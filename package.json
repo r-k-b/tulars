@@ -1,0 +1,22 @@
+{
+  "name": "tulars",
+  "version": "1.0.0",
+  "description": "Experimentation with simple Utility Function-based agents.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/r-k-b/tulars.git"
+  },
+  "author": "Robert K. Bell <robert.k.bell@gmail.com>",
+  "license": "AGPL-3.0",
+  "bugs": {
+    "url": "https://github.com/r-k-b/tulars/issues"
+  },
+  "homepage": "https://github.com/r-k-b/tulars#readme",
+  "dependencies": {
+    "elm": "0.18.0"
+  }
+}
