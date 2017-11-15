@@ -1,0 +1,40 @@
+- [ ] Have many agents interacting in interesting ways, with individual 
+      utility functions.
+  - [ ] Give agents things/places/events to seek out
+    - [ ] Allow agents to derive utility from...
+      - [ ] ...social interaction
+      - [ ] ...reducing entropy 
+      - [ ] ...eating nice food 
+      - [ ] ...moving about 
+      - [ ] ...resting 
+  - [ ] Give agents things/places/events to avoid
+    - [ ] Allow agents to...
+      - [ ] ...take damage
+        - [ ] From fire
+        - [ ] From attacks
+        - [ ] From hunger
+      - [ ] ...recognize unpleasant areas
+  - [ ] Group those agents into factions
+  - [ ] Allow live display and control over utility functions.
+  - [ ] Allow live display and control over the space
+    - [ ] Render the space
+    - [ ] Render agents
+      - [ ] Render a circle
+      - [ ] Render a simple, oriented shape
+      - [ ] Render an emoji to indicate the agent's state
+    - [ ] Render objects in the world
+      - [ ] Fire
+        - [ ] Render a filled red circle that fades out at the edge
+        - [ ] Show a fire icon at the centre 
+      - [ ] Food 
+      - [ ] Food Store
+      - [ ] Trash 
+      - [ ] Rest areas
+    - [ ] Allow moving agents via click-drag
+    - [ ] Allow adding / removing objects in the space
+  - [ ] Show interesting stats / graphs over time
+    - [ ] Record time-series of the stats
+      - [ ] Identify the stats of interest
+    - [ ] Draw a graph
+  - [ ] Have dynamic obstacles in the space
+    - [ ] add pathfinding
