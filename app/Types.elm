@@ -1,25 +1,35 @@
 module Types exposing (..)
 
-import Math.Vector2 exposing (Vec2)
 import Mouse exposing (Position)
+import OpenSolid.Direction2d exposing (Direction2d)
+import OpenSolid.Point2d exposing (Point2d)
+import OpenSolid.Vector2d as V2 exposing (Vector2d)
 import Time exposing (Time)
 
 
 type alias Model =
-    { position : Vec2
+    { position : Vector2d
     , drag : Maybe Drag
     , time : Time
+    , agents : List Agent
     }
 
 
 type alias Drag =
-    { start : Vec2
-    , current : Vec2
+    { start : Vector2d
+    , current : Vector2d
     }
 
 
 type Msg
-    = DragStart Vec2
-    | DragAt Vec2
-    | DragEnd Vec2
+    = DragStart Vector2d
+    | DragAt Vector2d
+    | DragEnd Vector2d
     | RAFtick Time
+
+
+type alias Agent =
+    { position : Point2d
+    , facing : Direction2d
+    , velocity : Vector2d
+    }

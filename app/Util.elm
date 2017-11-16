@@ -1,20 +1,21 @@
 module Util exposing (..)
 
-import Math.Vector2 exposing (Vec2, add, sub, vec2)
 import Mouse exposing (Position)
+import OpenSolid.Point2d exposing (Point2d)
+import OpenSolid.Vector2d as V2 exposing (Vector2d, difference, sum)
 import Types exposing (Model)
 
 
-mousePosToVec2 : Position -> Vec2
+mousePosToVec2 : { x : Int, y : Int } -> Vector2d
 mousePosToVec2 p =
-    vec2 (toFloat p.x) (toFloat p.y)
+    V2.fromComponents ( toFloat p.x, toFloat p.y )
 
 
-getPosition : Model -> Vec2
+getPosition : Model -> Vector2d
 getPosition { position, drag } =
     case drag of
         Nothing ->
             position
 
         Just { start, current } ->
-            sub (add position current) start
+            difference (sum position current) start

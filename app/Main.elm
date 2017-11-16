@@ -1,17 +1,15 @@
 module Main exposing (main)
 
-import Html exposing (Attribute, Html, div, text)
-import Html.Attributes exposing (style)
-import Html.Events exposing (on)
+import Html exposing (Html)
 import Json.Decode as Decode
 import Mouse exposing (Position)
-import Svg exposing (rect, svg)
-import Svg.Attributes exposing (height, rx, ry, viewBox, width, x, y)
-import Types exposing (Drag, Model, Msg(DragAt, DragEnd, DragStart, RAFtick))
+import OpenSolid.Direction2d exposing (fromAngle)
+import Types exposing (Agent, Drag, Model, Msg(DragAt, DragEnd, DragStart, RAFtick))
 import View exposing (view)
 import AnimationFrame exposing (times)
-import Math.Vector2 exposing (Vec2, add, sub, vec2)
 import Util exposing (getPosition, mousePosToVec2)
+import OpenSolid.Vector2d as Vector2d exposing (Vector2d)
+import OpenSolid.Point2d as Point2d
 
 
 main =
@@ -29,7 +27,15 @@ main =
 
 init : ( Model, Cmd Msg )
 init =
-    ( Model (vec2 200 200) Nothing 0, Cmd.none )
+    ( Model (Vector2d.fromComponents ( 200, 200 )) Nothing 0 [ defaultAgent ], Cmd.none )
+
+
+defaultAgent : Agent
+defaultAgent =
+    { facing = fromAngle (degrees 70)
+    , position = Point2d.fromCoordinates ( 200, 150 )
+    , velocity = Vector2d.fromComponents ( 1, 1 )
+    }
 
 
 
@@ -42,19 +48,19 @@ update msg model =
 
 
 updateHelp : Msg -> Model -> Model
-updateHelp msg ({ position, drag, time } as model) =
+updateHelp msg ({ position, drag, time, agents } as model) =
     case msg of
         DragStart xy ->
-            Model position (Just (Drag xy xy)) time
+            Model position (Just (Drag xy xy)) time agents
 
         DragAt xy ->
-            Model position (Maybe.map (\{ start } -> Drag start xy) drag) time
+            Model position (Maybe.map (\{ start } -> Drag start xy) drag) time agents
 
         DragEnd _ ->
-            Model (getPosition model) Nothing time
+            Model (getPosition model) Nothing time agents
 
         RAFtick t ->
-            Model position drag t
+            Model position drag t agents
 
 
 
