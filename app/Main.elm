@@ -10,6 +10,8 @@ import Svg.Attributes exposing (height, rx, ry, viewBox, width, x, y)
 import Types exposing (Drag, Model, Msg(DragAt, DragEnd, DragStart, RAFtick))
 import View exposing (view)
 import AnimationFrame exposing (times)
+import Math.Vector2 exposing (Vec2, add, sub, vec2)
+import Util exposing (getPosition, mousePosToVec2)
 
 
 main =
@@ -27,7 +29,7 @@ main =
 
 init : ( Model, Cmd Msg )
 init =
-    ( Model (Position 200 200) Nothing 0, Cmd.none )
+    ( Model (vec2 200 200) Nothing 0, Cmd.none )
 
 
 
@@ -68,18 +70,6 @@ subscriptions model =
                     Sub.none
 
                 Just _ ->
-                    Sub.batch [ Mouse.moves DragAt, Mouse.ups DragEnd ]
+                    Sub.batch [ Mouse.moves (mousePosToVec2 >> DragAt), Mouse.ups (mousePosToVec2 >> DragEnd) ]
     in
         Sub.batch [ drags, times RAFtick ]
-
-
-getPosition : Model -> Position
-getPosition { position, drag } =
-    case drag of
-        Nothing ->
-            position
-
-        Just { start, current } ->
-            Position
-                (position.x + current.x - start.x)
-                (position.y + current.y - start.y)

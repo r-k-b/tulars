@@ -4,11 +4,13 @@ import Html exposing (Attribute, Html, div, text)
 import Html.Attributes exposing (style)
 import Html.Events exposing (on)
 import Json.Decode as Decode
+import Math.Vector2 exposing (Vec2, add, getX, getY, sub, vec2)
 import Mouse exposing (Position)
 import Svg exposing (rect, svg)
 import Svg.Attributes exposing (height, rx, ry, viewBox, width, x, y)
 import Time exposing (Time)
 import Types exposing (Model, Msg(DragStart))
+import Util exposing (getPosition, mousePosToVec2)
 
 
 (=>) =
@@ -26,7 +28,7 @@ view : Model -> Html Msg
 view model =
     let
         realPosition =
-            getPosition model |> wigglePosition model.time
+            add (getPosition model) (wiggler model.time)
     in
         div []
             [ roundRect
@@ -39,8 +41,8 @@ view model =
                     , "height" => "100px"
                     , "border-radius" => "4px"
                     , "position" => "absolute"
-                    , "left" => px realPosition.x
-                    , "top" => px realPosition.y
+                    , "left" => (getX realPosition |> round |> px)
+                    , "top" => (getY realPosition |> round |> px)
                     , "color" => "white"
                     , "display" => "flex"
                     , "align-items" => "center"
@@ -60,28 +62,16 @@ px number =
 
 onMouseDown : Attribute Msg
 onMouseDown =
-    on "mousedown" (Decode.map DragStart Mouse.position)
+    on "mousedown" (Decode.map (mousePosToVec2 >> DragStart) Mouse.position)
 
 
-getPosition : Model -> Position
-getPosition { position, drag } =
-    case drag of
-        Nothing ->
-            position
-
-        Just { start, current } ->
-            Position
-                (position.x + current.x - start.x)
-                (position.y + current.y - start.y)
-
-
-wigglePosition : Time -> Position -> Position
-wigglePosition t p =
+wiggler : Time -> Vec2
+wiggler t =
     let
-        x2 =
-            p.x + floor (cos (t / 100) * 20)
+        x =
+            cos (t / 100) * 20
 
-        y2 =
-            p.y + floor (sin (t / 100) * 20)
+        y =
+            sin (t / 100) * 20
     in
-        Position x2 y2
+        vec2 x y
