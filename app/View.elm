@@ -8,7 +8,7 @@ import Mouse exposing (Position)
 import OpenSolid.BoundingBox2d as BoundingBox2d exposing (BoundingBox2d)
 import OpenSolid.Point2d as Point2d
 import OpenSolid.Svg as Svg exposing (render2d)
-import OpenSolid.Vector2d as Vector2d exposing (Vector2d, sum)
+import OpenSolid.Vector2d as Vector2d exposing (Vector2d, scaleBy, sum)
 import Svg exposing (Svg, g, rect, svg)
 import Svg.Attributes as Attributes exposing (height, rx, ry, transform, viewBox, width, x, y)
 import Time exposing (Time)
@@ -110,9 +110,9 @@ agentPoint =
 
 
 facingArrow =
-    { length = 50
-    , tipLength = 7
-    , tipWidth = 7
+    { length = 20
+    , tipLength = 5
+    , tipWidth = 5
     , stemAttributes = []
     , tipAttributes =
         [ Attributes.fill "orange" ]
@@ -121,11 +121,40 @@ facingArrow =
     }
 
 
+agentVelocityArrow : Agent -> Svg msg
+agentVelocityArrow agent =
+    let
+        exaggerated =
+            scaleBy 2 agent.velocity
+
+        exaggeratedLength =
+            Vector2d.length exaggerated
+    in
+        Svg.vector2d
+            { tipLength = exaggeratedLength * 0.1
+            , tipWidth = exaggeratedLength * 0.05
+            , tipAttributes =
+                [ Attributes.fill "orange"
+                , Attributes.stroke "blue"
+                , Attributes.strokeWidth "2"
+                ]
+            , stemAttributes =
+                [ Attributes.stroke "blue"
+                , Attributes.strokeWidth "3"
+                , Attributes.strokeDasharray "3 3"
+                ]
+            , groupAttributes = []
+            }
+            agent.position
+            exaggerated
+
+
 renderAgent : Agent -> Html msg
 renderAgent agent =
     g []
         [ Svg.point2d agentPoint agent.position
         , Svg.direction2d facingArrow agent.position agent.facing
+        , agentVelocityArrow agent
         ]
 
 
@@ -148,17 +177,3 @@ renderArrowToAgent agent =
         }
         Point2d.origin
         (Vector2d.from Point2d.origin agent.position)
-
-
-vecAttr : String -> Vector2d -> String
-vecAttr name v =
-    name ++ "(" ++ (vecPairToString v) ++ ")"
-
-
-vecPairToString : Vector2d -> String
-vecPairToString v =
-    let
-        ( x, y ) =
-            Vector2d.components v
-    in
-        toString x ++ " " ++ toString y

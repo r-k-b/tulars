@@ -26,6 +26,7 @@ type Msg
     | DragAt Vector2d
     | DragEnd Vector2d
     | RAFtick Time
+    | InitTime Time
 
 
 type alias Agent =

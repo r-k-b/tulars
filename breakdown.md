@@ -1,6 +1,7 @@
 - [ ] Have many agents interacting in interesting ways, with individual 
       utility functions.
   - [ ] Give agents things/places/events to seek out
+    - [x] Allow agents to move
     - [ ] Allow agents to derive utility from...
       - [ ] ...social interaction
       - [ ] ...reducing entropy 
@@ -19,7 +20,7 @@
   - [ ] Allow live display and control over the space
     - [ ] Render the space
     - [ ] Render agents
-      - [ ] Render a circle
+      - [x] Render a circle
       - [ ] Render a simple, oriented shape
       - [ ] Render an emoji to indicate the agent's state
     - [ ] Render objects in the world

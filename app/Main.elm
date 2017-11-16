@@ -3,13 +3,15 @@ module Main exposing (main)
 import Html exposing (Html)
 import Json.Decode as Decode
 import Mouse exposing (Position)
-import OpenSolid.Direction2d exposing (fromAngle)
-import Types exposing (Agent, Drag, Model, Msg(DragAt, DragEnd, DragStart, RAFtick))
+import OpenSolid.Direction2d as Direction2d
+import Task exposing (perform)
+import Types exposing (Agent, Drag, Model, Msg(DragAt, DragEnd, DragStart, InitTime, RAFtick))
 import View exposing (view)
 import AnimationFrame exposing (times)
 import Util exposing (getPosition, mousePosToVec2)
 import OpenSolid.Vector2d as Vector2d exposing (Vector2d)
 import OpenSolid.Point2d as Point2d
+import Time exposing (Time)
 
 
 main =
@@ -27,15 +29,20 @@ main =
 
 init : ( Model, Cmd Msg )
 init =
-    ( Model (Vector2d.fromComponents ( 200, 200 )) Nothing 0 [ defaultAgent ], Cmd.none )
+    ( Model (Vector2d.fromComponents ( 200, 200 )) Nothing 0 defaultAgents, perform InitTime Time.now )
 
 
-defaultAgent : Agent
-defaultAgent =
-    { facing = fromAngle (degrees 70)
-    , position = Point2d.fromCoordinates ( 200, 150 )
-    , velocity = Vector2d.fromComponents ( 1, 1 )
-    }
+defaultAgents : List Agent
+defaultAgents =
+    [ { facing = Direction2d.fromAngle (degrees 70)
+      , position = Point2d.fromCoordinates ( 200, 150 )
+      , velocity = Vector2d.fromComponents ( -1, -10 )
+      }
+    , { facing = Direction2d.fromAngle (degrees 200)
+      , position = Point2d.fromCoordinates ( 100, 250 )
+      , velocity = Vector2d.fromComponents ( -10, -20 )
+      }
+    ]
 
 
 
@@ -59,8 +66,27 @@ updateHelp msg ({ position, drag, time, agents } as model) =
         DragEnd _ ->
             Model (getPosition model) Nothing time agents
 
-        RAFtick t ->
+        RAFtick newT ->
+            let
+                dMove =
+                    moveAgent <| newT - time
+            in
+                Model position drag newT (List.map dMove agents)
+
+        InitTime t ->
             Model position drag t agents
+
+
+moveAgent : Time -> Agent -> Agent
+moveAgent dT agent =
+    let
+        dV =
+            Vector2d.scaleBy (dT / 1000) agent.velocity
+
+        newPosition =
+            Point2d.translateBy dV agent.position
+    in
+        { agent | position = newPosition }
 
 
 
