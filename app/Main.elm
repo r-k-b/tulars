@@ -89,6 +89,8 @@ moveAgent dT agent =
             Point2d.translateBy dV agent.position
 
         friction =
+            -- how do we adjust for large/small dT?
+            -- how do we increase friction nonlinearly?
             Vector2d.scaleBy (-0.001) agent.velocity
 
         dA =
