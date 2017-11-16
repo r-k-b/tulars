@@ -12,8 +12,8 @@ import OpenSolid.Vector2d as Vector2d exposing (Vector2d, scaleBy, sum)
 import Svg exposing (Svg, g, rect, svg)
 import Svg.Attributes as Attributes exposing (height, rx, ry, transform, viewBox, width, x, y)
 import Time exposing (Time)
-import Types exposing (Agent, Model, Msg(DragStart))
-import Util exposing (getPosition, mousePosToVec2)
+import Types exposing (Agent, Model, Msg)
+import Util exposing (mousePosToVec2)
 
 
 (=>) =
@@ -44,16 +44,12 @@ mainMap agents =
 
 view : Model -> Html Msg
 view model =
-    let
-        realPosition =
-            sum (getPosition model) (wiggler model.time)
-    in
-        div [ pageGridContainerStyle ]
-            [ div
-                [ mapGridItemStyle, class "zoom-svg" ]
-                [ (mainMap model.agents)
-                ]
+    div [ pageGridContainerStyle ]
+        [ div
+            [ mapGridItemStyle, class "zoom-svg" ]
+            [ (mainMap model.agents)
             ]
+        ]
 
 
 pageGridContainerStyle =
@@ -80,23 +76,6 @@ mapGridItemStyle =
 px : Int -> String
 px number =
     toString number ++ "px"
-
-
-onMouseDown : Attribute Msg
-onMouseDown =
-    on "mousedown" (Decode.map (mousePosToVec2 >> DragStart) Mouse.position)
-
-
-wiggler : Time -> Vector2d
-wiggler t =
-    let
-        x =
-            cos (t / 200) * 20
-
-        y =
-            sin (t / 200) * 20
-    in
-        Vector2d.fromComponents ( x, y )
 
 
 agentPoint : Svg.PointOptions msg

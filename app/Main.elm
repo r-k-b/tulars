@@ -5,10 +5,10 @@ import Json.Decode as Decode
 import Mouse exposing (Position)
 import OpenSolid.Direction2d as Direction2d
 import Task exposing (perform)
-import Types exposing (Agent, Drag, Model, Msg(DragAt, DragEnd, DragStart, InitTime, RAFtick))
+import Types exposing (Agent, Model, Msg(InitTime, RAFtick))
 import View exposing (view)
 import AnimationFrame exposing (times)
-import Util exposing (getPosition, mousePosToVec2)
+import Util exposing (mousePosToVec2)
 import OpenSolid.Vector2d as Vector2d exposing (Vector2d)
 import OpenSolid.Point2d as Point2d
 import Time exposing (Time)
@@ -29,7 +29,9 @@ main =
 
 init : ( Model, Cmd Msg )
 init =
-    ( Model (Vector2d.fromComponents ( 200, 200 )) Nothing 0 defaultAgents, perform InitTime Time.now )
+    ( Model 0 defaultAgents
+    , perform InitTime Time.now
+    )
 
 
 defaultAgents : List Agent
@@ -57,26 +59,17 @@ update msg model =
 
 
 updateHelp : Msg -> Model -> Model
-updateHelp msg ({ position, drag, time, agents } as model) =
+updateHelp msg ({ time, agents } as model) =
     case msg of
-        DragStart xy ->
-            Model position (Just (Drag xy xy)) time agents
-
-        DragAt xy ->
-            Model position (Maybe.map (\{ start } -> Drag start xy) drag) time agents
-
-        DragEnd _ ->
-            Model (getPosition model) Nothing time agents
-
         RAFtick newT ->
             let
                 dMove =
                     moveAgent <| newT - time
             in
-                Model position drag newT (List.map dMove agents)
+                Model newT (List.map dMove agents)
 
         InitTime t ->
-            Model position drag t agents
+            Model t agents
 
 
 moveAgent : Time -> Agent -> Agent
@@ -110,13 +103,4 @@ moveAgent dT agent =
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
-    let
-        drags =
-            case model.drag of
-                Nothing ->
-                    Sub.none
-
-                Just _ ->
-                    Sub.batch [ Mouse.moves (mousePosToVec2 >> DragAt), Mouse.ups (mousePosToVec2 >> DragEnd) ]
-    in
-        Sub.batch [ drags, times RAFtick ]
+    Sub.batch [ times RAFtick ]

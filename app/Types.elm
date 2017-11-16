@@ -8,24 +8,12 @@ import Time exposing (Time)
 
 
 type alias Model =
-    { position : Vector2d
-    , drag : Maybe Drag
-    , time : Time
+    { time : Time
     , agents : List Agent
     }
 
-
-type alias Drag =
-    { start : Vector2d
-    , current : Vector2d
-    }
-
-
 type Msg
-    = DragStart Vector2d
-    | DragAt Vector2d
-    | DragEnd Vector2d
-    | RAFtick Time
+    = RAFtick Time
     | InitTime Time
 
 
