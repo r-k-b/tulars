@@ -1,5 +1,9 @@
 - [ ] Have many agents interacting in interesting ways, with individual 
       utility functions.
+  - [ ] Allow live display and control over utility functions.
+    - [ ] Represent Considerations and Actions
+      - [ ] add these to the model
+      - [ ] show them to the user
   - [ ] Give agents things/places/events to seek out
     - [x] Allow agents to move
     - [ ] Allow agents to derive utility from...
@@ -16,13 +20,13 @@
         - [ ] From hunger
       - [ ] ...recognize unpleasant areas
   - [ ] Group those agents into factions
-  - [ ] Allow live display and control over utility functions.
   - [ ] Allow live display and control over the space
-    - [ ] Render the space
+    - [x] Render the space
     - [ ] Render agents
       - [x] Render a circle
-      - [ ] Render a simple, oriented shape
+      - [x] Render a simple, oriented shape
       - [ ] Render an emoji to indicate the agent's state
+      - [ ] Show a short trail of where they've been
     - [ ] Render objects in the world
       - [ ] Fire
         - [ ] Render a filled red circle that fades out at the edge

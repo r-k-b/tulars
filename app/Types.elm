@@ -12,9 +12,39 @@ type alias Model =
     , agents : List Agent
     }
 
+
 type Msg
     = RAFtick Time
     | InitTime Time
+
+
+type alias Action =
+    { name : String
+    , considerations : List Consideration
+    }
+
+
+type alias Consideration =
+    { name : String
+    , function : InputFunction
+    , input : ConsiderationInput
+    , inputMin : Float
+    , inputMax : Float
+    , weighting : Float
+    , offset : Float
+    }
+
+
+type ConsiderationInput
+    = Hunger
+    | DistanceToTargetPoint Point2d
+
+
+type InputFunction
+    = Linear Float Float
+    | Exponential Float
+    | Sigmoid
+    | Normal
 
 
 type alias Agent =
@@ -22,4 +52,5 @@ type alias Agent =
     , facing : Direction2d
     , velocity : Vector2d
     , acceleration : Vector2d
+    , actions : List Action
     }
