@@ -33,4 +33,5 @@ type alias Agent =
     { position : Point2d
     , facing : Direction2d
     , velocity : Vector2d
+    , acceleration : Vector2d
     }

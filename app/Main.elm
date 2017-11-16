@@ -37,10 +37,12 @@ defaultAgents =
     [ { facing = Direction2d.fromAngle (degrees 70)
       , position = Point2d.fromCoordinates ( 200, 150 )
       , velocity = Vector2d.fromComponents ( -1, -10 )
+      , acceleration = Vector2d.zero
       }
     , { facing = Direction2d.fromAngle (degrees 200)
       , position = Point2d.fromCoordinates ( 100, 250 )
       , velocity = Vector2d.fromComponents ( -10, -20 )
+      , acceleration = Vector2d.fromComponents ( -2, -1 )
       }
     ]
 
@@ -85,8 +87,19 @@ moveAgent dT agent =
 
         newPosition =
             Point2d.translateBy dV agent.position
+
+        friction =
+            Vector2d.scaleBy (-0.001) agent.velocity
+
+        dA =
+            Vector2d.scaleBy (dT / 1000) agent.acceleration
+
+        newVelocity =
+            List.foldl Vector2d.sum
+                Vector2d.zero
+                [ agent.velocity, dA, friction ]
     in
-        { agent | position = newPosition }
+        { agent | position = newPosition, velocity = newVelocity }
 
 
 
