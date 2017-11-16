@@ -4,7 +4,10 @@
   "description": "Experimentation with simple Utility Function-based agents.",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build-elm": "elm-make app/Main.elm --output=./dist/main.js",
+    "debug-elm": "elm-make app/Main.elm --output=./dist/main.js --debug",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "watch-elm": "npm run debug-elm; chokidar app/*.elm -c 'yes \"\" | head -40; npm run debug-elm'"
   },
   "repository": {
     "type": "git",
@@ -17,6 +20,8 @@
   },
   "homepage": "https://github.com/r-k-b/tulars#readme",
   "dependencies": {
+    "chokidar": "1.7.0",
+    "chokidar-cli": "1.2.0",
     "elm": "0.18.0"
   }
 }
