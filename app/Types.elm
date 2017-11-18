@@ -10,6 +10,7 @@ import Time exposing (Time)
 type alias Model =
     { time : Time
     , agents : List Agent
+    , foods : List Food
     }
 
 
@@ -92,4 +93,9 @@ type alias Agent =
     , acceleration : Vector2d
     , actions : List Action
     , hunger : Float
+    }
+
+
+type alias Food =
+    { position : Point2d
     }

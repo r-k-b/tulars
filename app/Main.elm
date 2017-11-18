@@ -41,9 +41,14 @@ main =
 
 init : ( Model, Cmd Msg )
 init =
-    ( Model 0 defaultAgents
+    ( Model 0 defaultAgents defaultFoods
     , perform InitTime Time.now
     )
+
+
+defaultFoods =
+    [ { position = Point2d.fromCoordinates ( 100, 100 ) }
+    ]
 
 
 defaultAgents : List Agent
@@ -80,9 +85,9 @@ justChill =
     Action
         "just chill"
         DoNothing
-        [ { name = "always 0.2"
+        [ { name = "always 0.02"
           , function = Linear 1 0
-          , input = Constant 0.2
+          , input = Constant 0.02
           , inputMin = 0
           , inputMax = 1
           , weighting = 1
@@ -180,17 +185,17 @@ update msg model =
 
 
 updateHelp : Msg -> Model -> Model
-updateHelp msg ({ time, agents } as model) =
+updateHelp msg ({ time, agents, foods } as model) =
     case msg of
         RAFtick newT ->
             let
                 dMove =
                     moveAgent <| newT - time
             in
-                Model newT (List.map dMove agents)
+                Model newT (List.map dMove agents) foods
 
         InitTime t ->
-            Model t agents
+            Model t agents foods
 
         ToggleConditionsVisibility agentName actionName ->
             let
@@ -214,7 +219,7 @@ updateHelp msg ({ time, agents } as model) =
                         )
                         model.agents
             in
-                Model time newAgents
+                Model time newAgents foods
 
         ToggleConditionDetailsVisibility agentName actionName considerationName ->
             let
@@ -246,7 +251,7 @@ updateHelp msg ({ time, agents } as model) =
                         )
                         model.agents
             in
-                Model time newAgents
+                Model time newAgents foods
 
 
 moveAgent : Time -> Agent -> Agent

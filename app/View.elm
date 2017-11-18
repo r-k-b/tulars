@@ -9,6 +9,7 @@ import OpenSolid.BoundingBox2d as BoundingBox2d exposing (BoundingBox2d)
 import OpenSolid.Point2d as Point2d exposing (xCoordinate, yCoordinate)
 import OpenSolid.Svg as Svg exposing (render2d)
 import OpenSolid.Vector2d as Vector2d exposing (Vector2d, scaleBy, sum)
+import OpenSolid.Circle2d as Circle2d
 import Svg exposing (Svg, g, rect, svg)
 import Svg.Attributes as Attributes exposing (height, rx, ry, transform, viewBox, width, x, y)
 import Time exposing (Time)
@@ -18,6 +19,7 @@ import Types
         , Agent
         , Consideration
         , ConsiderationInput(Constant, DistanceToTargetPoint, Hunger)
+        , Food
         , InputFunction(Exponential, InverseNormal, Linear, Normal, Sigmoid)
         , Model
         , Msg(ToggleConditionDetailsVisibility, ToggleConditionsVisibility)
@@ -32,7 +34,7 @@ view model =
     div [ pageGridContainerStyle ]
         [ div
             [ mapGridItemStyle, class "zoom-svg" ]
-            [ (mainMap model.agents)
+            [ (mainMap model.agents model.foods)
             ]
         , div
             [ agentInfoGridItemStyle ]
@@ -51,13 +53,31 @@ bb =
         }
 
 
-mainMap : List Agent -> Html.Html Msg
-mainMap agents =
+mainMap : List Agent -> List Food -> Html.Html Msg
+mainMap agents foods =
     render2d bb
         (g []
             [ g []
                 (List.map renderAgent agents)
+            , g []
+                (List.map renderFood foods)
+            , borderIndicator 200
+            , borderIndicator 300
             ]
+        )
+
+
+borderIndicator : Float -> Svg Msg
+borderIndicator r =
+    Svg.circle2d
+        [ Attributes.fillOpacity "0"
+        , Attributes.stroke "grey"
+        , Attributes.strokeWidth "1"
+        ]
+        (Circle2d.with
+            { centerPoint = Point2d.origin
+            , radius = r
+            }
         )
 
 
@@ -339,3 +359,13 @@ renderArrowToAgent agent =
         }
         Point2d.origin
         (Vector2d.from Point2d.origin agent.position)
+
+
+renderFood : Food -> Html Msg
+renderFood food =
+    Svg.text2d
+        [ Attributes.textAnchor "middle"
+        , Attributes.alignmentBaseline "middle"
+        ]
+        food.position
+        "🍽"
