@@ -13,8 +13,18 @@ import OpenSolid.Point2d as Point2d
 
 computeUtility : Agent -> Action -> Float
 computeUtility agent action =
-    List.map (computeConsideration agent Nothing) action.considerations
-        |> List.foldl (*) 1
+    let
+        tiny =
+            List.map (computeConsideration agent Nothing) action.considerations
+                |> List.foldl (*) 1
+
+        undoTiny =
+            List.length action.considerations
+                |> toFloat
+                |> min 1
+    in
+        -- What's the name for this operation?
+        tiny ^ (1 / undoTiny)
 
 
 {-| Provide a "forced" value to override the consideration's
