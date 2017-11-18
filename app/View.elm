@@ -12,16 +12,7 @@ import OpenSolid.Vector2d as Vector2d exposing (Vector2d, scaleBy, sum)
 import Svg exposing (Svg, g, rect, svg)
 import Svg.Attributes as Attributes exposing (height, rx, ry, transform, viewBox, width, x, y)
 import Time exposing (Time)
-import Types
-    exposing
-        ( Action
-        , Agent
-        , Consideration
-        , ConsiderationInput(DistanceToTargetPoint, Hunger)
-        , InputFunction(Exponential, InverseNormal, Linear, Normal, Sigmoid)
-        , Model
-        , Msg(ToggleConditionsVisibility)
-        )
+import Types exposing (Action, Agent, Consideration, ConsiderationInput(DistanceToTargetPoint, Hunger), InputFunction(Exponential, InverseNormal, Linear, Normal, Sigmoid), Model, Msg(ToggleConditionDetailsVisibility, ToggleConditionsVisibility))
 import Util exposing (mousePosToVec2)
 import Formatting exposing (roundTo, padLeft, print, (<>))
 import UtilityFunctions exposing (computeConsideration, computeUtility, getConsiderationRawValue)
@@ -203,7 +194,7 @@ renderAction agent action =
             if action.considerationsVisible then
                 [ text "Considerations:"
                 , div [ style indentWithLine ]
-                    (List.map (renderConsideration agent) <|
+                    (List.map (renderConsideration agent action) <|
                         List.reverse <|
                             List.sortBy (computeConsideration agent Nothing) action.considerations
                     )
@@ -227,18 +218,37 @@ renderAction agent action =
             )
 
 
-renderConsideration : Agent -> Consideration -> Html Msg
-renderConsideration agent con =
-    div []
-        [ h5 [] [ text con.name ]
-        , ul []
-            [ li [] [ text <| "Utility Function: " ++ (renderUF con.function) ]
-            , li [] [ text <| "Consideration Input: " ++ (renderCI con.input) ]
-            , li [] [ text <| "Consideration Raw Value: " ++ (prettyFloat 2 <| getConsiderationRawValue agent con) ]
-            , li [] [ text <| "Consideration Min & Max: " ++ (prettyFloat 2 <| con.inputMin) ++ ", " ++ (prettyFloat 2 <| con.inputMax) ]
-            , li [] [ text <| "Consideration Output: " ++ (prettyFloat 2 <| computeConsideration agent Nothing con) ]
-            ]
-        ]
+renderConsideration : Agent -> Action -> Consideration -> Html Msg
+renderConsideration agent action con =
+    let
+        details =
+            if con.detailsVisible then
+                [ ul []
+                    [ li [] [ text <| "Utility Function: " ++ (renderUF con.function) ]
+                    , li [] [ text <| "Consideration Input: " ++ (renderCI con.input) ]
+                    , li [] [ text <| "Consideration Raw Value: " ++ (prettyFloat 2 <| getConsiderationRawValue agent con) ]
+                    , li [] [ text <| "Consideration Min & Max: " ++ (prettyFloat 2 <| con.inputMin) ++ ", " ++ (prettyFloat 2 <| con.inputMax) ]
+                    , li [] [ text <| "Consideration Weighting: " ++ (prettyFloat 2 <| con.weighting) ]
+                    , li [] [ text <| "Consideration Offset: " ++ (prettyFloat 2 <| con.offset) ]
+                    ]
+                ]
+            else
+                []
+    in
+        div []
+            (List.append
+                [ h5
+                    [ onClick <| ToggleConditionDetailsVisibility agent.name action.name con.name
+                    , style [ "cursor" => "pointer" ]
+                    ]
+                    [ text "("
+                    , text <| prettyFloat 2 <| computeConsideration agent Nothing con
+                    , text ")  "
+                    , text con.name
+                    ]
+                ]
+                details
+            )
 
 
 renderUF : InputFunction -> String

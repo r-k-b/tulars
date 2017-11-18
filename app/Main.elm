@@ -13,7 +13,7 @@ import Types
         , ConsiderationInput(DistanceToTargetPoint, Hunger)
         , InputFunction(Exponential, InverseNormal, Linear, Normal, Sigmoid)
         , Model
-        , Msg(InitTime, RAFtick, ToggleConditionsVisibility)
+        , Msg(InitTime, RAFtick, ToggleConditionDetailsVisibility, ToggleConditionsVisibility)
         )
 import View exposing (view)
 import AnimationFrame exposing (times)
@@ -80,6 +80,7 @@ stayNearOrigin =
           , inputMax = 300
           , weighting = 1
           , offset = 0
+          , detailsVisible = False
           }
         ]
         False
@@ -95,6 +96,7 @@ moveToFood =
           , inputMax = 1
           , weighting = 3
           , offset = 0
+          , detailsVisible = False
           }
         , { name = "distance from food item"
           , function = Exponential 4.4
@@ -103,6 +105,7 @@ moveToFood =
           , inputMax = 0
           , weighting = 0.5
           , offset = 0
+          , detailsVisible = False
           }
         ]
         False
@@ -141,6 +144,38 @@ updateHelp msg ({ time, agents } as model) =
                                 action
                         )
                         actions
+
+                newAgents =
+                    List.map
+                        (\agent ->
+                            if agent.name == agentName then
+                                { agent | actions = updateAgentActions agent.actions }
+                            else
+                                agent
+                        )
+                        model.agents
+            in
+                Model time newAgents
+
+        ToggleConditionDetailsVisibility agentName actionName considerationName ->
+            let
+                updateActionConsiderations =
+                    List.map
+                        (\consideration ->
+                            if consideration.name == considerationName then
+                                { consideration | detailsVisible = not consideration.detailsVisible }
+                            else
+                                consideration
+                        )
+
+                updateAgentActions =
+                    List.map
+                        (\action ->
+                            if action.name == actionName then
+                                { action | considerations = updateActionConsiderations action.considerations }
+                            else
+                                action
+                        )
 
                 newAgents =
                     List.map

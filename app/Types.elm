@@ -17,6 +17,7 @@ type Msg
     = RAFtick Time
     | InitTime Time
     | ToggleConditionsVisibility String String
+    | ToggleConditionDetailsVisibility String String String
 
 
 type alias Action =
@@ -34,6 +35,7 @@ type alias Consideration =
     , inputMax : Float
     , weighting : Float
     , offset : Float
+    , detailsVisible : Bool
     }
 
 
