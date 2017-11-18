@@ -14,7 +14,7 @@ import OpenSolid.Point2d as Point2d
 computeUtility : Agent -> Action -> Float
 computeUtility agent action =
     List.map (computeConsideration agent Nothing) action.considerations
-        |> List.foldl (+) 0
+        |> List.foldl (*) 1
 
 
 {-| Provide a "forced" value to override the consideration's
