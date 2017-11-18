@@ -181,7 +181,11 @@ renderAgentInfo agent =
             , li [] [ text "Heading: ", prettyFloatHtml 2 <| vectorAngleDegrees agent.velocity ]
             ]
         , text "Actions:"
-        , div [ style indentWithLine ] (List.map (renderAction agent) agent.actions)
+        , div [ style indentWithLine ]
+            (List.map (renderAction agent) <|
+                List.reverse <|
+                    List.sortBy (computeUtility agent) agent.actions
+            )
         ]
 
 
@@ -202,7 +206,11 @@ renderAction agent action =
             , text ")"
             ]
         , text "Considerations:"
-        , div [ style indentWithLine ] (List.map (renderConsideration agent) action.considerations)
+        , div [ style indentWithLine ]
+            (List.map (renderConsideration agent) <|
+                List.reverse <|
+                    List.sortBy (computeConsideration agent Nothing) action.considerations
+            )
         ]
 
 
