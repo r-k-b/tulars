@@ -40,11 +40,36 @@ type ConsiderationInput
     | DistanceToTargetPoint Point2d
 
 
+type alias Exponent =
+    Float
+
+
+type alias Slope =
+    Float
+
+
+type alias Offset =
+    Float
+
+
+type alias Bend =
+    Float
+
+
+type alias Center =
+    Float
+
+
+type alias Tightness =
+    Float
+
+
 type InputFunction
-    = Linear Float Float
-    | Exponential Float
-    | Sigmoid
-    | Normal
+    = Linear Slope Offset
+    | Exponential Exponent
+    | Sigmoid Bend Center
+    | Normal Tightness Center
+    | InverseNormal Tightness Center
 
 
 type alias Agent =
@@ -53,4 +78,5 @@ type alias Agent =
     , velocity : Vector2d
     , acceleration : Vector2d
     , actions : List Action
+    , hunger : Float
     }

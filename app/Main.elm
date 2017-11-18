@@ -5,7 +5,16 @@ import Json.Decode as Decode
 import Mouse exposing (Position)
 import OpenSolid.Direction2d as Direction2d
 import Task exposing (perform)
-import Types exposing (Action, Agent, Consideration, ConsiderationInput(DistanceToTargetPoint, Hunger), InputFunction(Exponential, Linear, Normal, Sigmoid), Model, Msg(InitTime, RAFtick))
+import Types
+    exposing
+        ( Action
+        , Agent
+        , Consideration
+        , ConsiderationInput(DistanceToTargetPoint, Hunger)
+        , InputFunction(Exponential, InverseNormal, Linear, Normal, Sigmoid)
+        , Model
+        , Msg(InitTime, RAFtick)
+        )
 import View exposing (view)
 import AnimationFrame exposing (times)
 import Util exposing (mousePosToVec2)
@@ -53,6 +62,7 @@ defaultAgents =
                   }
                 ]
             ]
+      , hunger = 0.1
       }
     , { facing = Direction2d.fromAngle (degrees 200)
       , position = Point2d.fromCoordinates ( 100, 250 )
@@ -71,6 +81,7 @@ defaultAgents =
                   }
                 ]
             ]
+      , hunger = 0.3
       }
     ]
 
@@ -121,58 +132,6 @@ moveAgent dT agent =
                 [ agent.velocity, dA, friction ]
     in
         { agent | position = newPosition, velocity = newVelocity }
-
-
-computeUtility : Agent -> Action -> Float
-computeUtility agent action =
-    List.map (computeConsideration agent) action.considerations
-        |> List.foldl (+) 0
-
-
-computeConsideration : Agent -> Consideration -> Float
-computeConsideration agent consideration =
-    let
-        inputVal =
-            case consideration.input of
-                Hunger ->
-                    0.5
-
-                DistanceToTargetPoint point ->
-                    point |> Point2d.distanceFrom agent.position
-
-        normalizedInput =
-            normalize 0 1 consideration.inputMin consideration.inputMax inputVal
-
-        output =
-            case consideration.function of
-                Linear m b ->
-                    Debug.crash "todo"
-
-                Exponential exponent ->
-                    Debug.crash "todo"
-
-                Sigmoid ->
-                    Debug.crash "todo"
-
-                Normal ->
-                    Debug.crash "todo"
-    in
-        output |> clamp 0 1
-
-
-clamp : Float -> Float -> Float -> Float
-clamp min max x =
-    if (x < min) then
-        min
-    else if (x > max) then
-        max
-    else
-        x
-
-
-normalize : Float -> Float -> Float -> Float -> Float -> Float
-normalize bMin bMax aMin aMax x =
-    Debug.crash "todo"
 
 
 
