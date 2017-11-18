@@ -100,8 +100,8 @@ moveToFood =
           , input = DistanceToTargetPoint <| Point2d.fromCoordinates ( 100, 100 )
           , inputMin = 300
           , inputMax = 0
-          , weighting = 0.9
-          , offset = 0.1
+          , weighting = 0.5
+          , offset = 0
           }
         ]
 
