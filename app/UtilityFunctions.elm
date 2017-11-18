@@ -26,12 +26,7 @@ computeConsideration agent forced consideration =
         inputOrForced =
             case forced of
                 Nothing ->
-                    case consideration.input of
-                        Hunger ->
-                            agent.hunger
-
-                        DistanceToTargetPoint point ->
-                            point |> Point2d.distanceFrom agent.position
+                    getConsiderationRawValue agent consideration
 
                 Just x ->
                     x
@@ -82,3 +77,13 @@ linearTransform bMin bMax aMin aMax x =
             (bMax - bMin) / (aMax - aMin)
     in
         scale * (x + offset)
+
+
+getConsiderationRawValue : Agent -> Consideration -> Float
+getConsiderationRawValue agent consideration =
+    case consideration.input of
+        Hunger ->
+            agent.hunger
+
+        DistanceToTargetPoint point ->
+            point |> Point2d.distanceFrom agent.position

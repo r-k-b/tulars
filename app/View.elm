@@ -1,6 +1,6 @@
 module View exposing (view)
 
-import Html exposing (Attribute, Html, code, div, h2, h3, li, text, ul)
+import Html exposing (Attribute, Html, code, div, h2, h3, h4, h5, li, text, ul)
 import Html.Attributes exposing (class, style)
 import Html.Events exposing (on)
 import Json.Decode as Decode
@@ -12,9 +12,19 @@ import OpenSolid.Vector2d as Vector2d exposing (Vector2d, scaleBy, sum)
 import Svg exposing (Svg, g, rect, svg)
 import Svg.Attributes as Attributes exposing (height, rx, ry, transform, viewBox, width, x, y)
 import Time exposing (Time)
-import Types exposing (Agent, Model, Msg)
+import Types
+    exposing
+        ( Action
+        , Agent
+        , Consideration
+        , ConsiderationInput(DistanceToTargetPoint, Hunger)
+        , InputFunction(Exponential, InverseNormal, Linear, Normal, Sigmoid)
+        , Model
+        , Msg
+        )
 import Util exposing (mousePosToVec2)
 import Formatting exposing (roundTo, padLeft, print, (<>))
+import UtilityFunctions exposing (computeConsideration, computeUtility, getConsiderationRawValue)
 
 
 view : Model -> Html Msg
@@ -166,14 +176,102 @@ renderAgentInfo agent =
     div []
         [ h3 [] [ text agent.name ]
         , ul []
-            [ li [] [ text "Position: ", prettyPoint2d agent.position ] ]
+            [ li [] [ text "Position: ", prettyPoint2dHtml agent.position ]
+            , li [] [ text "Speed: ", prettyFloatHtml 2 <| Vector2d.length agent.velocity ]
+            , li [] [ text "Heading: ", prettyFloatHtml 2 <| vectorAngleDegrees agent.velocity ]
+            ]
+        , text "Actions:"
+        , div [ style indentWithLine ] (List.map (renderAction agent) agent.actions)
         ]
 
 
-prettyPoint2d : Point2d.Point2d -> Html msg
-prettyPoint2d p =
+indentWithLine =
+    [ "margin-left" => "0.2em"
+    , "padding-left" => "1em"
+    , "border-left" => "1px solid grey"
+    ]
+
+
+renderAction : Agent -> Action -> Html msg
+renderAction agent action =
+    div []
+        [ h4 []
+            [ text action.name
+            , text "  (Utility: "
+            , prettyFloatHtml 2 <| computeUtility agent action
+            , text ")"
+            ]
+        , text "Considerations:"
+        , div [ style indentWithLine ] (List.map (renderConsideration agent) action.considerations)
+        ]
+
+
+renderConsideration : Agent -> Consideration -> Html msg
+renderConsideration agent con =
+    div []
+        [ h5 [] [ text con.name ]
+        , ul []
+            [ li [] [ text <| "Utility Function: " ++ (renderUF con.function) ]
+            , li [] [ text <| "Consideration Input: " ++ (renderCI con.input) ]
+            , li [] [ text <| "Consideration Raw Value: " ++ (prettyFloat 2 <| getConsiderationRawValue agent con) ]
+            , li [] [ text <| "Consideration Min & Max: " ++ (prettyFloat 2 <| con.inputMin) ++ ", " ++ (prettyFloat 2 <| con.inputMax) ]
+            , li [] [ text <| "Consideration Output: " ++ (prettyFloat 2 <| computeConsideration agent Nothing con) ]
+            ]
+        ]
+
+
+renderUF : InputFunction -> String
+renderUF f =
+    case f of
+        Linear m b ->
+            "Linear (slope = " ++ (toString m) ++ ", offset = " ++ (toString b) ++ ")"
+
+        Exponential exponent ->
+            "Exponential (exponent = " ++ (toString exponent) ++ ")"
+
+        Sigmoid bend center ->
+            "Sigmoid (bend = " ++ (toString bend) ++ ", center = " ++ (toString center) ++ ")"
+
+        Normal tightness center ->
+            "Normal (tightness = " ++ (toString tightness) ++ ", center = " ++ (toString center) ++ ")"
+
+        InverseNormal tightness center ->
+            "InverseNormal (tightness = " ++ (toString tightness) ++ ", center = " ++ (toString center) ++ ")"
+
+
+renderCI : ConsiderationInput -> String
+renderCI ci =
+    case ci of
+        Hunger ->
+            "Hunger"
+
+        DistanceToTargetPoint p ->
+            "Distance to point " ++ (prettyPoint2d p)
+
+
+vectorAngleDegrees : Vector2d.Vector2d -> Float
+vectorAngleDegrees vec =
+    let
+        ( length, polarAngle ) =
+            Vector2d.polarComponents vec
+    in
+        polarAngle / (turns 1) * 360
+
+
+prettyPoint2dHtml : Point2d.Point2d -> Html msg
+prettyPoint2dHtml p =
     code [ style [ "white-space" => "pre-wrap" ] ]
-        [ text <| "(" ++ (prettyFloat 1 <| xCoordinate p) ++ ", " ++ (prettyFloat 1 <| yCoordinate p) ++ ")" ]
+        [ text <| prettyPoint2d p ]
+
+
+prettyPoint2d : Point2d.Point2d -> String
+prettyPoint2d p =
+    "(" ++ (prettyFloat 1 <| xCoordinate p) ++ ", " ++ (prettyFloat 1 <| yCoordinate p) ++ ")"
+
+
+prettyFloatHtml : Int -> Float -> Html msg
+prettyFloatHtml dp n =
+    code [ style [ "white-space" => "pre-wrap" ] ] [ text <| prettyFloat dp n ]
 
 
 prettyFloat : Int -> Float -> String

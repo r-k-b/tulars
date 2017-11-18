@@ -51,17 +51,8 @@ defaultAgents =
       , velocity = Vector2d.fromComponents ( -1, -10 )
       , acceleration = Vector2d.zero
       , actions =
-            [ Action
-                "stay near the origin"
-                [ { name = "distance from origin"
-                  , function = Linear 1 0
-                  , input = DistanceToTargetPoint Point2d.origin
-                  , inputMin = 0
-                  , inputMax = 400
-                  , weighting = 1
-                  , offset = 0
-                  }
-                ]
+            [ stayNearOrigin
+            , moveToFood
             ]
       , hunger = 0.1
       }
@@ -71,21 +62,48 @@ defaultAgents =
       , velocity = Vector2d.fromComponents ( -10, -20 )
       , acceleration = Vector2d.fromComponents ( -2, -1 )
       , actions =
-            [ Action
-                "stay near the origin"
-                [ { name = "distance from origin"
-                  , function = Linear 1 0
-                  , input = DistanceToTargetPoint Point2d.origin
-                  , inputMin = 0
-                  , inputMax = 400
-                  , weighting = 1
-                  , offset = 0
-                  }
-                ]
+            [ stayNearOrigin
+            , moveToFood
             ]
       , hunger = 0.3
       }
     ]
+
+
+stayNearOrigin =
+    Action
+        "stay within 200 or 300 units of the origin"
+        [ { name = "distance from origin"
+          , function = Linear 1 0
+          , input = DistanceToTargetPoint Point2d.origin
+          , inputMin = 200
+          , inputMax = 300
+          , weighting = 1
+          , offset = 0
+          }
+        ]
+
+
+moveToFood =
+    Action
+        "move toward edible food"
+        [ { name = "hunger"
+          , function = Linear 1 0
+          , input = Hunger
+          , inputMin = 0
+          , inputMax = 1
+          , weighting = 3
+          , offset = 0
+          }
+        , { name = "distance from food item"
+          , function = Exponential 4.4
+          , input = DistanceToTargetPoint <| Point2d.fromCoordinates ( 100, 100 )
+          , inputMin = 300
+          , inputMax = 0
+          , weighting = 0.9
+          , offset = 0.1
+          }
+        ]
 
 
 
