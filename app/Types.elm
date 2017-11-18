@@ -22,9 +22,15 @@ type Msg
 
 type alias Action =
     { name : String
+    , outcome : ActionOutcome
     , considerations : List Consideration
     , considerationsVisible : Bool
     }
+
+
+type ActionOutcome
+    = DoNothing
+    | MoveTo Point2d
 
 
 type alias Consideration =
@@ -42,6 +48,7 @@ type alias Consideration =
 type ConsiderationInput
     = Hunger
     | DistanceToTargetPoint Point2d
+    | Constant Float
 
 
 type alias Exponent =

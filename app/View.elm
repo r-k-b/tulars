@@ -12,7 +12,16 @@ import OpenSolid.Vector2d as Vector2d exposing (Vector2d, scaleBy, sum)
 import Svg exposing (Svg, g, rect, svg)
 import Svg.Attributes as Attributes exposing (height, rx, ry, transform, viewBox, width, x, y)
 import Time exposing (Time)
-import Types exposing (Action, Agent, Consideration, ConsiderationInput(DistanceToTargetPoint, Hunger), InputFunction(Exponential, InverseNormal, Linear, Normal, Sigmoid), Model, Msg(ToggleConditionDetailsVisibility, ToggleConditionsVisibility))
+import Types
+    exposing
+        ( Action
+        , Agent
+        , Consideration
+        , ConsiderationInput(Constant, DistanceToTargetPoint, Hunger)
+        , InputFunction(Exponential, InverseNormal, Linear, Normal, Sigmoid)
+        , Model
+        , Msg(ToggleConditionDetailsVisibility, ToggleConditionsVisibility)
+        )
 import Util exposing (mousePosToVec2)
 import Formatting exposing (roundTo, padLeft, print, (<>))
 import UtilityFunctions exposing (computeConsideration, computeUtility, getConsiderationRawValue)
@@ -278,6 +287,9 @@ renderCI ci =
 
         DistanceToTargetPoint p ->
             "Distance to point " ++ (prettyPoint2d p)
+
+        Constant p ->
+            "Constant " ++ (prettyFloat 2 p)
 
 
 vectorAngleDegrees : Vector2d.Vector2d -> Float

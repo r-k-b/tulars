@@ -2,15 +2,17 @@ module Main exposing (main)
 
 import Html exposing (Html)
 import Json.Decode as Decode
+import Maybe exposing (withDefault)
 import Mouse exposing (Position)
 import OpenSolid.Direction2d as Direction2d
 import Task exposing (perform)
 import Types
     exposing
         ( Action
+        , ActionOutcome(DoNothing, MoveTo)
         , Agent
         , Consideration
-        , ConsiderationInput(DistanceToTargetPoint, Hunger)
+        , ConsiderationInput(Constant, DistanceToTargetPoint, Hunger)
         , InputFunction(Exponential, InverseNormal, Linear, Normal, Sigmoid)
         , Model
         , Msg(InitTime, RAFtick, ToggleConditionDetailsVisibility, ToggleConditionsVisibility)
@@ -21,6 +23,7 @@ import Util exposing (mousePosToVec2)
 import OpenSolid.Vector2d as Vector2d exposing (Vector2d)
 import OpenSolid.Point2d as Point2d
 import Time exposing (Time)
+import UtilityFunctions exposing (computeUtility)
 
 
 main =
@@ -53,6 +56,7 @@ defaultAgents =
       , actions =
             [ stayNearOrigin
             , moveToFood
+            , justChill
             ]
       , hunger = 0.1
       }
@@ -70,9 +74,27 @@ defaultAgents =
     ]
 
 
+justChill =
+    Action
+        "just chill"
+        DoNothing
+        [ { name = "always 0.2"
+          , function = Linear 1 0
+          , input = Constant 0.2
+          , inputMin = 0
+          , inputMax = 1
+          , weighting = 1
+          , offset = 0
+          , detailsVisible = False
+          }
+        ]
+        False
+
+
 stayNearOrigin =
     Action
         "stay within 200 or 300 units of the origin"
+        (MoveTo Point2d.origin)
         [ { name = "distance from origin"
           , function = Linear 1 0
           , input = DistanceToTargetPoint Point2d.origin
@@ -87,28 +109,33 @@ stayNearOrigin =
 
 
 moveToFood =
-    Action
-        "move toward edible food"
-        [ { name = "hunger"
-          , function = Linear 1 0
-          , input = Hunger
-          , inputMin = 0
-          , inputMax = 1
-          , weighting = 3
-          , offset = 0
-          , detailsVisible = False
-          }
-        , { name = "distance from food item"
-          , function = Exponential 4.4
-          , input = DistanceToTargetPoint <| Point2d.fromCoordinates ( 100, 100 )
-          , inputMin = 300
-          , inputMax = 0
-          , weighting = 0.5
-          , offset = 0
-          , detailsVisible = False
-          }
-        ]
-        False
+    let
+        foodPoint =
+            Point2d.fromCoordinates ( 100, 100 )
+    in
+        Action
+            "move toward edible food"
+            (MoveTo foodPoint)
+            [ { name = "hunger"
+              , function = Linear 1 0
+              , input = Hunger
+              , inputMin = 0
+              , inputMax = 1
+              , weighting = 3
+              , offset = 0
+              , detailsVisible = False
+              }
+            , { name = "distance from food item"
+              , function = Exponential 4.4
+              , input = DistanceToTargetPoint foodPoint
+              , inputMin = 300
+              , inputMax = 0
+              , weighting = 0.5
+              , offset = 0
+              , detailsVisible = False
+              }
+            ]
+            False
 
 
 
@@ -211,8 +238,48 @@ moveAgent dT agent =
             List.foldl Vector2d.sum
                 Vector2d.zero
                 [ agent.velocity, dA, friction ]
+
+        movementVectors =
+            List.filterMap (getMovementVector agent) agent.actions
+
+        newAcceleration =
+            List.foldl Vector2d.sum Vector2d.zero movementVectors
+                |> Vector2d.normalize
+                |> Vector2d.scaleBy 4
+
+        newFacing =
+            Vector2d.direction newAcceleration
+                |> withDefault (Direction2d.fromAngle 0)
     in
-        { agent | position = newPosition, velocity = newVelocity }
+        { agent
+            | position = newPosition
+            , velocity = newVelocity
+            , acceleration = newAcceleration
+            , facing = newFacing
+        }
+
+
+getMovementVector : Agent -> Action -> Maybe Vector2d
+getMovementVector agent action =
+    case action.outcome of
+        MoveTo point ->
+            let
+                rawVector =
+                    Vector2d.from agent.position point
+
+                normalized =
+                    Vector2d.normalize rawVector
+
+                weighting =
+                    computeUtility agent action
+
+                weighted =
+                    Vector2d.scaleBy weighting normalized
+            in
+                Just weighted
+
+        _ ->
+            Nothing
 
 
 

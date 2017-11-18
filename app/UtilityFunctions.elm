@@ -5,7 +5,7 @@ import Types
         ( Action
         , Agent
         , Consideration
-        , ConsiderationInput(DistanceToTargetPoint, Hunger)
+        , ConsiderationInput(Constant, DistanceToTargetPoint, Hunger)
         , InputFunction(Exponential, InverseNormal, Linear, Normal, Sigmoid)
         )
 import OpenSolid.Point2d as Point2d
@@ -87,3 +87,6 @@ getConsiderationRawValue agent consideration =
 
         DistanceToTargetPoint point ->
             point |> Point2d.distanceFrom agent.position
+
+        Constant f ->
+            f
