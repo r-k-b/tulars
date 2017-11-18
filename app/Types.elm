@@ -51,6 +51,7 @@ type ConsiderationInput
     = Hunger
     | DistanceToTargetPoint Point2d
     | Constant Float
+    | CurrentSpeed
 
 
 type alias Exponent =

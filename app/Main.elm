@@ -12,7 +12,7 @@ import Types
         , ActionOutcome(ArrestMomentum, DoNothing, MoveTo)
         , Agent
         , Consideration
-        , ConsiderationInput(Constant, DistanceToTargetPoint, Hunger)
+        , ConsiderationInput(Constant, CurrentSpeed, DistanceToTargetPoint, Hunger)
         , InputFunction(Exponential, InverseNormal, Linear, Normal, Sigmoid)
         , Model
         , Msg(InitTime, RAFtick, ToggleConditionDetailsVisibility, ToggleConditionsVisibility)
@@ -167,6 +167,15 @@ stopAtFood =
               , input = DistanceToTargetPoint foodPoint
               , inputMin = 25
               , inputMax = 20
+              , weighting = 1
+              , offset = 0
+              , detailsVisible = False
+              }
+            , { name = "still moving"
+              , function = Linear 1 0
+              , input = CurrentSpeed
+              , inputMin = 0.1
+              , inputMax = 0.2
               , weighting = 1
               , offset = 0
               , detailsVisible = False

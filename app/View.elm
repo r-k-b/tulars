@@ -18,7 +18,7 @@ import Types
         ( Action
         , Agent
         , Consideration
-        , ConsiderationInput(Constant, DistanceToTargetPoint, Hunger)
+        , ConsiderationInput(Constant, CurrentSpeed, DistanceToTargetPoint, Hunger)
         , Food
         , InputFunction(Exponential, InverseNormal, Linear, Normal, Sigmoid)
         , Model
@@ -252,7 +252,7 @@ renderConsideration agent action con =
             if con.detailsVisible then
                 [ ul []
                     [ li [] [ text <| "Utility Function: " ++ (renderUF con.function) ]
-                    , li [] [ text <| "Consideration Input: " ++ (renderCI con.input) ]
+                    , li [] [ text <| "Consideration Input: " ++ (renderCI agent con.input) ]
                     , li [] [ text <| "Consideration Raw Value: " ++ (prettyFloat 2 <| getConsiderationRawValue agent con) ]
                     , li [] [ text <| "Consideration Min & Max: " ++ (prettyFloat 2 <| con.inputMin) ++ ", " ++ (prettyFloat 2 <| con.inputMax) ]
                     , li [] [ text <| "Consideration Weighting: " ++ (prettyFloat 2 <| con.weighting) ]
@@ -297,8 +297,8 @@ renderUF f =
             "InverseNormal (tightness = " ++ (toString tightness) ++ ", center = " ++ (toString center) ++ ")"
 
 
-renderCI : ConsiderationInput -> String
-renderCI ci =
+renderCI : Agent -> ConsiderationInput -> String
+renderCI agent ci =
     case ci of
         Hunger ->
             "Hunger"
@@ -308,6 +308,13 @@ renderCI ci =
 
         Constant p ->
             "Constant " ++ (prettyFloat 2 p)
+
+        CurrentSpeed ->
+            "Current Speed "
+                ++ (agent.velocity
+                        |> Vector2d.length
+                        |> prettyFloat 2
+                   )
 
 
 vectorAngleDegrees : Vector2d.Vector2d -> Float

@@ -5,10 +5,11 @@ import Types
         ( Action
         , Agent
         , Consideration
-        , ConsiderationInput(Constant, DistanceToTargetPoint, Hunger)
+        , ConsiderationInput(Constant, CurrentSpeed, DistanceToTargetPoint, Hunger)
         , InputFunction(Exponential, InverseNormal, Linear, Normal, Sigmoid)
         )
 import OpenSolid.Point2d as Point2d
+import OpenSolid.Vector2d as Vector2d
 
 
 computeUtility : Agent -> Action -> Float
@@ -100,3 +101,7 @@ getConsiderationRawValue agent consideration =
 
         Constant f ->
             f
+
+        CurrentSpeed ->
+            agent.velocity
+                |> Vector2d.length
