@@ -1,28 +1,43 @@
 module UtilityFunctions exposing (..)
 
-import Types exposing (Action, Agent, Consideration, ConsiderationInput(DistanceToTargetPoint, Hunger), InputFunction(Exponential, InverseNormal, Linear, Normal, Sigmoid))
+import Types
+    exposing
+        ( Action
+        , Agent
+        , Consideration
+        , ConsiderationInput(DistanceToTargetPoint, Hunger)
+        , InputFunction(Exponential, InverseNormal, Linear, Normal, Sigmoid)
+        )
 import OpenSolid.Point2d as Point2d
 
 
 computeUtility : Agent -> Action -> Float
 computeUtility agent action =
-    List.map (computeConsideration agent) action.considerations
+    List.map (computeConsideration agent Nothing) action.considerations
         |> List.foldl (+) 0
 
 
-computeConsideration : Agent -> Consideration -> Float
-computeConsideration agent consideration =
+{-| Provide a "forced" value to override the consideration's
+regular input value. Useful for graphing.
+-}
+computeConsideration : Agent -> Maybe Float -> Consideration -> Float
+computeConsideration agent forced consideration =
     let
-        inputVal =
-            case consideration.input of
-                Hunger ->
-                    agent.hunger
+        inputOrForced =
+            case forced of
+                Nothing ->
+                    case consideration.input of
+                        Hunger ->
+                            agent.hunger
 
-                DistanceToTargetPoint point ->
-                    point |> Point2d.distanceFrom agent.position
+                        DistanceToTargetPoint point ->
+                            point |> Point2d.distanceFrom agent.position
+
+                Just x ->
+                    x
 
         mappedInput =
-            linearTransform 0 1 consideration.inputMin consideration.inputMax inputVal
+            linearTransform 0 1 consideration.inputMin consideration.inputMax inputOrForced
 
         output =
             case consideration.function of
@@ -40,8 +55,11 @@ computeConsideration agent consideration =
 
                 InverseNormal tightness center ->
                     1 - e ^ (-tightness * (mappedInput + center) ^ 2)
+
+        normalizedOutput =
+            output |> nansToZero |> clamp 0 1
     in
-        output |> nansToZero |> clamp 0 1
+        normalizedOutput * consideration.weighting + consideration.offset
 
 
 nansToZero : Float -> Float
