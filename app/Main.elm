@@ -9,10 +9,11 @@ import Task exposing (perform)
 import Types
     exposing
         ( Action
-        , ActionOutcome(ArrestMomentum, DoNothing, MoveTo)
+        , ActionOutcome(ArrestMomentum, DoNothing, MoveAwayFrom, MoveTo)
         , Agent
         , Consideration
         , ConsiderationInput(Constant, CurrentSpeed, DistanceToTargetPoint, Hunger)
+        , Fire
         , InputFunction(Exponential, InverseNormal, Linear, Normal, Sigmoid)
         , Model
         , Msg(InitTime, RAFtick, ToggleConditionDetailsVisibility, ToggleConditionsVisibility)
@@ -41,7 +42,7 @@ main =
 
 init : ( Model, Cmd Msg )
 init =
-    ( Model 0 defaultAgents defaultFoods
+    ( Model 0 defaultAgents defaultFoods defaultFires
     , perform InitTime Time.now
     )
 
@@ -49,6 +50,15 @@ init =
 defaultFoods =
     [ { position = Point2d.fromCoordinates ( 100, 100 ) }
     ]
+
+
+defaultFires =
+    let
+        p =
+            Point2d.fromCoordinates ( -100, 100 )
+    in
+        [ { position = p, originalPosition = p }
+        ]
 
 
 defaultAgents : List Agent
@@ -194,17 +204,17 @@ update msg model =
 
 
 updateHelp : Msg -> Model -> Model
-updateHelp msg ({ time, agents, foods } as model) =
+updateHelp msg ({ time, agents, foods, fires } as model) =
     case msg of
         RAFtick newT ->
             let
                 dMove =
                     moveAgent <| newT - time
             in
-                Model newT (List.map dMove agents) foods
+                Model newT (List.map dMove agents) foods (List.map (moveFire newT) fires)
 
         InitTime t ->
-            Model t agents foods
+            Model t agents foods fires
 
         ToggleConditionsVisibility agentName actionName ->
             let
@@ -228,7 +238,7 @@ updateHelp msg ({ time, agents, foods } as model) =
                         )
                         model.agents
             in
-                Model time newAgents foods
+                Model time newAgents foods fires
 
         ToggleConditionDetailsVisibility agentName actionName considerationName ->
             let
@@ -260,7 +270,7 @@ updateHelp msg ({ time, agents, foods } as model) =
                         )
                         model.agents
             in
-                Model time newAgents foods
+                Model time newAgents foods fires
 
 
 moveAgent : Time -> Agent -> Agent
@@ -324,6 +334,18 @@ getMovementVector agent action =
             in
                 Just weighted
 
+        MoveAwayFrom point ->
+            let
+                weighted =
+                    Vector2d.from point agent.position
+                        |> Vector2d.normalize
+                        |> Vector2d.scaleBy weighting
+
+                weighting =
+                    computeUtility agent action
+            in
+                Just weighted
+
         ArrestMomentum ->
             let
                 weighting =
@@ -338,6 +360,16 @@ getMovementVector agent action =
 
         DoNothing ->
             Nothing
+
+
+moveFire : Time -> Fire -> Fire
+moveFire t fire =
+    let
+        newPosition =
+            fire.originalPosition
+                |> Point2d.rotateAround Point2d.origin (t / 3000)
+    in
+        { fire | position = newPosition }
 
 
 

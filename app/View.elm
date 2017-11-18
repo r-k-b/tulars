@@ -13,17 +13,7 @@ import OpenSolid.Circle2d as Circle2d
 import Svg exposing (Svg, g, rect, svg)
 import Svg.Attributes as Attributes exposing (height, rx, ry, transform, viewBox, width, x, y)
 import Time exposing (Time)
-import Types
-    exposing
-        ( Action
-        , Agent
-        , Consideration
-        , ConsiderationInput(Constant, CurrentSpeed, DistanceToTargetPoint, Hunger)
-        , Food
-        , InputFunction(Exponential, InverseNormal, Linear, Normal, Sigmoid)
-        , Model
-        , Msg(ToggleConditionDetailsVisibility, ToggleConditionsVisibility)
-        )
+import Types exposing (Action, Agent, Consideration, ConsiderationInput(Constant, CurrentSpeed, DistanceToTargetPoint, Hunger), Fire, Food, InputFunction(Exponential, InverseNormal, Linear, Normal, Sigmoid), Model, Msg(ToggleConditionDetailsVisibility, ToggleConditionsVisibility))
 import Util exposing (mousePosToVec2)
 import Formatting exposing (roundTo, padLeft, print, (<>))
 import UtilityFunctions exposing (computeConsideration, computeUtility, getConsiderationRawValue)
@@ -34,11 +24,11 @@ view model =
     div [ pageGridContainerStyle ]
         [ div
             [ mapGridItemStyle, class "zoom-svg" ]
-            [ (mainMap model.agents model.foods)
+            [ mainMap model
             ]
         , div
             [ agentInfoGridItemStyle ]
-            [ (agentsInfo model.agents)
+            [ agentsInfo model.agents
             ]
         ]
 
@@ -53,14 +43,16 @@ bb =
         }
 
 
-mainMap : List Agent -> List Food -> Html.Html Msg
-mainMap agents foods =
+mainMap : Model -> Html.Html Msg
+mainMap model =
     render2d bb
         (g []
             [ g []
-                (List.map renderAgent agents)
+                (List.map renderAgent model.agents)
             , g []
-                (List.map renderFood foods)
+                (List.map renderFood model.foods)
+            , g []
+                (List.map renderFire model.fires)
             , borderIndicator 200
             , borderIndicator 300
             ]
@@ -368,11 +360,21 @@ renderArrowToAgent agent =
         (Vector2d.from Point2d.origin agent.position)
 
 
-renderFood : Food -> Html Msg
-renderFood food =
+renderEmoji : String -> Point2d.Point2d -> Html Msg
+renderEmoji emoji point =
     Svg.text2d
         [ Attributes.textAnchor "middle"
         , Attributes.alignmentBaseline "middle"
         ]
-        food.position
-        "🍽"
+        point
+        emoji
+
+
+renderFood : Food -> Html Msg
+renderFood food =
+    renderEmoji "🍽" food.position
+
+
+renderFire : Fire -> Html Msg
+renderFire fire =
+    renderEmoji "🔥" fire.position

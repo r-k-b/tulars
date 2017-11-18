@@ -11,6 +11,7 @@ type alias Model =
     { time : Time
     , agents : List Agent
     , foods : List Food
+    , fires : List Fire
     }
 
 
@@ -32,6 +33,7 @@ type alias Action =
 type ActionOutcome
     = DoNothing
     | MoveTo Point2d
+    | MoveAwayFrom Point2d
     | ArrestMomentum
 
 
@@ -99,4 +101,10 @@ type alias Agent =
 
 type alias Food =
     { position : Point2d
+    }
+
+
+type alias Fire =
+    { position : Point2d
+    , originalPosition : Point2d
     }
