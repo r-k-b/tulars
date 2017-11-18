@@ -13,7 +13,20 @@ import OpenSolid.Circle2d as Circle2d
 import Svg exposing (Svg, g, rect, svg)
 import Svg.Attributes as Attributes exposing (height, rx, ry, transform, viewBox, width, x, y)
 import Time exposing (Time)
-import Types exposing (Action, Agent, Consideration, ConsiderationInput(Constant, CurrentSpeed, DistanceToTargetPoint, Hunger), Fire, Food, InputFunction(Exponential, InverseNormal, Linear, Normal, Sigmoid), Model, Msg(ToggleConditionDetailsVisibility, ToggleConditionsVisibility))
+import Types
+    exposing
+        ( Action
+        , Agent
+        , Consideration
+        , ConsiderationInput(Constant, CurrentSpeed, CurrentlyCallingOut, DistanceToTargetPoint, Hunger, TimeSinceLastShoutedFeedMe)
+        , CurrentSignal
+        , Fire
+        , Food
+        , InputFunction(Exponential, InverseNormal, Linear, Normal, Sigmoid)
+        , Model
+        , Msg(ToggleConditionDetailsVisibility, ToggleConditionsVisibility)
+        , Signal(Eating, FeedMe, GoAway)
+        )
 import Util exposing (mousePosToVec2)
 import Formatting exposing (roundTo, padLeft, print, (<>))
 import UtilityFunctions exposing (computeConsideration, computeUtility, getConsiderationRawValue)
@@ -28,7 +41,7 @@ view model =
             ]
         , div
             [ agentInfoGridItemStyle ]
-            [ agentsInfo model.agents
+            [ agentsInfo model.time model.agents
             ]
         ]
 
@@ -73,14 +86,14 @@ borderIndicator r =
         )
 
 
-agentsInfo : List Agent -> Html.Html Msg
-agentsInfo agents =
+agentsInfo : Time -> List Agent -> Html.Html Msg
+agentsInfo currentTime agents =
     div []
         [ h2 []
             [ text "Agents" ]
         , div
             []
-            (List.map renderAgentInfo agents)
+            (List.map (renderAgentInfo currentTime) agents)
         ]
 
 
@@ -174,29 +187,70 @@ agentVelocityArrow agent =
 
 renderAgent : Agent -> Html Msg
 renderAgent agent =
-    g []
-        [ Svg.point2d agentPoint agent.position
-        , Svg.direction2d facingArrow agent.position agent.facing
-        , agentVelocityArrow agent
-        ]
+    let
+        call =
+            case agent.callingOut of
+                Nothing ->
+                    []
+
+                Just calling ->
+                    case calling.signal of
+                        FeedMe ->
+                            [ renderEmoji "😮" agent.position
+                                |> Svg.scaleAbout agent.position 2
+                            ]
+
+                        GoAway ->
+                            [ renderEmoji "😣" agent.position ]
+
+                        Eating ->
+                            [ renderEmoji "🍖" agent.position ]
+    in
+        g []
+            (List.append
+                [ Svg.point2d agentPoint agent.position
+                , Svg.direction2d facingArrow agent.position agent.facing
+                , agentVelocityArrow agent
+                ]
+                call
+            )
 
 
-renderAgentInfo : Agent -> Html Msg
-renderAgentInfo agent =
+renderAgentInfo : Time -> Agent -> Html Msg
+renderAgentInfo currentTime agent =
     div []
         [ h3 [] [ text agent.name ]
         , ul []
             [ li [] [ text "Position: ", prettyPoint2dHtml agent.position ]
             , li [] [ text "Speed: ", prettyFloatHtml 2 <| Vector2d.length agent.velocity ]
             , li [] [ text "Heading: ", prettyFloatHtml 2 <| vectorAngleDegrees agent.velocity ]
+            , li [] [ text "Calling: ", renderCalling agent.callingOut ]
             ]
         , text "Actions:"
         , div [ style indentWithLine ]
-            (List.map (renderAction agent) <|
+            (List.map (renderAction agent currentTime) <|
                 List.reverse <|
-                    List.sortBy (computeUtility agent) agent.actions
+                    List.sortBy (computeUtility agent currentTime) agent.actions
             )
         ]
+
+
+renderCalling : Maybe CurrentSignal -> Html Msg
+renderCalling currentSignal =
+    case currentSignal of
+        Nothing ->
+            text "Nothing"
+
+        Just calling ->
+            case calling.signal of
+                FeedMe ->
+                    text "Feed Me!"
+
+                GoAway ->
+                    text "Go away"
+
+                Eating ->
+                    text "nom nom nom"
 
 
 indentWithLine =
@@ -206,16 +260,16 @@ indentWithLine =
     ]
 
 
-renderAction : Agent -> Action -> Html Msg
-renderAction agent action =
+renderAction : Agent -> Time -> Action -> Html Msg
+renderAction agent currentTime action =
     let
         considerations =
             if action.considerationsVisible then
                 [ text "Considerations:"
                 , div [ style indentWithLine ]
-                    (List.map (renderConsideration agent action) <|
+                    (List.map (renderConsideration agent action currentTime) <|
                         List.reverse <|
-                            List.sortBy (computeConsideration agent Nothing) action.considerations
+                            List.sortBy (computeConsideration agent currentTime Nothing) action.considerations
                     )
                 ]
             else
@@ -228,7 +282,7 @@ renderAction agent action =
                     , style [ "cursor" => "pointer" ]
                     ]
                     [ text "("
-                    , prettyFloatHtml 2 <| computeUtility agent action
+                    , prettyFloatHtml 2 <| computeUtility agent currentTime action
                     , text ") "
                     , text action.name
                     ]
@@ -237,15 +291,15 @@ renderAction agent action =
             )
 
 
-renderConsideration : Agent -> Action -> Consideration -> Html Msg
-renderConsideration agent action con =
+renderConsideration : Agent -> Action -> Time -> Consideration -> Html Msg
+renderConsideration agent action currentTime con =
     let
         details =
             if con.detailsVisible then
                 [ ul []
                     [ li [] [ text <| "Utility Function: " ++ (renderUF con.function) ]
-                    , li [] [ text <| "Consideration Input: " ++ (renderCI agent con.input) ]
-                    , li [] [ text <| "Consideration Raw Value: " ++ (prettyFloat 2 <| getConsiderationRawValue agent con) ]
+                    , li [] [ text <| "Consideration Input: " ++ (renderCI currentTime agent con.input) ]
+                    , li [] [ text <| "Consideration Raw Value: " ++ (prettyFloat 2 <| getConsiderationRawValue agent currentTime con) ]
                     , li [] [ text <| "Consideration Min & Max: " ++ (prettyFloat 2 <| con.inputMin) ++ ", " ++ (prettyFloat 2 <| con.inputMax) ]
                     , li [] [ text <| "Consideration Weighting: " ++ (prettyFloat 2 <| con.weighting) ]
                     , li [] [ text <| "Consideration Offset: " ++ (prettyFloat 2 <| con.offset) ]
@@ -261,7 +315,7 @@ renderConsideration agent action con =
                     , style [ "cursor" => "pointer" ]
                     ]
                     [ text "("
-                    , text <| prettyFloat 2 <| computeConsideration agent Nothing con
+                    , text <| prettyFloat 2 <| computeConsideration agent currentTime Nothing con
                     , text ")  "
                     , text con.name
                     ]
@@ -289,8 +343,8 @@ renderUF f =
             "InverseNormal (tightness = " ++ (toString tightness) ++ ", center = " ++ (toString center) ++ ")"
 
 
-renderCI : Agent -> ConsiderationInput -> String
-renderCI agent ci =
+renderCI : Time -> Agent -> ConsiderationInput -> String
+renderCI currentTime agent ci =
     case ci of
         Hunger ->
             "Hunger"
@@ -306,6 +360,31 @@ renderCI agent ci =
                 ++ (agent.velocity
                         |> Vector2d.length
                         |> prettyFloat 2
+                   )
+
+        TimeSinceLastShoutedFeedMe ->
+            let
+                val =
+                    case agent.timeLastShoutedFeedMe of
+                        Nothing ->
+                            "Never"
+
+                        Just t ->
+                            (currentTime - t)
+                                |> prettyFloat 2
+            in
+                "Time since last shouted \"Feed Me!\" "
+                    ++ val
+
+        CurrentlyCallingOut ->
+            "Currently calling out"
+                ++ (toString <|
+                        case agent.callingOut of
+                            Nothing ->
+                                0
+
+                            Just _ ->
+                                1
                    )
 
 

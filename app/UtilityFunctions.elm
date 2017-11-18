@@ -1,22 +1,23 @@
 module UtilityFunctions exposing (..)
 
+import Time exposing (Time)
 import Types
     exposing
         ( Action
         , Agent
         , Consideration
-        , ConsiderationInput(Constant, CurrentSpeed, DistanceToTargetPoint, Hunger)
+        , ConsiderationInput(Constant, CurrentSpeed, CurrentlyCallingOut, DistanceToTargetPoint, Hunger, TimeSinceLastShoutedFeedMe)
         , InputFunction(Exponential, InverseNormal, Linear, Normal, Sigmoid)
         )
 import OpenSolid.Point2d as Point2d
 import OpenSolid.Vector2d as Vector2d
 
 
-computeUtility : Agent -> Action -> Float
-computeUtility agent action =
+computeUtility : Agent -> Time -> Action -> Float
+computeUtility agent currentTime action =
     let
         tiny =
-            List.map (computeConsideration agent Nothing) action.considerations
+            List.map (computeConsideration agent currentTime Nothing) action.considerations
                 |> List.foldl (*) 1
 
         undoTiny =
@@ -31,13 +32,13 @@ computeUtility agent action =
 {-| Provide a "forced" value to override the consideration's
 regular input value. Useful for graphing.
 -}
-computeConsideration : Agent -> Maybe Float -> Consideration -> Float
-computeConsideration agent forced consideration =
+computeConsideration : Agent -> Time -> Maybe Float -> Consideration -> Float
+computeConsideration agent currentTime forced consideration =
     let
         inputOrForced =
             case forced of
                 Nothing ->
-                    getConsiderationRawValue agent consideration
+                    getConsiderationRawValue agent currentTime consideration
 
                 Just x ->
                     x
@@ -90,8 +91,8 @@ linearTransform bMin bMax aMin aMax x =
         scale * (x + offset)
 
 
-getConsiderationRawValue : Agent -> Consideration -> Float
-getConsiderationRawValue agent consideration =
+getConsiderationRawValue : Agent -> Time -> Consideration -> Float
+getConsiderationRawValue agent currentTime consideration =
     case consideration.input of
         Hunger ->
             agent.hunger
@@ -105,3 +106,26 @@ getConsiderationRawValue agent consideration =
         CurrentSpeed ->
             agent.velocity
                 |> Vector2d.length
+
+        TimeSinceLastShoutedFeedMe ->
+            let
+                timeSince =
+                    case agent.timeLastShoutedFeedMe of
+                        Nothing ->
+                            (1.0 / 0)
+
+                        Just t ->
+                            currentTime - t
+            in
+                if isNaN timeSince then
+                    Debug.crash "wtf"
+                else
+                    timeSince
+
+        CurrentlyCallingOut ->
+            case agent.callingOut of
+                Nothing ->
+                    0
+
+                Just _ ->
+                    1

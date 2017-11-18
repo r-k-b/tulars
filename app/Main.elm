@@ -9,14 +9,16 @@ import Task exposing (perform)
 import Types
     exposing
         ( Action
-        , ActionOutcome(ArrestMomentum, DoNothing, MoveAwayFrom, MoveTo)
+        , ActionOutcome(ArrestMomentum, CallOut, DoNothing, MoveAwayFrom, MoveTo)
         , Agent
         , Consideration
-        , ConsiderationInput(Constant, CurrentSpeed, DistanceToTargetPoint, Hunger)
+        , ConsiderationInput(Constant, CurrentSpeed, CurrentlyCallingOut, DistanceToTargetPoint, Hunger, TimeSinceLastShoutedFeedMe)
+        , CurrentSignal
         , Fire
         , InputFunction(Exponential, InverseNormal, Linear, Normal, Sigmoid)
         , Model
         , Msg(InitTime, RAFtick, ToggleConditionDetailsVisibility, ToggleConditionsVisibility)
+        , Signal(FeedMe)
         )
 import View exposing (view)
 import AnimationFrame exposing (times)
@@ -63,7 +65,7 @@ defaultFires =
 
 defaultAgents : List Agent
 defaultAgents =
-    [ { name = "alf"
+    [ { name = "Alf"
       , facing = Direction2d.fromAngle (degrees 70)
       , position = Point2d.fromCoordinates ( 200, 150 )
       , velocity = Vector2d.fromComponents ( -1, -10 )
@@ -75,8 +77,10 @@ defaultAgents =
             , stopAtFood
             ]
       , hunger = 0.1
+      , timeLastShoutedFeedMe = Nothing
+      , callingOut = Nothing
       }
-    , { name = "bob"
+    , { name = "Bob"
       , facing = Direction2d.fromAngle (degrees 200)
       , position = Point2d.fromCoordinates ( 100, 250 )
       , velocity = Vector2d.fromComponents ( -10, -20 )
@@ -87,6 +91,23 @@ defaultAgents =
             , stopAtFood
             ]
       , hunger = 0.3
+      , timeLastShoutedFeedMe = Nothing
+      , callingOut = Nothing
+      }
+    , { name = "Charlie"
+      , facing = Direction2d.fromAngle (degrees 150)
+      , position = Point2d.fromCoordinates ( -50, -50 )
+      , velocity = Vector2d.fromComponents ( 0, 0 )
+      , acceleration = Vector2d.fromComponents ( 0, 0 )
+      , actions =
+            [ justChill
+            , stayNearOrigin
+            , stopAtFood
+            , shoutFeedMe
+            ]
+      , hunger = 0.8
+      , timeLastShoutedFeedMe = Nothing
+      , callingOut = Nothing
       }
     ]
 
@@ -171,7 +192,7 @@ stopAtFood =
     in
         Action
             "stop when in range of edible food"
-            (ArrestMomentum)
+            ArrestMomentum
             [ { name = "in range of food item"
               , function = Exponential 0.01
               , input = DistanceToTargetPoint foodPoint
@@ -194,6 +215,41 @@ stopAtFood =
             False
 
 
+shoutFeedMe =
+    Action
+        "shout \"feed me!\" "
+        (CallOut FeedMe 1.0)
+        [ { name = "hunger"
+          , function = Sigmoid 15 0.5
+          , input = Hunger
+          , inputMin = 0
+          , inputMax = 1
+          , weighting = 1
+          , offset = 0
+          , detailsVisible = True
+          }
+        , { name = "haven't finished shouting"
+          , function = Sigmoid 11 0.5
+          , input = TimeSinceLastShoutedFeedMe
+          , inputMin = 3000
+          , inputMax = 0
+          , weighting = 1
+          , offset = 0.01
+          , detailsVisible = True
+          }
+        , { name = "haven't called for food in a while"
+          , function = Linear 1 0
+          , input = TimeSinceLastShoutedFeedMe
+          , inputMin = 6000
+          , inputMax = 10000
+          , weighting = 1
+          , offset = 0.01
+          , detailsVisible = True
+          }
+        ]
+        False
+
+
 
 -- UPDATE
 
@@ -209,7 +265,7 @@ updateHelp msg ({ time, agents, foods, fires } as model) =
         RAFtick newT ->
             let
                 dMove =
-                    moveAgent <| newT - time
+                    moveAgent newT <| newT - time
             in
                 Model newT (List.map dMove agents) foods (List.map (moveFire newT) fires)
 
@@ -273,8 +329,8 @@ updateHelp msg ({ time, agents, foods, fires } as model) =
                 Model time newAgents foods fires
 
 
-moveAgent : Time -> Agent -> Agent
-moveAgent dT agent =
+moveAgent : Time -> Time -> Agent -> Agent
+moveAgent currentTime dT agent =
     let
         dV =
             Vector2d.scaleBy (dT / 1000) agent.velocity
@@ -296,7 +352,7 @@ moveAgent dT agent =
                 [ agent.velocity, dA, friction ]
 
         movementVectors =
-            List.filterMap (getMovementVector agent) agent.actions
+            List.filterMap (getMovementVector currentTime agent) agent.actions
 
         newAcceleration =
             List.foldl Vector2d.sum Vector2d.zero movementVectors
@@ -306,31 +362,54 @@ moveAgent dT agent =
         newFacing =
             Vector2d.direction newAcceleration
                 |> withDefault agent.facing
+
+        topAction =
+            agent.actions
+                |> List.sortBy (computeUtility agent currentTime)
+                |> List.reverse
+                |> List.head
+
+        ( newFeedMeTime, newCall ) =
+            Maybe.map
+                (\topAct ->
+                    case topAct.outcome of
+                        CallOut signal intensity ->
+                            case agent.callingOut of
+                                Nothing ->
+                                    ( Just currentTime, Just <| CurrentSignal signal currentTime )
+
+                                Just _ ->
+                                    ( agent.timeLastShoutedFeedMe, Just <| CurrentSignal signal currentTime )
+
+                        _ ->
+                            ( agent.timeLastShoutedFeedMe, Nothing )
+                )
+                topAction
+                |> Maybe.withDefault
+                    ( agent.timeLastShoutedFeedMe, Nothing )
     in
         { agent
             | position = newPosition
             , velocity = newVelocity
             , acceleration = newAcceleration
             , facing = newFacing
+            , timeLastShoutedFeedMe = newFeedMeTime
+            , callingOut = newCall
         }
 
 
-getMovementVector : Agent -> Action -> Maybe Vector2d
-getMovementVector agent action =
+getMovementVector : Time -> Agent -> Action -> Maybe Vector2d
+getMovementVector currentTime agent action =
     case action.outcome of
         MoveTo point ->
             let
-                rawVector =
+                weighted =
                     Vector2d.from agent.position point
-
-                normalized =
-                    Vector2d.normalize rawVector
+                        |> Vector2d.normalize
+                        |> Vector2d.scaleBy weighting
 
                 weighting =
-                    computeUtility agent action
-
-                weighted =
-                    Vector2d.scaleBy weighting normalized
+                    computeUtility agent currentTime action
             in
                 Just weighted
 
@@ -342,14 +421,14 @@ getMovementVector agent action =
                         |> Vector2d.scaleBy weighting
 
                 weighting =
-                    computeUtility agent action
+                    computeUtility agent currentTime action
             in
                 Just weighted
 
         ArrestMomentum ->
             let
                 weighting =
-                    computeUtility agent action
+                    computeUtility agent currentTime action
             in
                 Just
                     (agent.velocity
@@ -359,6 +438,9 @@ getMovementVector agent action =
                     )
 
         DoNothing ->
+            Nothing
+
+        CallOut signal intensity ->
             Nothing
 
 

@@ -35,6 +35,19 @@ type ActionOutcome
     | MoveTo Point2d
     | MoveAwayFrom Point2d
     | ArrestMomentum
+    | CallOut Signal Float
+
+
+type Signal
+    = FeedMe
+    | GoAway
+    | Eating
+
+
+type alias CurrentSignal =
+    { signal : Signal
+    , started : Time
+    }
 
 
 type alias Consideration =
@@ -54,6 +67,8 @@ type ConsiderationInput
     | DistanceToTargetPoint Point2d
     | Constant Float
     | CurrentSpeed
+    | TimeSinceLastShoutedFeedMe
+    | CurrentlyCallingOut
 
 
 type alias Exponent =
@@ -96,6 +111,8 @@ type alias Agent =
     , acceleration : Vector2d
     , actions : List Action
     , hunger : Float
+    , timeLastShoutedFeedMe : Maybe Time
+    , callingOut : Maybe CurrentSignal
     }
 
 
