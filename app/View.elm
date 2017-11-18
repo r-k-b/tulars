@@ -2,7 +2,7 @@ module View exposing (view)
 
 import Html exposing (Attribute, Html, code, div, h2, h3, h4, h5, li, text, ul)
 import Html.Attributes exposing (class, style)
-import Html.Events exposing (on)
+import Html.Events exposing (on, onClick)
 import Json.Decode as Decode
 import Mouse exposing (Position)
 import OpenSolid.BoundingBox2d as BoundingBox2d exposing (BoundingBox2d)
@@ -20,7 +20,7 @@ import Types
         , ConsiderationInput(DistanceToTargetPoint, Hunger)
         , InputFunction(Exponential, InverseNormal, Linear, Normal, Sigmoid)
         , Model
-        , Msg
+        , Msg(ToggleConditionsVisibility)
         )
 import Util exposing (mousePosToVec2)
 import Formatting exposing (roundTo, padLeft, print, (<>))
@@ -51,7 +51,7 @@ bb =
         }
 
 
-mainMap : List Agent -> Html.Html msg
+mainMap : List Agent -> Html.Html Msg
 mainMap agents =
     render2d bb
         (g []
@@ -63,7 +63,7 @@ mainMap agents =
         )
 
 
-agentsInfo : List Agent -> Html.Html msg
+agentsInfo : List Agent -> Html.Html Msg
 agentsInfo agents =
     div []
         [ h2 []
@@ -162,7 +162,7 @@ agentVelocityArrow agent =
             exaggerated
 
 
-renderAgent : Agent -> Html msg
+renderAgent : Agent -> Html Msg
 renderAgent agent =
     g []
         [ Svg.point2d agentPoint agent.position
@@ -171,7 +171,7 @@ renderAgent agent =
         ]
 
 
-renderAgentInfo : Agent -> Html msg
+renderAgentInfo : Agent -> Html Msg
 renderAgentInfo agent =
     div []
         [ h3 [] [ text agent.name ]
@@ -196,25 +196,38 @@ indentWithLine =
     ]
 
 
-renderAction : Agent -> Action -> Html msg
+renderAction : Agent -> Action -> Html Msg
 renderAction agent action =
-    div []
-        [ h4 []
-            [ text action.name
-            , text "  (Utility: "
-            , prettyFloatHtml 2 <| computeUtility agent action
-            , text ")"
-            ]
-        , text "Considerations:"
-        , div [ style indentWithLine ]
-            (List.map (renderConsideration agent) <|
-                List.reverse <|
-                    List.sortBy (computeConsideration agent Nothing) action.considerations
+    let
+        considerations =
+            if action.considerationsVisible then
+                [ text "Considerations:"
+                , div [ style indentWithLine ]
+                    (List.map (renderConsideration agent) <|
+                        List.reverse <|
+                            List.sortBy (computeConsideration agent Nothing) action.considerations
+                    )
+                ]
+            else
+                []
+    in
+        div []
+            (List.append
+                [ h4
+                    [ onClick <| ToggleConditionsVisibility agent.name action.name
+                    , style [ "cursor" => "pointer" ]
+                    ]
+                    [ text "("
+                    , prettyFloatHtml 2 <| computeUtility agent action
+                    , text ") "
+                    , text action.name
+                    ]
+                ]
+                considerations
             )
-        ]
 
 
-renderConsideration : Agent -> Consideration -> Html msg
+renderConsideration : Agent -> Consideration -> Html Msg
 renderConsideration agent con =
     div []
         [ h5 [] [ text con.name ]
@@ -266,7 +279,7 @@ vectorAngleDegrees vec =
         polarAngle / (turns 1) * 360
 
 
-prettyPoint2dHtml : Point2d.Point2d -> Html msg
+prettyPoint2dHtml : Point2d.Point2d -> Html Msg
 prettyPoint2dHtml p =
     code [ style [ "white-space" => "pre-wrap" ] ]
         [ text <| prettyPoint2d p ]
@@ -277,7 +290,7 @@ prettyPoint2d p =
     "(" ++ (prettyFloat 1 <| xCoordinate p) ++ ", " ++ (prettyFloat 1 <| yCoordinate p) ++ ")"
 
 
-prettyFloatHtml : Int -> Float -> Html msg
+prettyFloatHtml : Int -> Float -> Html Msg
 prettyFloatHtml dp n =
     code [ style [ "white-space" => "pre-wrap" ] ] [ text <| prettyFloat dp n ]
 

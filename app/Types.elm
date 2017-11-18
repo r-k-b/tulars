@@ -16,11 +16,13 @@ type alias Model =
 type Msg
     = RAFtick Time
     | InitTime Time
+    | ToggleConditionsVisibility String String
 
 
 type alias Action =
     { name : String
     , considerations : List Consideration
+    , considerationsVisible : Bool
     }
 
 

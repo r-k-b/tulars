@@ -13,7 +13,7 @@ import Types
         , ConsiderationInput(DistanceToTargetPoint, Hunger)
         , InputFunction(Exponential, InverseNormal, Linear, Normal, Sigmoid)
         , Model
-        , Msg(InitTime, RAFtick)
+        , Msg(InitTime, RAFtick, ToggleConditionsVisibility)
         )
 import View exposing (view)
 import AnimationFrame exposing (times)
@@ -82,6 +82,7 @@ stayNearOrigin =
           , offset = 0
           }
         ]
+        False
 
 
 moveToFood =
@@ -104,6 +105,7 @@ moveToFood =
           , offset = 0
           }
         ]
+        False
 
 
 
@@ -127,6 +129,30 @@ updateHelp msg ({ time, agents } as model) =
 
         InitTime t ->
             Model t agents
+
+        ToggleConditionsVisibility agentName actionName ->
+            let
+                updateAgentActions actions =
+                    List.map
+                        (\action ->
+                            if action.name == actionName then
+                                { action | considerationsVisible = not action.considerationsVisible }
+                            else
+                                action
+                        )
+                        actions
+
+                newAgents =
+                    List.map
+                        (\agent ->
+                            if agent.name == agentName then
+                                { agent | actions = updateAgentActions agent.actions }
+                            else
+                                agent
+                        )
+                        model.agents
+            in
+                Model time newAgents
 
 
 moveAgent : Time -> Agent -> Agent
