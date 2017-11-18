@@ -57,8 +57,6 @@ mainMap agents =
         (g []
             [ g []
                 (List.map renderAgent agents)
-            , g []
-                (List.map renderArrowToAgent agents)
             ]
         )
 

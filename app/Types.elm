@@ -31,6 +31,7 @@ type alias Action =
 type ActionOutcome
     = DoNothing
     | MoveTo Point2d
+    | ArrestMomentum
 
 
 type alias Consideration =

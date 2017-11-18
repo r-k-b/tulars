@@ -9,7 +9,7 @@ import Task exposing (perform)
 import Types
     exposing
         ( Action
-        , ActionOutcome(DoNothing, MoveTo)
+        , ActionOutcome(ArrestMomentum, DoNothing, MoveTo)
         , Agent
         , Consideration
         , ConsiderationInput(Constant, DistanceToTargetPoint, Hunger)
@@ -57,6 +57,7 @@ defaultAgents =
             [ stayNearOrigin
             , moveToFood
             , justChill
+            , stopAtFood
             ]
       , hunger = 0.1
       }
@@ -68,6 +69,7 @@ defaultAgents =
       , actions =
             [ stayNearOrigin
             , moveToFood
+            , stopAtFood
             ]
       , hunger = 0.3
       }
@@ -125,12 +127,42 @@ moveToFood =
               , offset = 0
               , detailsVisible = False
               }
-            , { name = "distance from food item"
+            , { name = "too far from food item"
               , function = Exponential 4.4
               , input = DistanceToTargetPoint foodPoint
               , inputMin = 300
-              , inputMax = 0
+              , inputMax = 20
               , weighting = 0.5
+              , offset = 0
+              , detailsVisible = False
+              }
+            , { name = "in range of food item"
+              , function = Exponential 0.01
+              , input = DistanceToTargetPoint foodPoint
+              , inputMin = 20
+              , inputMax = 25
+              , weighting = 1
+              , offset = 0
+              , detailsVisible = False
+              }
+            ]
+            False
+
+
+stopAtFood =
+    let
+        foodPoint =
+            Point2d.fromCoordinates ( 100, 100 )
+    in
+        Action
+            "stop when in range of edible food"
+            (ArrestMomentum)
+            [ { name = "in range of food item"
+              , function = Exponential 0.01
+              , input = DistanceToTargetPoint foodPoint
+              , inputMin = 25
+              , inputMax = 20
+              , weighting = 1
               , offset = 0
               , detailsVisible = False
               }
@@ -249,7 +281,7 @@ moveAgent dT agent =
 
         newFacing =
             Vector2d.direction newAcceleration
-                |> withDefault (Direction2d.fromAngle 0)
+                |> withDefault agent.facing
     in
         { agent
             | position = newPosition
@@ -278,7 +310,19 @@ getMovementVector agent action =
             in
                 Just weighted
 
-        _ ->
+        ArrestMomentum ->
+            let
+                weighting =
+                    computeUtility agent action
+            in
+                Just
+                    (agent.velocity
+                        |> Vector2d.flip
+                        |> Vector2d.normalize
+                        |> Vector2d.scaleBy weighting
+                    )
+
+        DoNothing ->
             Nothing
 
 
