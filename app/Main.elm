@@ -45,7 +45,8 @@ init =
 
 defaultAgents : List Agent
 defaultAgents =
-    [ { facing = Direction2d.fromAngle (degrees 70)
+    [ { name = "alf"
+      , facing = Direction2d.fromAngle (degrees 70)
       , position = Point2d.fromCoordinates ( 200, 150 )
       , velocity = Vector2d.fromComponents ( -1, -10 )
       , acceleration = Vector2d.zero
@@ -64,7 +65,8 @@ defaultAgents =
             ]
       , hunger = 0.1
       }
-    , { facing = Direction2d.fromAngle (degrees 200)
+    , { name = "bob"
+      , facing = Direction2d.fromAngle (degrees 200)
       , position = Point2d.fromCoordinates ( 100, 250 )
       , velocity = Vector2d.fromComponents ( -10, -20 )
       , acceleration = Vector2d.fromComponents ( -2, -1 )

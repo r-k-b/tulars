@@ -16,6 +16,7 @@
         "elm-lang/html": "2.0.0 <= v < 3.0.0",
         "elm-lang/mouse": "1.0.1 <= v < 2.0.0",
         "elm-lang/svg": "2.0.0 <= v < 3.0.0",
+        "krisajenkins/formatting": "4.2.0 <= v < 5.0.0",
         "opensolid/geometry": "2.0.1 <= v < 3.0.0",
         "opensolid/svg": "2.0.1 <= v < 3.0.0",
         "terezka/elm-plot": "5.1.0 <= v < 6.0.0"

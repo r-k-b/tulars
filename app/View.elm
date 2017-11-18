@@ -1,12 +1,12 @@
 module View exposing (view)
 
-import Html exposing (Attribute, Html, div, text)
+import Html exposing (Attribute, Html, code, div, h2, h3, li, text, ul)
 import Html.Attributes exposing (class, style)
 import Html.Events exposing (on)
 import Json.Decode as Decode
 import Mouse exposing (Position)
 import OpenSolid.BoundingBox2d as BoundingBox2d exposing (BoundingBox2d)
-import OpenSolid.Point2d as Point2d
+import OpenSolid.Point2d as Point2d exposing (xCoordinate, yCoordinate)
 import OpenSolid.Svg as Svg exposing (render2d)
 import OpenSolid.Vector2d as Vector2d exposing (Vector2d, scaleBy, sum)
 import Svg exposing (Svg, g, rect, svg)
@@ -14,10 +14,21 @@ import Svg.Attributes as Attributes exposing (height, rx, ry, transform, viewBox
 import Time exposing (Time)
 import Types exposing (Agent, Model, Msg)
 import Util exposing (mousePosToVec2)
+import Formatting exposing (roundTo, padLeft, print, (<>))
 
 
-(=>) =
-    (,)
+view : Model -> Html Msg
+view model =
+    div [ pageGridContainerStyle ]
+        [ div
+            [ mapGridItemStyle, class "zoom-svg" ]
+            [ (mainMap model.agents)
+            ]
+        , div
+            [ agentInfoGridItemStyle ]
+            [ (agentsInfo model.agents)
+            ]
+        ]
 
 
 bb : BoundingBox2d
@@ -42,14 +53,19 @@ mainMap agents =
         )
 
 
-view : Model -> Html Msg
-view model =
-    div [ pageGridContainerStyle ]
-        [ div
-            [ mapGridItemStyle, class "zoom-svg" ]
-            [ (mainMap model.agents)
-            ]
+agentsInfo : List Agent -> Html.Html msg
+agentsInfo agents =
+    div []
+        [ h2 []
+            [ text "Agents" ]
+        , div
+            []
+            (List.map renderAgentInfo agents)
         ]
+
+
+(=>) =
+    (,)
 
 
 pageGridContainerStyle =
@@ -70,6 +86,14 @@ mapGridItemStyle =
         [ "grid-column" => "1 / 2"
         , "grid-row" => "1 / 2"
         , "overflow" => "hidden"
+        ]
+
+
+agentInfoGridItemStyle =
+    style
+        [ "grid-column" => "2 / 3"
+        , "grid-row" => "1 / 3"
+        , "overflow" => "auto"
         ]
 
 
@@ -135,6 +159,26 @@ renderAgent agent =
         , Svg.direction2d facingArrow agent.position agent.facing
         , agentVelocityArrow agent
         ]
+
+
+renderAgentInfo : Agent -> Html msg
+renderAgentInfo agent =
+    div []
+        [ h3 [] [ text agent.name ]
+        , ul []
+            [ li [] [ text "Position: ", prettyPoint2d agent.position ] ]
+        ]
+
+
+prettyPoint2d : Point2d.Point2d -> Html msg
+prettyPoint2d p =
+    code [ style [ "white-space" => "pre-wrap" ] ]
+        [ text <| "(" ++ (prettyFloat 1 <| xCoordinate p) ++ ", " ++ (prettyFloat 1 <| yCoordinate p) ++ ")" ]
+
+
+prettyFloat : Int -> Float -> String
+prettyFloat dp n =
+    print (Formatting.roundTo dp |> Formatting.padLeft 6 ' ') n
 
 
 renderArrowToAgent : Agent -> Svg msg

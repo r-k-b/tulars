@@ -73,7 +73,8 @@ type InputFunction
 
 
 type alias Agent =
-    { position : Point2d
+    { name : String
+    , position : Point2d
     , facing : Direction2d
     , velocity : Vector2d
     , acceleration : Vector2d
