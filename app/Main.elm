@@ -123,7 +123,7 @@ justChill =
           , inputMax = 1
           , weighting = 1
           , offset = 0
-          , detailsVisible = False
+          , detailsVisible = True
           }
         ]
         False
@@ -140,7 +140,7 @@ stayNearOrigin =
           , inputMax = 300
           , weighting = 1
           , offset = 0
-          , detailsVisible = False
+          , detailsVisible = True
           }
         ]
         False
@@ -161,7 +161,7 @@ moveToFood =
               , inputMax = 1
               , weighting = 3
               , offset = 0
-              , detailsVisible = False
+              , detailsVisible = True
               }
             , { name = "too far from food item"
               , function = Exponential 4.4
@@ -170,7 +170,7 @@ moveToFood =
               , inputMax = 20
               , weighting = 0.5
               , offset = 0
-              , detailsVisible = False
+              , detailsVisible = True
               }
             , { name = "in range of food item"
               , function = Exponential 0.01
@@ -179,7 +179,7 @@ moveToFood =
               , inputMax = 25
               , weighting = 1
               , offset = 0
-              , detailsVisible = False
+              , detailsVisible = True
               }
             ]
             False
@@ -200,7 +200,7 @@ stopAtFood =
               , inputMax = 20
               , weighting = 1
               , offset = 0
-              , detailsVisible = False
+              , detailsVisible = True
               }
             , { name = "still moving"
               , function = Linear 1 0
@@ -209,7 +209,7 @@ stopAtFood =
               , inputMax = 0.2
               , weighting = 1
               , offset = 0
-              , detailsVisible = False
+              , detailsVisible = True
               }
             ]
             False

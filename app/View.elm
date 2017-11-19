@@ -164,7 +164,7 @@ mapGridItemStyle =
 
 agentInfoGridItemStyle =
     style
-        [ "grid-column" => "2 / 3"
+        [ "grid-column" => "2 / 4"
         , "grid-row" => "1 / 3"
         , "overflow" => "auto"
         ]
@@ -212,12 +212,12 @@ agentVelocityArrow agent =
             , tipAttributes =
                 [ Attributes.fill "orange"
                 , Attributes.stroke "blue"
-                , Attributes.strokeWidth "2"
+                , Attributes.strokeWidth "1"
                 ]
             , stemAttributes =
                 [ Attributes.stroke "blue"
-                , Attributes.strokeWidth "3"
-                , Attributes.strokeDasharray "3 3"
+                , Attributes.strokeWidth "1"
+                , Attributes.strokeDasharray "1 2"
                 ]
             , groupAttributes = []
             }
@@ -269,10 +269,6 @@ renderAgentInfo currentTime agent =
         , text "Actions:"
         , div [ style indentWithLine ]
             (List.map (renderAction agent currentTime)
-                {- <|
-                   List.reverse <|
-                       List.sortBy (computeUtility agent currentTime)
-                -}
                 agent.actions
             )
         ]
@@ -308,23 +304,33 @@ renderAction agent currentTime action =
     let
         considerations =
             if action.considerationsVisible then
-                [ text "Considerations:"
-                , div [ style indentWithLine ]
-                    (List.map (renderConsideration agent action currentTime) action.considerations
-                     {- <|
-                        List.reverse <|
-                            List.sortBy (computeConsideration agent currentTime Nothing) action.considerations
-                     -}
-                    )
+                [ div
+                    [ style
+                        [ "display" => "flex"
+                        ]
+                    ]
+                    (List.map (renderConsideration agent action currentTime) action.considerations)
                 ]
             else
                 []
+
+        containerStyle =
+            if action.considerationsVisible then
+                style
+                    [ "background-color" => "#00000011"
+                    , "padding" => "0.6em"
+                    ]
+            else
+                style [ "padding" => "0.6em" ]
     in
-        div []
+        div [ containerStyle ]
             (List.append
                 [ h4
                     [ onClick <| ToggleConditionsVisibility agent.name action.name
-                    , style [ "cursor" => "pointer" ]
+                    , style
+                        [ "cursor" => "pointer"
+                        , "margin" => "0"
+                        ]
                     ]
                     [ text "("
                     , prettyFloatHtml 2 <| computeUtility agent currentTime action
@@ -341,15 +347,7 @@ renderConsideration agent action currentTime con =
     let
         details =
             if con.detailsVisible then
-                [ ul []
-                    [ li [] [ text <| "Utility Function: " ++ (renderUF con.function) ]
-                    , li [] [ text <| "Consideration Input: " ++ (renderCI currentTime agent con.input) ]
-                    , li [] [ text <| "Consideration Raw Value: " ++ (prettyFloat 2 <| getConsiderationRawValue agent currentTime con) ]
-                    , li [] [ text <| "Consideration Min & Max: " ++ (prettyFloat 2 <| con.inputMin) ++ ", " ++ (prettyFloat 2 <| con.inputMax) ]
-                    , li [] [ text <| "Consideration Weighting: " ++ (prettyFloat 2 <| con.weighting) ]
-                    , li [] [ text <| "Consideration Offset: " ++ (prettyFloat 2 <| con.offset) ]
-                    ]
-                , renderConsiderationChart agent currentTime con
+                [ renderConsiderationChart agent currentTime con
                 ]
             else
                 []
@@ -357,16 +355,19 @@ renderConsideration agent action currentTime con =
         heading =
             [ h5
                 [ onClick <| ToggleConditionDetailsVisibility agent.name action.name con.name
-                , style [ "cursor" => "pointer" ]
+                , style
+                    [ "cursor" => "pointer"
+                    , "margin" => "0.5em 0"
+                    ]
                 ]
                 [ text "("
-                , text <| prettyFloat 2 <| computeConsideration agent currentTime Nothing con
+                , code [] [ text <| prettyFloat 2 <| computeConsideration agent currentTime Nothing con ]
                 , text ")  "
                 , text con.name
                 ]
             ]
     in
-        div []
+        div [ style [ "flex-basis" => "20em" ] ]
             (List.append heading details)
 
 
@@ -400,7 +401,7 @@ renderConsiderationChart agent currentTime con =
                     Just ( datapoint, newStep )
 
         horizontalStep =
-            (inputMax - inputMin) / 8
+            (inputMax - inputMin) / 4
 
         stepwiseHorizontalTicksHelp : Float -> Maybe ( Float, Float )
         stepwiseHorizontalTicksHelp previous =
@@ -421,7 +422,7 @@ renderConsiderationChart agent currentTime con =
         customLine : Plot.Series Float msg
         customLine =
             { axis = verticalAxis
-            , interpolation = Plot.Monotone Nothing [ Attributes.stroke "#ff9edf" ]
+            , interpolation = Plot.Monotone Nothing [ Attributes.stroke "#ff9edf", Attributes.strokeWidth "3" ]
             , toDataPoints = customLineToDataPoints
             }
 
@@ -439,7 +440,7 @@ renderConsiderationChart agent currentTime con =
 
         blueCircle : ( Float, Float ) -> Plot.DataPoint msg
         blueCircle ( x, y ) =
-            Plot.dot (Plot.viewCircle 5 "#cfd8ea") x y
+            Plot.dot (Plot.viewCircle 10 "#ff0000") x y
 
         currentValPoint : Plot.Series Float msg
         currentValPoint =
@@ -506,6 +507,8 @@ renderConsiderationChart agent currentTime con =
                     , junk = \summary -> [ Plot.junk title summary.x.dataMax summary.y.max ]
                     , toDomainLowest = \y -> y
                     , toRangeLowest = \y -> y
+                    , width = 400
+                    , height = 320
                 }
                 [ customLine, currentValPoint ]
                 inputMin
