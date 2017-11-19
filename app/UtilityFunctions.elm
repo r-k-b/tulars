@@ -39,6 +39,7 @@ computeConsideration agent currentTime forced consideration =
             case forced of
                 Nothing ->
                     getConsiderationRawValue agent currentTime consideration
+                        |> clampTo consideration
 
                 Just x ->
                     x
@@ -129,3 +130,15 @@ getConsiderationRawValue agent currentTime consideration =
 
                 Just _ ->
                     1
+
+
+clampTo : Consideration -> Float -> Float
+clampTo con x =
+    let
+        inputMin =
+            min con.inputMin con.inputMax
+
+        inputMax =
+            max con.inputMin con.inputMax
+    in
+        clamp inputMin inputMax x

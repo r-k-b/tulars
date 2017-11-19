@@ -4,6 +4,7 @@ import Html exposing (Attribute, Html, code, div, h2, h3, h4, h5, li, text, ul)
 import Html.Attributes exposing (class, style)
 import Html.Events exposing (on, onClick)
 import Json.Decode as Decode
+import List.Extra as ListE
 import Mouse exposing (Position)
 import OpenSolid.BoundingBox2d as BoundingBox2d exposing (BoundingBox2d)
 import OpenSolid.Point2d as Point2d exposing (xCoordinate, yCoordinate)
@@ -336,7 +337,7 @@ renderConsideration agent action currentTime con =
                     , li [] [ text <| "Consideration Weighting: " ++ (prettyFloat 2 <| con.weighting) ]
                     , li [] [ text <| "Consideration Offset: " ++ (prettyFloat 2 <| con.offset) ]
                     ]
-                , renderConsiderationChart con
+                , renderConsiderationChart agent currentTime con
                 ]
             else
                 []
@@ -357,9 +358,49 @@ renderConsideration agent action currentTime con =
             (List.append heading details)
 
 
-renderConsiderationChart : Consideration -> Html Msg
-renderConsiderationChart con =
+renderConsiderationChart : Agent -> Time -> Consideration -> Html Msg
+renderConsiderationChart agent currentTime con =
     let
+        data =
+            ListE.unfoldr stepwise inputMin
+
+        inputMin =
+            min con.inputMin con.inputMax
+
+        inputMax =
+            max con.inputMin con.inputMax
+
+        step =
+            (inputMax - inputMin) / 16
+
+        stepwise : Float -> Maybe ( ( Float, Float ), Float )
+        stepwise previous =
+            if previous > inputMax then
+                Nothing
+            else
+                let
+                    datapoint =
+                        ( previous, computeConsideration agent currentTime (Just previous) con )
+
+                    newStep =
+                        previous + step
+                in
+                    Just ( datapoint, newStep )
+
+        horizontalStep =
+            (inputMax - inputMin) / 8
+
+        stepwiseHorizontalTicksHelp : Float -> Maybe ( Float, Float )
+        stepwiseHorizontalTicksHelp previous =
+            if previous > inputMax then
+                Nothing
+            else
+                Just ( previous, previous + horizontalStep )
+
+        stepwiseHorizontalTicks : List Float
+        stepwiseHorizontalTicks =
+            ListE.unfoldr stepwiseHorizontalTicksHelp inputMin
+
         customLine : Plot.Series (List ( Float, Float )) msg
         customLine =
             { axis = verticalAxis
@@ -371,7 +412,7 @@ renderConsiderationChart con =
         verticalAxis =
             Plot.customAxis <|
                 \summary ->
-                    { position = \_ _ -> 0
+                    { position = Basics.min
                     , axisLine = Just (dataLine summary)
                     , ticks = List.map Plot.simpleTick (Plot.interval 0 0.05 summary)
                     , labels = List.map Plot.simpleLabel (Plot.interval 0 0.1 summary)
@@ -384,8 +425,8 @@ renderConsiderationChart con =
                 \summary ->
                     { position = Basics.min
                     , axisLine = Just (dataLine summary)
-                    , ticks = List.map Plot.simpleTick [ 0, 10, 20 ]
-                    , labels = List.map Plot.simpleLabel [ 0, 10, 20 ]
+                    , ticks = List.map Plot.simpleTick stepwiseHorizontalTicks
+                    , labels = List.map Plot.simpleLabel stepwiseHorizontalTicks
                     , flipAnchor = False
                     }
 
@@ -402,13 +443,14 @@ renderConsiderationChart con =
                 [ fill "#afafaf"
                 , style [ "text-anchor" => "end", "font-style" => "italic" ]
                 ]
-                "f(x) = sin x"
+                (renderUF con.function)
 
         defaultSeriesPlotCustomizations =
             Plot.defaultSeriesPlotCustomizations
 
-        data =
-            [ ( 0, 0.1 ), ( 2, 0.12 ), ( 4, 0.27 ), ( 6, 0.25 ), ( 20, 0.46 ) ]
+        blueCircle : ( Float, Float ) -> Plot.DataPoint msg
+        blueCircle ( x, y ) =
+            Plot.dot (Plot.viewCircle 5 "#cfd8ea") x (y * 1.2)
 
         view : Svg.Svg a
         view =
