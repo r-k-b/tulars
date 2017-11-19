@@ -573,7 +573,6 @@ applyFriction velocity =
         -- see https://www.desmos.com/calculator/axezt5yozt
         factor =
             (1 / (e ^ (k * (speed - n)) + t) + u)
-                |> Debug.log "Factor: "
     in
         case speed < 5 of
             True ->
