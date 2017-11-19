@@ -112,7 +112,7 @@ getConsiderationRawValue agent currentTime consideration =
                 timeSince =
                     case agent.timeLastShoutedFeedMe of
                         Nothing ->
-                            (1.0 / 0)
+                            10000
 
                         Just t ->
                             currentTime - t

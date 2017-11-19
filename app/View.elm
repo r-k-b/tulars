@@ -7,11 +7,12 @@ import Json.Decode as Decode
 import Mouse exposing (Position)
 import OpenSolid.BoundingBox2d as BoundingBox2d exposing (BoundingBox2d)
 import OpenSolid.Point2d as Point2d exposing (xCoordinate, yCoordinate)
-import OpenSolid.Svg as Svg exposing (render2d)
+import OpenSolid.Svg as Svg exposing (render2d, relativeTo)
 import OpenSolid.Vector2d as Vector2d exposing (Vector2d, scaleBy, sum)
 import OpenSolid.Circle2d as Circle2d
+import OpenSolid.Frame2d as Frame2d
 import Svg exposing (Svg, g, rect, svg)
-import Svg.Attributes as Attributes exposing (height, rx, ry, transform, viewBox, width, x, y)
+import Svg.Attributes as Attributes exposing (fill, height, rx, ry, stroke, transform, viewBox, width, x, y)
 import Time exposing (Time)
 import Types
     exposing
@@ -30,6 +31,7 @@ import Types
 import Util exposing (mousePosToVec2)
 import Formatting exposing (roundTo, padLeft, print, (<>))
 import UtilityFunctions exposing (computeConsideration, computeUtility, getConsiderationRawValue)
+import Plot
 
 
 view : Model -> Html Msg
@@ -56,9 +58,39 @@ bb =
         }
 
 
+render2dResponsive : BoundingBox2d -> Svg msg -> Html msg
+render2dResponsive boundingBox svg =
+    let
+        { minX, maxY } =
+            BoundingBox2d.extrema boundingBox
+
+        topLeftFrame =
+            Frame2d.atPoint (Point2d.fromCoordinates ( minX, maxY ))
+                |> Frame2d.flipY
+
+        ( width, height ) =
+            BoundingBox2d.dimensions boundingBox
+
+        coords =
+            [ 0
+            , 0
+            , width
+            , height
+            ]
+                |> List.map toString
+                |> String.join " "
+    in
+        Svg.svg
+            [ Attributes.width (toString width)
+            , Attributes.height (toString height)
+            , viewBox coords
+            ]
+            [ relativeTo topLeftFrame svg ]
+
+
 mainMap : Model -> Html.Html Msg
 mainMap model =
-    render2d bb
+    render2dResponsive bb
         (g []
             [ g []
                 (List.map renderAgent model.agents)
@@ -304,24 +336,93 @@ renderConsideration agent action currentTime con =
                     , li [] [ text <| "Consideration Weighting: " ++ (prettyFloat 2 <| con.weighting) ]
                     , li [] [ text <| "Consideration Offset: " ++ (prettyFloat 2 <| con.offset) ]
                     ]
+                , renderConsiderationChart con
                 ]
             else
                 []
+
+        heading =
+            [ h5
+                [ onClick <| ToggleConditionDetailsVisibility agent.name action.name con.name
+                , style [ "cursor" => "pointer" ]
+                ]
+                [ text "("
+                , text <| prettyFloat 2 <| computeConsideration agent currentTime Nothing con
+                , text ")  "
+                , text con.name
+                ]
+            ]
     in
         div []
-            (List.append
-                [ h5
-                    [ onClick <| ToggleConditionDetailsVisibility agent.name action.name con.name
-                    , style [ "cursor" => "pointer" ]
-                    ]
-                    [ text "("
-                    , text <| prettyFloat 2 <| computeConsideration agent currentTime Nothing con
-                    , text ")  "
-                    , text con.name
-                    ]
+            (List.append heading details)
+
+
+renderConsiderationChart : Consideration -> Html Msg
+renderConsiderationChart con =
+    let
+        customLine : Plot.Series (List ( Float, Float )) msg
+        customLine =
+            { axis = verticalAxis
+            , interpolation = Plot.Monotone Nothing [ Attributes.stroke "#ff9edf" ]
+            , toDataPoints = List.map (\( x, y ) -> Plot.clear x y)
+            }
+
+        verticalAxis : Plot.Axis
+        verticalAxis =
+            Plot.customAxis <|
+                \summary ->
+                    { position = \_ _ -> 0
+                    , axisLine = Just (dataLine summary)
+                    , ticks = List.map Plot.simpleTick (Plot.interval 0 0.05 summary)
+                    , labels = List.map Plot.simpleLabel (Plot.interval 0 0.1 summary)
+                    , flipAnchor = False
+                    }
+
+        horizontalAxis : Plot.Axis
+        horizontalAxis =
+            Plot.customAxis <|
+                \summary ->
+                    { position = Basics.min
+                    , axisLine = Just (dataLine summary)
+                    , ticks = List.map Plot.simpleTick [ 0, 10, 20 ]
+                    , labels = List.map Plot.simpleLabel [ 0, 10, 20 ]
+                    , flipAnchor = False
+                    }
+
+        dataLine : Plot.AxisSummary -> Plot.LineCustomizations
+        dataLine summary =
+            { attributes = [ stroke "grey" ]
+            , start = summary.dataMin
+            , end = summary.dataMax
+            }
+
+        title : Svg msg
+        title =
+            Plot.viewLabel
+                [ fill "#afafaf"
+                , style [ "text-anchor" => "end", "font-style" => "italic" ]
                 ]
-                details
-            )
+                "f(x) = sin x"
+
+        defaultSeriesPlotCustomizations =
+            Plot.defaultSeriesPlotCustomizations
+
+        data =
+            [ ( 0, 0.1 ), ( 2, 0.12 ), ( 4, 0.27 ), ( 6, 0.25 ), ( 20, 0.46 ) ]
+
+        view : Svg.Svg a
+        view =
+            Plot.viewSeriesCustom
+                { defaultSeriesPlotCustomizations
+                    | horizontalAxis = horizontalAxis
+                    , junk = \summary -> [ Plot.junk title summary.x.dataMax summary.y.max ]
+                    , toDomainLowest = \y -> y - 0.01
+                    , toRangeLowest = \y -> y - 0
+                }
+                [ customLine ]
+                data
+    in
+        view
 
 
 renderUF : InputFunction -> String

@@ -247,7 +247,7 @@ shoutFeedMe =
           , detailsVisible = True
           }
         ]
-        False
+        True
 
 
 
