@@ -20,7 +20,14 @@ import Types
         ( Action
         , Agent
         , Consideration
-        , ConsiderationInput(Constant, CurrentSpeed, CurrentlyCallingOut, DistanceToTargetPoint, Hunger, TimeSinceLastShoutedFeedMe)
+        , ConsiderationInput
+            ( Constant
+            , CurrentSpeed
+            , CurrentlyCallingOut
+            , DistanceToTargetPoint
+            , Hunger
+            , TimeSinceLastShoutedFeedMe
+            )
         , CurrentSignal
         , Fire
         , Food
@@ -31,7 +38,7 @@ import Types
         )
 import Util exposing (mousePosToVec2)
 import Formatting exposing (roundTo, padLeft, print, (<>))
-import UtilityFunctions exposing (computeConsideration, computeUtility, getConsiderationRawValue)
+import UtilityFunctions exposing (clampTo, computeConsideration, computeUtility, getConsiderationRawValue)
 import Plot
 
 
@@ -261,9 +268,12 @@ renderAgentInfo currentTime agent =
             ]
         , text "Actions:"
         , div [ style indentWithLine ]
-            (List.map (renderAction agent currentTime) <|
-                List.reverse <|
-                    List.sortBy (computeUtility agent currentTime) agent.actions
+            (List.map (renderAction agent currentTime)
+                {- <|
+                   List.reverse <|
+                       List.sortBy (computeUtility agent currentTime)
+                -}
+                agent.actions
             )
         ]
 
@@ -300,9 +310,11 @@ renderAction agent currentTime action =
             if action.considerationsVisible then
                 [ text "Considerations:"
                 , div [ style indentWithLine ]
-                    (List.map (renderConsideration agent action currentTime) <|
+                    (List.map (renderConsideration agent action currentTime) action.considerations
+                     {- <|
                         List.reverse <|
                             List.sortBy (computeConsideration agent currentTime Nothing) action.considerations
+                     -}
                     )
                 ]
             else
@@ -362,7 +374,7 @@ renderConsiderationChart : Agent -> Time -> Consideration -> Html Msg
 renderConsiderationChart agent currentTime con =
     let
         data =
-            ListE.unfoldr stepwise inputMin
+            inputMin
 
         inputMin =
             min con.inputMin con.inputMax
@@ -401,23 +413,61 @@ renderConsiderationChart agent currentTime con =
         stepwiseHorizontalTicks =
             ListE.unfoldr stepwiseHorizontalTicksHelp inputMin
 
-        customLine : Plot.Series (List ( Float, Float )) msg
+        customLineToDataPoints : Float -> List (Plot.DataPoint msg)
+        customLineToDataPoints data =
+            ListE.unfoldr stepwise data
+                |> List.map (\( x, y ) -> Plot.clear x y)
+
+        customLine : Plot.Series Float msg
         customLine =
             { axis = verticalAxis
             , interpolation = Plot.Monotone Nothing [ Attributes.stroke "#ff9edf" ]
-            , toDataPoints = List.map (\( x, y ) -> Plot.clear x y)
+            , toDataPoints = customLineToDataPoints
+            }
+
+        currentValPointToDataPoints : Float -> List (Plot.DataPoint msg)
+        currentValPointToDataPoints data =
+            let
+                x =
+                    getConsiderationRawValue agent currentTime con
+                        |> clampTo con
+
+                y =
+                    computeConsideration agent currentTime (Just x) con
+            in
+                [ blueCircle ( x, y ) ]
+
+        blueCircle : ( Float, Float ) -> Plot.DataPoint msg
+        blueCircle ( x, y ) =
+            Plot.dot (Plot.viewCircle 5 "#cfd8ea") x y
+
+        currentValPoint : Plot.Series Float msg
+        currentValPoint =
+            { axis = verticalAxis
+            , interpolation = Plot.None
+            , toDataPoints = currentValPointToDataPoints
             }
 
         verticalAxis : Plot.Axis
         verticalAxis =
             Plot.customAxis <|
                 \summary ->
-                    { position = Basics.min
-                    , axisLine = Just (dataLine summary)
-                    , ticks = List.map Plot.simpleTick (Plot.interval 0 0.05 summary)
-                    , labels = List.map Plot.simpleLabel (Plot.interval 0 0.1 summary)
-                    , flipAnchor = False
-                    }
+                    let
+                        roundedMax =
+                            summary.dataMax |> ceiling |> toFloat
+
+                        roundedMin =
+                            summary.dataMin |> floor |> toFloat
+
+                        decentInterval =
+                            (roundedMax - roundedMin) / 8
+                    in
+                        { position = Basics.min
+                        , axisLine = Just (dataLine summary)
+                        , ticks = List.map Plot.simpleTick (Plot.interval 0 decentInterval summary)
+                        , labels = List.map Plot.simpleLabel (Plot.interval 0 decentInterval summary)
+                        , flipAnchor = False
+                        }
 
         horizontalAxis : Plot.Axis
         horizontalAxis =
@@ -433,8 +483,8 @@ renderConsiderationChart agent currentTime con =
         dataLine : Plot.AxisSummary -> Plot.LineCustomizations
         dataLine summary =
             { attributes = [ stroke "grey" ]
-            , start = summary.dataMin
-            , end = summary.dataMax
+            , start = summary.dataMin |> floor |> toFloat
+            , end = summary.dataMax |> ceiling |> toFloat
             }
 
         title : Svg msg
@@ -448,21 +498,17 @@ renderConsiderationChart agent currentTime con =
         defaultSeriesPlotCustomizations =
             Plot.defaultSeriesPlotCustomizations
 
-        blueCircle : ( Float, Float ) -> Plot.DataPoint msg
-        blueCircle ( x, y ) =
-            Plot.dot (Plot.viewCircle 5 "#cfd8ea") x (y * 1.2)
-
         view : Svg.Svg a
         view =
             Plot.viewSeriesCustom
                 { defaultSeriesPlotCustomizations
                     | horizontalAxis = horizontalAxis
                     , junk = \summary -> [ Plot.junk title summary.x.dataMax summary.y.max ]
-                    , toDomainLowest = \y -> y - 0.01
-                    , toRangeLowest = \y -> y - 0
+                    , toDomainLowest = \y -> y
+                    , toRangeLowest = \y -> y
                 }
-                [ customLine ]
-                data
+                [ customLine, currentValPoint ]
+                inputMin
     in
         view
 
