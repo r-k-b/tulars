@@ -9,10 +9,17 @@ import Task exposing (perform)
 import Types
     exposing
         ( Action
-        , ActionOutcome(ArrestMomentum, CallOut, DoNothing, MoveAwayFrom, MoveTo)
+        , ActionOutcome(ArrestMomentum, CallOut, DoNothing, MoveAwayFrom, MoveTo, Wander)
         , Agent
         , Consideration
-        , ConsiderationInput(Constant, CurrentSpeed, CurrentlyCallingOut, DistanceToTargetPoint, Hunger, TimeSinceLastShoutedFeedMe)
+        , ConsiderationInput
+            ( Constant
+            , CurrentSpeed
+            , CurrentlyCallingOut
+            , DistanceToTargetPoint
+            , Hunger
+            , TimeSinceLastShoutedFeedMe
+            )
         , CurrentSignal
         , Fire
         , InputFunction(Exponential, InverseNormal, Linear, Normal, Sigmoid)
@@ -89,6 +96,7 @@ defaultAgents =
             [ stayNearOrigin
             , moveToFood
             , stopAtFood
+            , wander
             ]
       , hunger = 0.3
       , timeLastShoutedFeedMe = Nothing
@@ -96,7 +104,7 @@ defaultAgents =
       }
     , { name = "Charlie"
       , facing = Direction2d.fromAngle (degrees 150)
-      , position = Point2d.fromCoordinates ( -50, -50 )
+      , position = Point2d.fromCoordinates ( -120, -120 )
       , velocity = Vector2d.fromComponents ( 0, 0 )
       , acceleration = Vector2d.fromComponents ( 0, 0 )
       , actions =
@@ -123,10 +131,40 @@ justChill =
           , inputMax = 1
           , weighting = 1
           , offset = 0
-          , detailsVisible = True
+          , detailsVisible = False
           }
         ]
         False
+
+
+wander =
+    let
+        foodPoint =
+            Point2d.fromCoordinates ( 100, 100 )
+    in
+        Action
+            "wander"
+            Wander
+            [ { name = "always 0.04"
+              , function = Linear 1 0
+              , input = Constant 0.02
+              , inputMin = 0
+              , inputMax = 1
+              , weighting = 1
+              , offset = 0
+              , detailsVisible = False
+              }
+            , { name = "in range of food item"
+              , function = Exponential 0.01
+              , input = DistanceToTargetPoint foodPoint
+              , inputMin = 24
+              , inputMax = 25
+              , weighting = 1
+              , offset = 0
+              , detailsVisible = False
+              }
+            ]
+            False
 
 
 stayNearOrigin =
@@ -140,7 +178,7 @@ stayNearOrigin =
           , inputMax = 300
           , weighting = 1
           , offset = 0
-          , detailsVisible = True
+          , detailsVisible = False
           }
         ]
         False
@@ -161,7 +199,7 @@ moveToFood =
               , inputMax = 1
               , weighting = 3
               , offset = 0
-              , detailsVisible = True
+              , detailsVisible = False
               }
             , { name = "too far from food item"
               , function = Exponential 4.4
@@ -170,7 +208,7 @@ moveToFood =
               , inputMax = 20
               , weighting = 0.5
               , offset = 0
-              , detailsVisible = True
+              , detailsVisible = False
               }
             , { name = "in range of food item"
               , function = Exponential 0.01
@@ -179,7 +217,7 @@ moveToFood =
               , inputMax = 25
               , weighting = 1
               , offset = 0
-              , detailsVisible = True
+              , detailsVisible = False
               }
             ]
             False
@@ -200,16 +238,16 @@ stopAtFood =
               , inputMax = 20
               , weighting = 1
               , offset = 0
-              , detailsVisible = True
+              , detailsVisible = False
               }
             , { name = "still moving"
-              , function = Linear 1 0
+              , function = Sigmoid 10 0.5
               , input = CurrentSpeed
-              , inputMin = 0.1
-              , inputMax = 0.2
+              , inputMin = 3
+              , inputMax = 6
               , weighting = 1
               , offset = 0
-              , detailsVisible = True
+              , detailsVisible = False
               }
             ]
             False
@@ -226,7 +264,7 @@ shoutFeedMe =
           , inputMax = 1
           , weighting = 1
           , offset = 0
-          , detailsVisible = True
+          , detailsVisible = False
           }
         , { name = "haven't finished shouting"
           , function = Sigmoid 11 0.5
@@ -235,7 +273,7 @@ shoutFeedMe =
           , inputMax = 0
           , weighting = 1
           , offset = 0.01
-          , detailsVisible = True
+          , detailsVisible = False
           }
         , { name = "haven't called for food in a while"
           , function = Linear 1 0
@@ -244,7 +282,7 @@ shoutFeedMe =
           , inputMax = 10000
           , weighting = 1
           , offset = 0.01
-          , detailsVisible = True
+          , detailsVisible = False
           }
         ]
         True
@@ -338,26 +376,36 @@ moveAgent currentTime dT agent =
         newPosition =
             Point2d.translateBy dV agent.position
 
-        friction =
+        newVelocity =
             -- how do we adjust for large/small dT?
-            -- how do we increase friction nonlinearly?
-            Vector2d.scaleBy (-0.001) agent.velocity
+            agent.velocity
+                |> applyFriction
+                |> Vector2d.sum deltaAcceleration
 
-        dA =
+        deltaAcceleration =
             Vector2d.scaleBy (dT / 1000) agent.acceleration
 
-        newVelocity =
-            List.foldl Vector2d.sum
-                Vector2d.zero
-                [ agent.velocity, dA, friction ]
+        topMovementActionIsArrestMomentum =
+            agent.actions
+                |> List.filter isMovementAction
+                |> List.sortBy (computeUtility agent currentTime >> (*) -1)
+                |> List.head
+                |> Maybe.andThen onlyArrestMomentum
 
         movementVectors =
-            List.filterMap (getMovementVector currentTime agent) agent.actions
+            case topMovementActionIsArrestMomentum of
+                Just arrestMomentumAction ->
+                    getMovementVector currentTime dT agent arrestMomentumAction
+                        |> Maybe.map List.singleton
+                        |> Maybe.withDefault []
+
+                Nothing ->
+                    List.filterMap (getMovementVector currentTime dT agent) agent.actions
 
         newAcceleration =
             List.foldl Vector2d.sum Vector2d.zero movementVectors
                 |> Vector2d.normalize
-                |> Vector2d.scaleBy 4
+                |> Vector2d.scaleBy 8
 
         newFacing =
             Vector2d.direction newAcceleration
@@ -365,7 +413,7 @@ moveAgent currentTime dT agent =
 
         topAction =
             agent.actions
-                |> List.sortBy (computeUtility agent currentTime)
+                |> List.sortBy (computeUtility agent currentTime >> (*) -1)
                 |> List.reverse
                 |> List.head
 
@@ -398,8 +446,8 @@ moveAgent currentTime dT agent =
         }
 
 
-getMovementVector : Time -> Agent -> Action -> Maybe Vector2d
-getMovementVector currentTime agent action =
+getMovementVector : Time -> Time -> Agent -> Action -> Maybe Vector2d
+getMovementVector currentTime deltaTime agent action =
     case action.outcome of
         MoveTo point ->
             let
@@ -430,18 +478,33 @@ getMovementVector currentTime agent action =
                 weighting =
                     computeUtility agent currentTime action
             in
-                Just
-                    (agent.velocity
-                        |> Vector2d.flip
-                        |> Vector2d.normalize
-                        |> Vector2d.scaleBy weighting
-                    )
+                case weighting < 0.1 of
+                    True ->
+                        Nothing
+
+                    False ->
+                        Just
+                            (agent.velocity
+                                |> Vector2d.flip
+                                |> Vector2d.normalize
+                                |> Vector2d.scaleBy weighting
+                            )
 
         DoNothing ->
             Nothing
 
         CallOut signal intensity ->
             Nothing
+
+        Wander ->
+            let
+                weighting =
+                    computeUtility agent currentTime action
+            in
+                agent.facing
+                    |> Direction2d.toVector
+                    |> Vector2d.rotateBy (degrees 10 * (deltaTime / 1000))
+                    |> Just
 
 
 moveFire : Time -> Fire -> Fire
@@ -452,6 +515,72 @@ moveFire t fire =
                 |> Point2d.rotateAround Point2d.origin (t / 3000)
     in
         { fire | position = newPosition }
+
+
+isMovementAction : Action -> Bool
+isMovementAction action =
+    case action.outcome of
+        ArrestMomentum ->
+            True
+
+        MoveTo _ ->
+            True
+
+        MoveAwayFrom _ ->
+            True
+
+        Wander ->
+            True
+
+        DoNothing ->
+            False
+
+        CallOut _ _ ->
+            False
+
+
+onlyArrestMomentum : Action -> Maybe Action
+onlyArrestMomentum action =
+    case action.outcome of
+        ArrestMomentum ->
+            Just action
+
+        _ ->
+            Nothing
+
+
+{-| Scales a vector, representing how much speed is lost to friction.
+-}
+applyFriction : Vector2d -> Vector2d
+applyFriction velocity =
+    let
+        speed =
+            Vector2d.length velocity
+
+        t =
+            1.1
+
+        u =
+            0.088
+
+        n =
+            30
+
+        k =
+            0.26
+
+        -- \frac{1}{e^{k\left(x-n\right)}+t}+u\ \left\{0\le x\right\}
+        -- see https://www.desmos.com/calculator/axezt5yozt
+        factor =
+            (1 / (e ^ (k * (speed - n)) + t) + u)
+                |> Debug.log "Factor: "
+    in
+        case speed < 5 of
+            True ->
+                Vector2d.zero
+
+            False ->
+                velocity |> Vector2d.scaleBy factor
 
 
 

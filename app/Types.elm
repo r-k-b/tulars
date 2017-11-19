@@ -36,6 +36,7 @@ type ActionOutcome
     | MoveAwayFrom Point2d
     | ArrestMomentum
     | CallOut Signal Float
+    | Wander
 
 
 type Signal

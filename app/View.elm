@@ -345,14 +345,39 @@ renderAction agent currentTime action =
 renderConsideration : Agent -> Action -> Time -> Consideration -> Html Msg
 renderConsideration agent action currentTime con =
     let
+        considerationValue =
+            computeConsideration agent currentTime Nothing con
+
+        rawValue =
+            getConsiderationRawValue agent currentTime con
+
         details =
             if con.detailsVisible then
-                [ renderConsiderationChart agent currentTime con
+                [ ul []
+                    [ li []
+                        [ codeText <| "Input: " ++ (renderCI currentTime agent con.input)
+                        ]
+                    , li []
+                        [ codeText <| "Output:    " ++ (prettyFloat 4 considerationValue)
+                        ]
+                    , li []
+                        [ codeText <| "Raw Value: " ++ (prettyFloat 4 rawValue)
+                        ]
+                    , li []
+                        [ codeText <| "Min: " ++ (prettyFloat 4 <| con.inputMin) ++ ", Max: " ++ (prettyFloat 2 <| con.inputMax)
+                        ]
+                    , li []
+                        [ codeText <| "Weighting: " ++ (prettyFloat 4 <| con.weighting)
+                        ]
+                    , li []
+                        [ codeText <| "Offset:    " ++ (prettyFloat 4 <| con.offset)
+                        ]
+                    ]
                 ]
             else
                 []
 
-        heading =
+        main =
             [ h5
                 [ onClick <| ToggleConditionDetailsVisibility agent.name action.name con.name
                 , style
@@ -361,14 +386,15 @@ renderConsideration agent action currentTime con =
                     ]
                 ]
                 [ text "("
-                , code [] [ text <| prettyFloat 2 <| computeConsideration agent currentTime Nothing con ]
+                , code [] [ text <| prettyFloat 2 considerationValue ]
                 , text ")  "
                 , text con.name
                 ]
+            , renderConsiderationChart agent currentTime con
             ]
     in
         div [ style [ "flex-basis" => "20em" ] ]
-            (List.append heading details)
+            (List.append main details)
 
 
 renderConsiderationChart : Agent -> Time -> Consideration -> Html Msg
@@ -591,8 +617,8 @@ vectorAngleDegrees vec =
 
 prettyPoint2dHtml : Point2d.Point2d -> Html Msg
 prettyPoint2dHtml p =
-    code [ style [ "white-space" => "pre-wrap" ] ]
-        [ text <| prettyPoint2d p ]
+    prettyPoint2d p
+        |> codeText
 
 
 prettyPoint2d : Point2d.Point2d -> String
@@ -602,7 +628,13 @@ prettyPoint2d p =
 
 prettyFloatHtml : Int -> Float -> Html Msg
 prettyFloatHtml dp n =
-    code [ style [ "white-space" => "pre-wrap" ] ] [ text <| prettyFloat dp n ]
+    prettyFloat dp n
+        |> codeText
+
+
+codeText : String -> Html Msg
+codeText s =
+    code [ style [ "white-space" => "pre-wrap" ] ] [ text s ]
 
 
 prettyFloat : Int -> Float -> String
