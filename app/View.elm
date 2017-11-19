@@ -159,6 +159,7 @@ mapGridItemStyle =
         [ "grid-column" => "1 / 2"
         , "grid-row" => "1 / 2"
         , "overflow" => "hidden"
+        , "margin" => "0.5em"
         ]
 
 
@@ -259,14 +260,9 @@ renderAgent agent =
 renderAgentInfo : Time -> Agent -> Html Msg
 renderAgentInfo currentTime agent =
     div []
-        [ h3 [] [ text agent.name ]
-        , ul []
-            [ li [] [ text "Position: ", prettyPoint2dHtml agent.position ]
-            , li [] [ text "Speed: ", prettyFloatHtml 2 <| Vector2d.length agent.velocity ]
-            , li [] [ text "Heading: ", prettyFloatHtml 2 <| vectorAngleDegrees agent.velocity ]
-            , li [] [ text "Calling: ", renderCalling agent.callingOut ]
-            ]
-        , text "Actions:"
+        [ h3
+            [ style [ "margin-bottom" => "0.1em" ] ]
+            [ text agent.name ]
         , div [ style indentWithLine ]
             (List.map (renderAction agent currentTime)
                 agent.actions
@@ -322,6 +318,9 @@ renderAction agent currentTime action =
                     ]
             else
                 style [ "padding" => "0.6em" ]
+
+        utility =
+            computeUtility agent currentTime action
     in
         div [ containerStyle ]
             (List.append
@@ -330,10 +329,11 @@ renderAction agent currentTime action =
                     , style
                         [ "cursor" => "pointer"
                         , "margin" => "0"
+                        , "opacity" => (utility ^ (1 / 1.5) + 0.3 |> toString)
                         ]
                     ]
                     [ text "("
-                    , prettyFloatHtml 2 <| computeUtility agent currentTime action
+                    , prettyFloatHtml 2 utility
                     , text ") "
                     , text action.name
                     ]
