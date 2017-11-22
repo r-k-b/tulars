@@ -38,7 +38,7 @@ import Util exposing (mousePosToVec2)
 import OpenSolid.Vector2d as Vector2d exposing (Vector2d)
 import OpenSolid.Point2d as Point2d
 import Time exposing (Time)
-import UtilityFunctions exposing (getActions, computeUtility)
+import UtilityFunctions exposing (computeUtility, computeVariableActions, getActions)
 
 
 main =
@@ -88,6 +88,7 @@ defaultAgents =
       , actionGenerators =
             ActionGeneratorList
                 [ stopAtFood
+                , avoidFire
                 ]
       , visibleActions = Dict.empty
       , variableActions =
@@ -111,6 +112,7 @@ defaultAgents =
       , actionGenerators =
             ActionGeneratorList
                 [ stopAtFood
+                , avoidFire
                 ]
       , visibleActions = Dict.empty
       , variableActions =
@@ -134,6 +136,7 @@ defaultAgents =
       , actionGenerators =
             ActionGeneratorList
                 [ stopAtFood
+                , avoidFire
                 ]
       , visibleActions = Dict.empty
       , variableActions =
@@ -312,9 +315,34 @@ stopAtFood =
                 ]
                 Dict.empty
     in
-        { name = "stop at food"
-        , generator = generator
-        }
+        ActionGenerator "stop at food" generator
+
+
+avoidFire : ActionGenerator
+avoidFire =
+    let
+        generator : Model -> ActionList
+        generator model =
+            List.map goalPerItem model.fires
+                |> ActionList
+
+        goalPerItem : Fire -> Action
+        goalPerItem fire =
+            Action
+                "get away from the fire"
+                (MoveAwayFrom fire.position)
+                [ { name = "too close to fire"
+                  , function = Exponential 0.1
+                  , input = DistanceToTargetPoint fire.position
+                  , inputMin = 200
+                  , inputMax = 10
+                  , weighting = 1
+                  , offset = 0
+                  }
+                ]
+                Dict.empty
+    in
+        ActionGenerator "avoid fire" generator
 
 
 
@@ -336,7 +364,8 @@ updateHelp msg model =
             RAFtick newT ->
                 let
                     dMove =
-                        moveAgent model newT <| newT - time
+                        (moveAgent model newT <| newT - time)
+                            >> (recomputeActions model)
                 in
                     Model newT (List.map dMove agents) foods (List.map (moveFire newT) fires)
 
@@ -441,7 +470,7 @@ moveAgent model currentTime dT agent =
         newAcceleration =
             List.foldl Vector2d.sum Vector2d.zero movementVectors
                 |> Vector2d.normalize
-                |> Vector2d.scaleBy 8
+                |> Vector2d.scaleBy 64
 
         newFacing =
             Vector2d.direction newAcceleration
@@ -616,6 +645,15 @@ applyFriction velocity =
 
             False ->
                 velocity |> Vector2d.scaleBy factor
+
+
+recomputeActions : Model -> Agent -> Agent
+recomputeActions model agent =
+    let
+        newActions =
+            computeVariableActions model agent
+    in
+        { agent | variableActions = newActions }
 
 
 
