@@ -128,7 +128,7 @@ defaultAgents =
                 [ stayNearOrigin
                 , wander
                 ]
-      , hunger = 0.3
+      , hunger = 0.0
       , timeLastShoutedFeedMe = Nothing
       , callingOut = Nothing
       }

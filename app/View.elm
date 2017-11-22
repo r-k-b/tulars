@@ -260,6 +260,8 @@ renderAgent agent =
                 [ Svg.point2d agentPoint agent.position
                 , Svg.direction2d facingArrow agent.position agent.facing
                 , agentVelocityArrow agent
+                , renderName agent
+                    |> Svg.scaleAbout agent.position 0.7
                 ]
                 call
             )
@@ -687,6 +689,19 @@ renderEmoji emoji point =
         ]
         point
         emoji
+
+
+renderName : Agent -> Html Msg
+renderName agent =
+    Svg.text2d
+        [ Attributes.textAnchor "middle"
+        , Attributes.alignmentBaseline "hanging"
+        ]
+        (Point2d.translateBy
+            (Vector2d.fromComponents ( 0, -10 ))
+            agent.position
+        )
+        agent.name
 
 
 renderFood : Food -> Html Msg
