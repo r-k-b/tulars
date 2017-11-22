@@ -63,8 +63,8 @@ init =
 
 defaultFoods =
     [ { id = 1
-      , position = Point2d.fromCoordinates ( 100, 100 )
-      , joules = 3000
+      , position = Point2d.fromCoordinates ( -100, 100 )
+      , joules = 3.0e9
       }
     ]
 
@@ -73,8 +73,12 @@ defaultFires =
     let
         p =
             Point2d.fromCoordinates ( -100, 100 )
+
+        p2 =
+            Point2d.fromCoordinates ( -100, -100 )
     in
-        [ { position = p, originalPosition = p }
+        [ { id = 1, position = p, originalPosition = p }
+        , { id = 2, position = p2, originalPosition = p2 }
         ]
 
 
@@ -87,7 +91,8 @@ defaultAgents =
       , acceleration = Vector2d.zero
       , actionGenerators =
             ActionGeneratorList
-                [ stopAtFood
+                [ moveToFood
+                , stopAtFood
                 , avoidFire
                 ]
       , visibleActions = Dict.empty
@@ -97,10 +102,9 @@ defaultAgents =
       , constantActions =
             ActionList
                 [ stayNearOrigin
-                , moveToFood
                 , justChill
                 ]
-      , hunger = 0.1
+      , hunger = 0.8
       , timeLastShoutedFeedMe = Nothing
       , callingOut = Nothing
       }
@@ -111,7 +115,8 @@ defaultAgents =
       , acceleration = Vector2d.fromComponents ( -2, -1 )
       , actionGenerators =
             ActionGeneratorList
-                [ stopAtFood
+                [ moveToFood
+                , stopAtFood
                 , avoidFire
                 ]
       , visibleActions = Dict.empty
@@ -121,7 +126,6 @@ defaultAgents =
       , constantActions =
             ActionList
                 [ stayNearOrigin
-                , moveToFood
                 , wander
                 ]
       , hunger = 0.3
@@ -215,42 +219,6 @@ stayNearOrigin =
         Dict.empty
 
 
-moveToFood =
-    let
-        foodPoint =
-            Point2d.fromCoordinates ( 100, 100 )
-    in
-        Action
-            "move toward edible food"
-            (MoveTo foodPoint)
-            [ { name = "hunger"
-              , function = Linear 1 0
-              , input = Hunger
-              , inputMin = 0
-              , inputMax = 1
-              , weighting = 3
-              , offset = 0
-              }
-            , { name = "too far from food item"
-              , function = Exponential 4.4
-              , input = DistanceToTargetPoint foodPoint
-              , inputMin = 300
-              , inputMax = 20
-              , weighting = 0.5
-              , offset = 0
-              }
-            , { name = "in range of food item"
-              , function = Exponential 0.01
-              , input = DistanceToTargetPoint foodPoint
-              , inputMin = 20
-              , inputMax = 25
-              , weighting = 1
-              , offset = 0
-              }
-            ]
-            Dict.empty
-
-
 shoutFeedMe =
     Action
         "shout \"feed me!\" "
@@ -283,6 +251,49 @@ shoutFeedMe =
         Dict.empty
 
 
+moveToFood : ActionGenerator
+moveToFood =
+    let
+        generator : Model -> ActionList
+        generator model =
+            List.map goalPerItem model.foods
+                |> ActionList
+
+        goalPerItem : Food -> Action
+        goalPerItem food =
+            Action
+                ("move toward edible food" |> withSuffix food.id)
+                (MoveTo food.position)
+                [ { name = "hunger"
+                  , function = Linear 1 0
+                  , input = Hunger
+                  , inputMin = 0
+                  , inputMax = 1
+                  , weighting = 3
+                  , offset = 0
+                  }
+                , { name = "too far from food item"
+                  , function = Exponential 2
+                  , input = DistanceToTargetPoint food.position
+                  , inputMin = 3000
+                  , inputMax = 20
+                  , weighting = 0.5
+                  , offset = 0
+                  }
+                , { name = "in range of food item"
+                  , function = Exponential 0.01
+                  , input = DistanceToTargetPoint food.position
+                  , inputMin = 20
+                  , inputMax = 25
+                  , weighting = 1
+                  , offset = 0
+                  }
+                ]
+                Dict.empty
+    in
+        ActionGenerator "stop at food" generator
+
+
 stopAtFood : ActionGenerator
 stopAtFood =
     let
@@ -294,7 +305,7 @@ stopAtFood =
         goalPerItem : Food -> Action
         goalPerItem food =
             Action
-                "stop when in range of edible food"
+                ("stop when in range of edible food" |> withSuffix food.id)
                 ArrestMomentum
                 [ { name = "in range of food item"
                   , function = Exponential 0.01
@@ -329,14 +340,14 @@ avoidFire =
         goalPerItem : Fire -> Action
         goalPerItem fire =
             Action
-                "get away from the fire"
+                ("get away from the fire" |> withSuffix fire.id)
                 (MoveAwayFrom fire.position)
                 [ { name = "too close to fire"
-                  , function = Exponential 0.1
+                  , function = Linear 1 0
                   , input = DistanceToTargetPoint fire.position
                   , inputMin = 200
                   , inputMax = 10
-                  , weighting = 1
+                  , weighting = 3
                   , offset = 0
                   }
                 ]
@@ -500,6 +511,12 @@ moveAgent model currentTime dT agent =
                 topAction
                 |> Maybe.withDefault
                     ( agent.timeLastShoutedFeedMe, Nothing )
+
+        newHunger =
+            agent.hunger
+                + 0.000003
+                * dT
+                |> clamp 0 1
     in
         { agent
             | position = newPosition
@@ -508,6 +525,7 @@ moveAgent model currentTime dT agent =
             , facing = newFacing
             , timeLastShoutedFeedMe = newFeedMeTime
             , callingOut = newCall
+            , hunger = newHunger
         }
 
 
@@ -635,11 +653,11 @@ applyFriction velocity =
             0.26
 
         -- \frac{1}{e^{k\left(x-n\right)}+t}+u\ \left\{0\le x\right\}
-        -- see https://www.desmos.com/calculator/axezt5yozt
+        -- see https://www.desmos.com/calculator/7i2gwxpej1
         factor =
             (1 / (e ^ (k * (speed - n)) + t) + u)
     in
-        case speed < 5 of
+        case speed < 0.1 of
             True ->
                 Vector2d.zero
 
@@ -654,6 +672,11 @@ recomputeActions model agent =
             computeVariableActions model agent
     in
         { agent | variableActions = newActions }
+
+
+withSuffix : Int -> String -> String
+withSuffix id s =
+    s ++ " (#" ++ toString id ++ ")"
 
 
 

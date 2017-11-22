@@ -142,6 +142,7 @@ type alias Food =
 
 
 type alias Fire =
-    { position : Point2d
+    { id : Int
+    , position : Point2d
     , originalPosition : Point2d
     }
