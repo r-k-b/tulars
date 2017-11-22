@@ -1,5 +1,6 @@
 module View exposing (view)
 
+import Dict
 import Html exposing (Attribute, Html, code, div, h2, h3, h4, h5, li, text, ul)
 import Html.Attributes exposing (class, style)
 import Html.Events exposing (on, onClick)
@@ -38,7 +39,14 @@ import Types
         )
 import Util exposing (mousePosToVec2)
 import Formatting exposing (roundTo, padLeft, print, (<>))
-import UtilityFunctions exposing (clampTo, computeConsideration, computeUtility, getConsiderationRawValue)
+import UtilityFunctions
+    exposing
+        ( clampTo
+        , getActions
+        , computeConsideration
+        , computeUtility
+        , getConsiderationRawValue
+        )
 import Plot
 
 
@@ -51,7 +59,7 @@ view model =
             ]
         , div
             [ agentInfoGridItemStyle ]
-            [ agentsInfo model.time model.agents
+            [ agentsInfo model model.time model.agents
             ]
         ]
 
@@ -126,14 +134,14 @@ borderIndicator r =
         )
 
 
-agentsInfo : Time -> List Agent -> Html.Html Msg
-agentsInfo currentTime agents =
+agentsInfo : Model -> Time -> List Agent -> Html.Html Msg
+agentsInfo model currentTime agents =
     div []
         [ h2 []
             [ text "Agents" ]
         , div
             []
-            (List.map (renderAgentInfo currentTime) agents)
+            (List.map (renderAgentInfo model currentTime) agents)
         ]
 
 
@@ -257,15 +265,15 @@ renderAgent agent =
             )
 
 
-renderAgentInfo : Time -> Agent -> Html Msg
-renderAgentInfo currentTime agent =
+renderAgentInfo : Model -> Time -> Agent -> Html Msg
+renderAgentInfo model currentTime agent =
     div []
         [ h3
             [ style [ "margin-bottom" => "0.1em" ] ]
             [ text agent.name ]
         , div [ style indentWithLine ]
-            (List.map (renderAction agent currentTime)
-                agent.actions
+            (getActions agent
+                |> List.map (renderAction agent currentTime)
             )
         ]
 
@@ -298,8 +306,12 @@ indentWithLine =
 renderAction : Agent -> Time -> Action -> Html Msg
 renderAction agent currentTime action =
     let
+        isExpanded =
+            Dict.get action.name agent.visibleActions
+                |> Maybe.withDefault False
+
         considerations =
-            if action.considerationsVisible then
+            if isExpanded then
                 [ div
                     [ style
                         [ "display" => "flex"
@@ -311,7 +323,7 @@ renderAction agent currentTime action =
                 []
 
         containerStyle =
-            if action.considerationsVisible then
+            if isExpanded then
                 style
                     [ "background-color" => "#00000011"
                     , "padding" => "0.6em"
@@ -351,8 +363,12 @@ renderConsideration agent action currentTime con =
         rawValue =
             getConsiderationRawValue agent currentTime con
 
+        isExpanded =
+            Dict.get con.name action.visibleConsiderations
+                |> Maybe.withDefault False
+
         details =
-            if con.detailsVisible then
+            if isExpanded then
                 [ ul []
                     [ li []
                         [ codeText <| "Input: " ++ (renderCI currentTime agent con.input)

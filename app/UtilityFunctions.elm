@@ -4,10 +4,21 @@ import Time exposing (Time)
 import Types
     exposing
         ( Action
+        , ActionGenerator
+        , ActionGeneratorList(ActionGeneratorList)
+        , ActionList(ActionList)
         , Agent
         , Consideration
-        , ConsiderationInput(Constant, CurrentSpeed, CurrentlyCallingOut, DistanceToTargetPoint, Hunger, TimeSinceLastShoutedFeedMe)
+        , ConsiderationInput
+            ( Constant
+            , CurrentSpeed
+            , CurrentlyCallingOut
+            , DistanceToTargetPoint
+            , Hunger
+            , TimeSinceLastShoutedFeedMe
+            )
         , InputFunction(Exponential, InverseNormal, Linear, Normal, Sigmoid)
+        , Model
         )
 import OpenSolid.Point2d as Point2d
 import OpenSolid.Vector2d as Vector2d
@@ -142,3 +153,44 @@ clampTo con x =
             max con.inputMin con.inputMax
     in
         clamp inputMin inputMax x
+
+
+{-| Convenience method for combining the Variable and Constant action lists.
+-}
+getActions : Agent -> List Action
+getActions agent =
+    let
+        asList : ActionList -> List Action
+        asList (ActionList a) =
+            a
+    in
+        List.append (asList agent.constantActions) (asList agent.variableActions)
+
+
+computeVariableActions : Model -> Agent -> ActionList
+computeVariableActions model agent =
+    let
+        generatorsToList : ActionGeneratorList -> List ActionGenerator
+        generatorsToList (ActionGeneratorList a) =
+            a
+
+        actionsToList : ActionList -> List Action
+        actionsToList (ActionList a) =
+            a
+    in
+        generatorsToList agent.actionGenerators
+            |> List.map .generator
+            |> applyList model
+            |> List.map actionsToList
+            |> List.concat
+            |> ActionList
+
+
+applyList : a -> List (a -> b) -> List b
+applyList data fList =
+    case fList of
+        [] ->
+            []
+
+        next :: rest ->
+            (next data) :: (applyList data rest)

@@ -1,5 +1,6 @@
 module Main exposing (main)
 
+import Dict
 import Html exposing (Html)
 import Json.Decode as Decode
 import Maybe exposing (withDefault)
@@ -9,6 +10,9 @@ import Task exposing (perform)
 import Types
     exposing
         ( Action
+        , ActionGenerator
+        , ActionGeneratorList(ActionGeneratorList)
+        , ActionList(ActionList)
         , ActionOutcome(ArrestMomentum, CallOut, DoNothing, MoveAwayFrom, MoveTo, Wander)
         , Agent
         , Consideration
@@ -22,6 +26,7 @@ import Types
             )
         , CurrentSignal
         , Fire
+        , Food
         , InputFunction(Exponential, InverseNormal, Linear, Normal, Sigmoid)
         , Model
         , Msg(InitTime, RAFtick, ToggleConditionDetailsVisibility, ToggleConditionsVisibility)
@@ -33,7 +38,7 @@ import Util exposing (mousePosToVec2)
 import OpenSolid.Vector2d as Vector2d exposing (Vector2d)
 import OpenSolid.Point2d as Point2d
 import Time exposing (Time)
-import UtilityFunctions exposing (computeUtility)
+import UtilityFunctions exposing (getActions, computeUtility)
 
 
 main =
@@ -57,7 +62,10 @@ init =
 
 
 defaultFoods =
-    [ { position = Point2d.fromCoordinates ( 100, 100 ) }
+    [ { id = 1
+      , position = Point2d.fromCoordinates ( 100, 100 )
+      , joules = 3000
+      }
     ]
 
 
@@ -77,12 +85,20 @@ defaultAgents =
       , position = Point2d.fromCoordinates ( 200, 150 )
       , velocity = Vector2d.fromComponents ( -1, -10 )
       , acceleration = Vector2d.zero
-      , actions =
-            [ stayNearOrigin
-            , moveToFood
-            , justChill
-            , stopAtFood
-            ]
+      , actionGenerators =
+            ActionGeneratorList
+                [ stopAtFood
+                ]
+      , visibleActions = Dict.empty
+      , variableActions =
+            ActionList
+                []
+      , constantActions =
+            ActionList
+                [ stayNearOrigin
+                , moveToFood
+                , justChill
+                ]
       , hunger = 0.1
       , timeLastShoutedFeedMe = Nothing
       , callingOut = Nothing
@@ -92,12 +108,20 @@ defaultAgents =
       , position = Point2d.fromCoordinates ( 100, 250 )
       , velocity = Vector2d.fromComponents ( -10, -20 )
       , acceleration = Vector2d.fromComponents ( -2, -1 )
-      , actions =
-            [ stayNearOrigin
-            , moveToFood
-            , stopAtFood
-            , wander
-            ]
+      , actionGenerators =
+            ActionGeneratorList
+                [ stopAtFood
+                ]
+      , visibleActions = Dict.empty
+      , variableActions =
+            ActionList
+                []
+      , constantActions =
+            ActionList
+                [ stayNearOrigin
+                , moveToFood
+                , wander
+                ]
       , hunger = 0.3
       , timeLastShoutedFeedMe = Nothing
       , callingOut = Nothing
@@ -107,12 +131,20 @@ defaultAgents =
       , position = Point2d.fromCoordinates ( -120, -120 )
       , velocity = Vector2d.fromComponents ( 0, 0 )
       , acceleration = Vector2d.fromComponents ( 0, 0 )
-      , actions =
-            [ justChill
-            , stayNearOrigin
-            , stopAtFood
-            , shoutFeedMe
-            ]
+      , actionGenerators =
+            ActionGeneratorList
+                [ stopAtFood
+                ]
+      , visibleActions = Dict.empty
+      , variableActions =
+            ActionList
+                []
+      , constantActions =
+            ActionList
+                [ justChill
+                , stayNearOrigin
+                , shoutFeedMe
+                ]
       , hunger = 0.8
       , timeLastShoutedFeedMe = Nothing
       , callingOut = Nothing
@@ -131,10 +163,9 @@ justChill =
           , inputMax = 1
           , weighting = 1
           , offset = 0
-          , detailsVisible = False
           }
         ]
-        False
+        Dict.empty
 
 
 wander =
@@ -152,7 +183,6 @@ wander =
               , inputMax = 1
               , weighting = 1
               , offset = 0
-              , detailsVisible = False
               }
             , { name = "in range of food item"
               , function = Exponential 0.01
@@ -161,10 +191,9 @@ wander =
               , inputMax = 25
               , weighting = 1
               , offset = 0
-              , detailsVisible = False
               }
             ]
-            False
+            Dict.empty
 
 
 stayNearOrigin =
@@ -178,10 +207,9 @@ stayNearOrigin =
           , inputMax = 300
           , weighting = 1
           , offset = 0
-          , detailsVisible = False
           }
         ]
-        False
+        Dict.empty
 
 
 moveToFood =
@@ -199,7 +227,6 @@ moveToFood =
               , inputMax = 1
               , weighting = 3
               , offset = 0
-              , detailsVisible = False
               }
             , { name = "too far from food item"
               , function = Exponential 4.4
@@ -208,7 +235,6 @@ moveToFood =
               , inputMax = 20
               , weighting = 0.5
               , offset = 0
-              , detailsVisible = False
               }
             , { name = "in range of food item"
               , function = Exponential 0.01
@@ -217,40 +243,9 @@ moveToFood =
               , inputMax = 25
               , weighting = 1
               , offset = 0
-              , detailsVisible = False
               }
             ]
-            False
-
-
-stopAtFood =
-    let
-        foodPoint =
-            Point2d.fromCoordinates ( 100, 100 )
-    in
-        Action
-            "stop when in range of edible food"
-            ArrestMomentum
-            [ { name = "in range of food item"
-              , function = Exponential 0.01
-              , input = DistanceToTargetPoint foodPoint
-              , inputMin = 25
-              , inputMax = 20
-              , weighting = 1
-              , offset = 0
-              , detailsVisible = False
-              }
-            , { name = "still moving"
-              , function = Sigmoid 10 0.5
-              , input = CurrentSpeed
-              , inputMin = 3
-              , inputMax = 6
-              , weighting = 1
-              , offset = 0
-              , detailsVisible = False
-              }
-            ]
-            False
+            Dict.empty
 
 
 shoutFeedMe =
@@ -264,7 +259,6 @@ shoutFeedMe =
           , inputMax = 1
           , weighting = 1
           , offset = 0
-          , detailsVisible = False
           }
         , { name = "haven't finished shouting"
           , function = Sigmoid 11 0.5
@@ -273,7 +267,6 @@ shoutFeedMe =
           , inputMax = 0
           , weighting = 1
           , offset = 0.01
-          , detailsVisible = False
           }
         , { name = "haven't called for food in a while"
           , function = Linear 1 0
@@ -282,10 +275,46 @@ shoutFeedMe =
           , inputMax = 10000
           , weighting = 1
           , offset = 0.01
-          , detailsVisible = False
           }
         ]
-        True
+        Dict.empty
+
+
+stopAtFood : ActionGenerator
+stopAtFood =
+    let
+        generator : Model -> ActionList
+        generator model =
+            List.map goalPerItem model.foods
+                |> ActionList
+
+        goalPerItem : Food -> Action
+        goalPerItem food =
+            Action
+                "stop when in range of edible food"
+                ArrestMomentum
+                [ { name = "in range of food item"
+                  , function = Exponential 0.01
+                  , input = DistanceToTargetPoint food.position
+                  , inputMin = 25
+                  , inputMax = 20
+                  , weighting = 1
+                  , offset = 0
+                  }
+                , { name = "still moving"
+                  , function = Sigmoid 10 0.5
+                  , input = CurrentSpeed
+                  , inputMin = 3
+                  , inputMax = 6
+                  , weighting = 1
+                  , offset = 0
+                  }
+                ]
+                Dict.empty
+    in
+        { name = "stop at food"
+        , generator = generator
+        }
 
 
 
@@ -298,77 +327,84 @@ update msg model =
 
 
 updateHelp : Msg -> Model -> Model
-updateHelp msg ({ time, agents, foods, fires } as model) =
-    case msg of
-        RAFtick newT ->
-            let
-                dMove =
-                    moveAgent newT <| newT - time
-            in
-                Model newT (List.map dMove agents) foods (List.map (moveFire newT) fires)
+updateHelp msg model =
+    let
+        { time, agents, foods, fires } =
+            model
+    in
+        case msg of
+            RAFtick newT ->
+                let
+                    dMove =
+                        moveAgent model newT <| newT - time
+                in
+                    Model newT (List.map dMove agents) foods (List.map (moveFire newT) fires)
 
-        InitTime t ->
-            Model t agents foods fires
+            InitTime t ->
+                Model t agents foods fires
 
-        ToggleConditionsVisibility agentName actionName ->
-            let
-                updateAgentActions actions =
-                    List.map
-                        (\action ->
-                            if action.name == actionName then
-                                { action | considerationsVisible = not action.considerationsVisible }
-                            else
-                                action
-                        )
-                        actions
+            ToggleConditionsVisibility agentName actionName ->
+                let
+                    updateActionVisibility viz =
+                        let
+                            prior =
+                                Dict.get actionName viz
+                                    |> Maybe.withDefault False
+                        in
+                            Dict.insert actionName (not prior) viz
 
-                newAgents =
-                    List.map
-                        (\agent ->
-                            if agent.name == agentName then
-                                { agent | actions = updateAgentActions agent.actions }
-                            else
-                                agent
-                        )
-                        model.agents
-            in
-                Model time newAgents foods fires
+                    newAgents =
+                        List.map
+                            (\agent ->
+                                if agent.name == agentName then
+                                    { agent | visibleActions = updateActionVisibility agent.visibleActions }
+                                else
+                                    agent
+                            )
+                            model.agents
+                in
+                    Model time newAgents foods fires
 
-        ToggleConditionDetailsVisibility agentName actionName considerationName ->
-            let
-                updateActionConsiderations =
-                    List.map
-                        (\consideration ->
-                            if consideration.name == considerationName then
-                                { consideration | detailsVisible = not consideration.detailsVisible }
-                            else
-                                consideration
-                        )
+            ToggleConditionDetailsVisibility agentName actionName considerationName ->
+                let
+                    updateConsiderationVisibility viz =
+                        let
+                            prior =
+                                Dict.get considerationName viz
+                                    |> Maybe.withDefault False
+                        in
+                            Dict.insert considerationName (not prior) viz
 
-                updateAgentActions =
-                    List.map
-                        (\action ->
-                            if action.name == actionName then
-                                { action | considerations = updateActionConsiderations action.considerations }
-                            else
-                                action
-                        )
+                    updateAgentActions : ActionList -> ActionList
+                    updateAgentActions (ActionList list) =
+                        List.map
+                            (\action ->
+                                if action.name == actionName then
+                                    { action | visibleConsiderations = updateConsiderationVisibility action.visibleConsiderations }
+                                else
+                                    action
+                            )
+                            list
+                            |> ActionList
 
-                newAgents =
-                    List.map
-                        (\agent ->
-                            if agent.name == agentName then
-                                { agent | actions = updateAgentActions agent.actions }
-                            else
-                                agent
-                        )
-                        model.agents
-            in
-                Model time newAgents foods fires
+                    newAgents =
+                        List.map
+                            (\agent ->
+                                if agent.name == agentName then
+                                    { agent
+                                        | constantActions = updateAgentActions agent.constantActions
+                                        , variableActions = updateAgentActions agent.variableActions
+                                    }
+                                else
+                                    agent
+                            )
+                            model.agents
+                in
+                    Model time newAgents foods fires
 
 
-moveAgent : Time -> Time -> Agent -> Agent
-moveAgent currentTime dT agent =
+moveAgent : Model -> Time -> Time -> Agent -> Agent
+moveAgent model currentTime dT agent =
     let
         dV =
             Vector2d.scaleBy (dT / 1000) agent.velocity
@@ -386,7 +422,7 @@ moveAgent currentTime dT agent =
             Vector2d.scaleBy (dT / 1000) agent.acceleration
 
         topMovementActionIsArrestMomentum =
-            agent.actions
+            getActions agent
                 |> List.filter isMovementAction
                 |> List.sortBy (computeUtility agent currentTime >> (*) -1)
                 |> List.head
@@ -400,7 +436,7 @@ moveAgent currentTime dT agent =
                         |> Maybe.withDefault []
 
                 Nothing ->
-                    List.filterMap (getMovementVector currentTime dT agent) agent.actions
+                    List.filterMap (getMovementVector currentTime dT agent) (getActions agent)
 
         newAcceleration =
             List.foldl Vector2d.sum Vector2d.zero movementVectors
@@ -412,7 +448,7 @@ moveAgent currentTime dT agent =
                 |> withDefault agent.facing
 
         topAction =
-            agent.actions
+            getActions agent
                 |> List.sortBy (computeUtility agent currentTime >> (*) -1)
                 |> List.reverse
                 |> List.head

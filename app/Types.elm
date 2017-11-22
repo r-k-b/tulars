@@ -1,5 +1,6 @@
 module Types exposing (..)
 
+import Dict exposing (Dict)
 import Mouse exposing (Position)
 import OpenSolid.Direction2d exposing (Direction2d)
 import OpenSolid.Point2d exposing (Point2d)
@@ -22,12 +23,42 @@ type Msg
     | ToggleConditionDetailsVisibility String String String
 
 
+type alias Agent =
+    { name : String
+    , position : Point2d
+    , facing : Direction2d
+    , velocity : Vector2d
+    , acceleration : Vector2d
+    , constantActions : ActionList
+    , variableActions : ActionList
+    , actionGenerators : ActionGeneratorList
+    , visibleActions : Dict String Bool
+    , hunger : Float
+    , timeLastShoutedFeedMe : Maybe Time
+    , callingOut : Maybe CurrentSignal
+    }
+
+
 type alias Action =
     { name : String
     , outcome : ActionOutcome
     , considerations : List Consideration
-    , considerationsVisible : Bool
+    , visibleConsiderations : Dict String Bool
     }
+
+
+type ActionList
+    = ActionList (List Action)
+
+
+type alias ActionGenerator =
+    { name : String
+    , generator : Model -> ActionList
+    }
+
+
+type ActionGeneratorList
+    = ActionGeneratorList (List ActionGenerator)
 
 
 type ActionOutcome
@@ -59,7 +90,6 @@ type alias Consideration =
     , inputMax : Float
     , weighting : Float
     , offset : Float
-    , detailsVisible : Bool
     }
 
 
@@ -104,21 +134,10 @@ type InputFunction
     | InverseNormal Tightness Center
 
 
-type alias Agent =
-    { name : String
-    , position : Point2d
-    , facing : Direction2d
-    , velocity : Vector2d
-    , acceleration : Vector2d
-    , actions : List Action
-    , hunger : Float
-    , timeLastShoutedFeedMe : Maybe Time
-    , callingOut : Maybe CurrentSignal
-    }
-
-
 type alias Food =
-    { position : Point2d
+    { id : Int
+    , position : Point2d
+    , joules : Float
     }
 
 
