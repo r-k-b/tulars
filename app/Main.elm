@@ -38,7 +38,7 @@ import Util exposing (mousePosToVec2)
 import OpenSolid.Vector2d as Vector2d exposing (Vector2d)
 import OpenSolid.Point2d as Point2d
 import Time exposing (Time)
-import UtilityFunctions exposing (computeUtility, computeVariableActions, getActions)
+import UtilityFunctions exposing (actionsToList, computeUtility, computeVariableActions, getActions)
 
 
 main =
@@ -702,6 +702,24 @@ recomputeActions model agent =
     let
         newActions =
             computeVariableActions model agent
+                |> List.map preserveProperties
+                |> ActionList
+
+        preservableProperties : Dict.Dict String (Dict.Dict String Bool)
+        preservableProperties =
+            agent.variableActions
+                |> actionsToList
+                |> List.map (\action -> ( action.name, action.visibleConsiderations ))
+                |> Dict.fromList
+
+        preserveProperties : Action -> Action
+        preserveProperties action =
+            let
+                oldVCs =
+                    Dict.get action.name preservableProperties
+                        |> Maybe.withDefault Dict.empty
+            in
+                { action | visibleConsiderations = oldVCs }
     in
         { agent | variableActions = newActions }
 

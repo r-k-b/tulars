@@ -167,23 +167,13 @@ getActions agent =
         List.append (asList agent.constantActions) (asList agent.variableActions)
 
 
-computeVariableActions : Model -> Agent -> ActionList
+computeVariableActions : Model -> Agent -> List Action
 computeVariableActions model agent =
-    let
-        generatorsToList : ActionGeneratorList -> List ActionGenerator
-        generatorsToList (ActionGeneratorList a) =
-            a
-
-        actionsToList : ActionList -> List Action
-        actionsToList (ActionList a) =
-            a
-    in
         generatorsToList agent.actionGenerators
             |> List.map .generator
             |> applyList model agent
             |> List.map actionsToList
             |> List.concat
-            |> ActionList
 
 
 applyList : Model -> Agent -> List (Model -> Agent -> ActionList) -> List ActionList
@@ -194,3 +184,12 @@ applyList model agent fList =
 
         next :: rest ->
             (next model agent) :: (applyList model agent rest)
+
+
+generatorsToList : ActionGeneratorList -> List ActionGenerator
+generatorsToList (ActionGeneratorList a) =
+    a
+
+actionsToList : ActionList -> List Action
+actionsToList (ActionList a) =
+    a
