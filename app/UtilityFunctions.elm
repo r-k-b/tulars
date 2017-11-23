@@ -180,17 +180,17 @@ computeVariableActions model agent =
     in
         generatorsToList agent.actionGenerators
             |> List.map .generator
-            |> applyList model
+            |> applyList model agent
             |> List.map actionsToList
             |> List.concat
             |> ActionList
 
 
-applyList : a -> List (a -> b) -> List b
-applyList data fList =
+applyList : Model -> Agent -> List (Model -> Agent -> ActionList) -> List ActionList
+applyList model agent fList =
     case fList of
         [] ->
             []
 
         next :: rest ->
-            (next data) :: (applyList data rest)
+            (next model agent) :: (applyList model agent rest)

@@ -53,7 +53,7 @@ type ActionList
 
 type alias ActionGenerator =
     { name : String
-    , generator : Model -> ActionList
+    , generator : Model -> Agent -> ActionList
     }
 
 

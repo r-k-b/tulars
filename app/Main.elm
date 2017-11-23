@@ -64,7 +64,7 @@ init =
 defaultFoods =
     [ { id = 1
       , position = Point2d.fromCoordinates ( -100, 100 )
-      , joules = 3.0e9
+      , joules = 3000000000
       }
     ]
 
@@ -94,6 +94,7 @@ defaultAgents =
                 [ moveToFood
                 , stopAtFood
                 , avoidFire
+                , maintainPersonalSpace
                 ]
       , visibleActions = Dict.empty
       , variableActions =
@@ -118,6 +119,7 @@ defaultAgents =
                 [ moveToFood
                 , stopAtFood
                 , avoidFire
+                , maintainPersonalSpace
                 ]
       , visibleActions = Dict.empty
       , variableActions =
@@ -141,6 +143,7 @@ defaultAgents =
             ActionGeneratorList
                 [ stopAtFood
                 , avoidFire
+                , maintainPersonalSpace
                 ]
       , visibleActions = Dict.empty
       , variableActions =
@@ -254,8 +257,8 @@ shoutFeedMe =
 moveToFood : ActionGenerator
 moveToFood =
     let
-        generator : Model -> ActionList
-        generator model =
+        generator : Model -> Agent -> ActionList
+        generator model agent =
             List.map goalPerItem model.foods
                 |> ActionList
 
@@ -297,8 +300,8 @@ moveToFood =
 stopAtFood : ActionGenerator
 stopAtFood =
     let
-        generator : Model -> ActionList
-        generator model =
+        generator : Model -> Agent -> ActionList
+        generator model agent =
             List.map goalPerItem model.foods
                 |> ActionList
 
@@ -332,8 +335,8 @@ stopAtFood =
 avoidFire : ActionGenerator
 avoidFire =
     let
-        generator : Model -> ActionList
-        generator model =
+        generator : Model -> Agent -> ActionList
+        generator model agent =
             List.map goalPerItem model.fires
                 |> ActionList
 
@@ -348,6 +351,35 @@ avoidFire =
                   , inputMin = 200
                   , inputMax = 10
                   , weighting = 3
+                  , offset = 0
+                  }
+                ]
+                Dict.empty
+    in
+        ActionGenerator "avoid fire" generator
+
+
+maintainPersonalSpace : ActionGenerator
+maintainPersonalSpace =
+    let
+        generator : Model -> Agent -> ActionList
+        generator model agent =
+            model.agents
+                |> List.filter (\other -> other.name /= agent.name)
+                |> List.map (goalPerItem agent)
+                |> ActionList
+
+        goalPerItem : Agent -> Agent -> Action
+        goalPerItem agent otherAgent =
+            Action
+                ("maintain personal space from " ++ otherAgent.name)
+                (MoveAwayFrom otherAgent.position)
+                [ { name = "space invaded"
+                  , function = Linear 1 0
+                  , input = DistanceToTargetPoint otherAgent.position
+                  , inputMin = 15
+                  , inputMax = 5
+                  , weighting = 1
                   , offset = 0
                   }
                 ]
