@@ -68,6 +68,7 @@ type ActionOutcome
     | ArrestMomentum
     | CallOut Signal Float
     | Wander
+    | EatFood Int
 
 
 type Signal

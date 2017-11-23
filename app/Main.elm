@@ -13,7 +13,15 @@ import Types
         , ActionGenerator
         , ActionGeneratorList(ActionGeneratorList)
         , ActionList(ActionList)
-        , ActionOutcome(ArrestMomentum, CallOut, DoNothing, MoveAwayFrom, MoveTo, Wander)
+        , ActionOutcome
+            ( ArrestMomentum
+            , CallOut
+            , DoNothing
+            , EatFood
+            , MoveAwayFrom
+            , MoveTo
+            , Wander
+            )
         , Agent
         , Consideration
         , ConsiderationInput
@@ -332,6 +340,33 @@ stopAtFood =
         ActionGenerator "stop at food" generator
 
 
+eatFood : ActionGenerator
+eatFood =
+    let
+        generator : Model -> Agent -> ActionList
+        generator model agent =
+            List.map goalPerItem model.foods
+                |> ActionList
+
+        goalPerItem : Food -> Action
+        goalPerItem food =
+            Action
+                ("eat meal" |> withSuffix food.id)
+                (EatFood food.id)
+                [ { name = "in range of meal"
+                  , function = Exponential 0.01
+                  , input = DistanceToTargetPoint food.position
+                  , inputMin = 19
+                  , inputMax = 20
+                  , weighting = 0.8
+                  , offset = -0.01
+                  }
+                ]
+                Dict.empty
+    in
+        ActionGenerator "stop at food" generator
+
+
 avoidFire : ActionGenerator
 avoidFire =
     let
@@ -410,7 +445,8 @@ updateHelp msg model =
                         (moveAgent model newT <| newT - time)
                             >> (recomputeActions model)
                 in
-                    Model newT (List.map dMove agents) foods (List.map (moveFire newT) fires)
+                    Model time (List.map dMove agents) foods (List.map (moveFire newT) fires)
+                        |> moveWorld newT
 
             InitTime t ->
                 Model t agents foods fires
@@ -605,12 +641,6 @@ getMovementVector currentTime deltaTime agent action =
                                 |> Vector2d.scaleBy weighting
                             )
 
-        DoNothing ->
-            Nothing
-
-        CallOut signal intensity ->
-            Nothing
-
         Wander ->
             let
                 weighting =
@@ -620,6 +650,15 @@ getMovementVector currentTime deltaTime agent action =
                     |> Direction2d.toVector
                     |> Vector2d.rotateBy (degrees 10 * (deltaTime / 1000))
                     |> Just
+
+        DoNothing ->
+            Nothing
+
+        CallOut signal intensity ->
+            Nothing
+
+        EatFood _ ->
+            Nothing
 
 
 moveFire : Time -> Fire -> Fire
@@ -651,6 +690,9 @@ isMovementAction action =
             False
 
         CallOut _ _ ->
+            False
+
+        EatFood _ ->
             False
 
 
@@ -727,6 +769,34 @@ recomputeActions model agent =
 withSuffix : Int -> String -> String
 withSuffix id s =
     s ++ " (#" ++ toString id ++ ")"
+
+
+moveWorld : Time -> Model -> Model
+moveWorld newTime model =
+    let
+        deltaT =
+            newTime - model.time
+
+        newFoods =
+            model.foods
+                |> List.filterMap (rotFood deltaT)
+    in
+        { model
+            | time = newTime
+            , foods = newFoods
+        }
+
+
+rotFood : Time -> Food -> Maybe Food
+rotFood deltaT food =
+    let
+        newJoules =
+            food.joules - deltaT * 200000
+    in
+        if newJoules <= 0 then
+            Nothing
+        else
+            Just { food | joules = newJoules }
 
 
 
