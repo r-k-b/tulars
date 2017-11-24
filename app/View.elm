@@ -13,8 +13,31 @@ import OpenSolid.Svg as Svg exposing (render2d, relativeTo)
 import OpenSolid.Vector2d as Vector2d exposing (Vector2d, scaleBy, sum)
 import OpenSolid.Circle2d as Circle2d
 import OpenSolid.Frame2d as Frame2d
-import Svg exposing (Svg, g, rect, svg)
-import Svg.Attributes as Attributes exposing (fill, height, rx, ry, stroke, transform, viewBox, width, x, y)
+import Svg exposing (Svg, g, rect, stop, svg)
+import Svg.Attributes as Attributes
+    exposing
+        ( cx
+        , cy
+        , fill
+        , height
+        , id
+        , offset
+        , r
+        , rx
+        , ry
+        , stopColor
+        , stopOpacity
+        , stroke
+        , transform
+        , viewBox
+        , width
+        , x
+        , x1
+        , x2
+        , y
+        , y1
+        , y2
+        )
 import Time exposing (Time)
 import Types
     exposing
@@ -107,12 +130,12 @@ render2dResponsive boundingBox svg =
 mainMap : Model -> Html.Html Msg
 mainMap model =
     render2dResponsive bb
-        (g []
-            [ g []
+        (g [ id "mainMap" ]
+            [ g [ id "agents" ]
                 (List.map renderAgent model.agents)
-            , g []
+            , g [ id "foods" ]
                 (List.map renderFood model.foods)
-            , g []
+            , g [ id "fires" ]
                 (List.map renderFire model.fires)
             , borderIndicator 200
             , borderIndicator 300
@@ -181,6 +204,11 @@ agentInfoGridItemStyle =
 
 px : Int -> String
 px number =
+    toString number ++ "px"
+
+
+inPx : Float -> String
+inPx number =
     toString number ++ "px"
 
 
@@ -255,7 +283,7 @@ renderAgent agent =
                         Eating ->
                             [ renderEmoji "🍖" agent.position ]
     in
-        g []
+        g [ id <| "agent " ++ agent.name ]
             (List.append
                 [ Svg.point2d agentPoint agent.position
                 , Svg.direction2d facingArrow agent.position agent.facing
@@ -704,11 +732,47 @@ renderName agent =
         agent.name
 
 
-renderFood : Food -> Html Msg
+renderFood : Food -> Svg Msg
 renderFood food =
     renderEmoji "🍽" food.position
 
 
-renderFire : Fire -> Html Msg
+renderFire : Fire -> Svg Msg
 renderFire fire =
-    renderEmoji "🔥" fire.position
+    let
+        gradient =
+            Svg.radialGradient
+                [ id "fireRednessGradient"
+                , x1 "0"
+                , x2 "100"
+                , y1 "0"
+                , y2 "100"
+                ]
+                [ stop
+                    [ offset "0%"
+                    , stopColor "#ff0000"
+                    , stopOpacity "0.3"
+                    ]
+                    []
+                , stop
+                    [ offset "100%"
+                    , stopColor "#ff0000"
+                    , stopOpacity "0"
+                    ]
+                    []
+                ]
+
+        redness =
+            Svg.circle
+                [ cx (fire.position |> xCoordinate |> inPx)
+                , cy (fire.position |> yCoordinate |> inPx)
+                , r "50px"
+                , fill "url(#fireRednessGradient)"
+                ]
+                []
+    in
+        g [ id <| "fire_" ++ (toString fire.id) ]
+            [ renderEmoji "🔥" fire.position
+            , gradient
+            , redness
+            ]

@@ -2,15 +2,15 @@
       utility functions.
   - [ ] Allow live display and control over utility functions.
     - [ ] Represent Considerations and Actions
-      - [ ] add these to the model
-      - [ ] show them to the user
+      - [x] add these to the model
+      - [x] show them to the user
   - [ ] Give agents things/places/events to seek out
     - [x] Allow agents to move
     - [ ] Allow agents to derive utility from...
       - [ ] ...social interaction
       - [ ] ...reducing entropy 
-      - [ ] ...eating nice food 
-      - [ ] ...moving about 
+      - [x] ...eating 
+      - [x] ...moving about 
       - [ ] ...resting 
   - [ ] Give agents things/places/events to avoid
     - [ ] Allow agents to...
@@ -28,10 +28,10 @@
       - [ ] Render an emoji to indicate the agent's state
       - [ ] Show a short trail of where they've been
     - [ ] Render objects in the world
-      - [ ] Fire
-        - [ ] Render a filled red circle that fades out at the edge
-        - [ ] Show a fire icon at the centre 
-      - [ ] Food 
+      - [x] Fire
+        - [x] Render a filled red circle that fades out at the edge
+        - [x] Show a fire icon at the centre 
+      - [x] Food 
       - [ ] Food Store
       - [ ] Trash 
       - [ ] Rest areas
