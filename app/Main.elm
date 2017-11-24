@@ -84,7 +84,6 @@ defaultFires =
             Point2d.fromCoordinates ( -100, -100 )
     in
         [ { id = 1, position = p, originalPosition = p }
-        , { id = 2, position = p2, originalPosition = p2 }
         ]
 
 
@@ -98,6 +97,7 @@ defaultAgents =
       , actionGenerators =
             [ moveToFood
             , stopAtFood
+            , eatFood
             , avoidFire
             , maintainPersonalSpace
             ]
@@ -119,6 +119,7 @@ defaultAgents =
       , actionGenerators =
             [ moveToFood
             , stopAtFood
+            , eatFood
             , avoidFire
             , maintainPersonalSpace
             ]
@@ -139,6 +140,7 @@ defaultAgents =
       , acceleration = Vector2d.fromComponents ( 0, 0 )
       , actionGenerators =
             [ stopAtFood
+            , eatFood
             , avoidFire
             , maintainPersonalSpace
             ]
@@ -339,8 +341,8 @@ eatFood =
                 [ { name = "in range of meal"
                   , function = Exponential 0.01
                   , input = DistanceToTargetPoint food.position
-                  , inputMin = 19
-                  , inputMax = 20
+                  , inputMin = 20
+                  , inputMax = 19
                   , weighting = 0.8
                   , offset = -0.01
                   }
@@ -365,7 +367,7 @@ avoidFire =
                 [ { name = "too close to fire"
                   , function = Linear 1 0
                   , input = DistanceToTargetPoint fire.position
-                  , inputMin = 200
+                  , inputMin = 100
                   , inputMax = 10
                   , weighting = 3
                   , offset = 0
@@ -538,7 +540,6 @@ moveAgent model currentTime dT agent =
         topAction =
             getActions agent
                 |> List.sortBy (computeUtility agent currentTime >> (*) -1)
-                |> List.reverse
                 |> List.head
 
         ( newFeedMeTime, newCall ) =
@@ -646,7 +647,7 @@ moveFire t fire =
     let
         newPosition =
             fire.originalPosition
-                |> Point2d.rotateAround Point2d.origin (t / 3000)
+                |> Point2d.rotateAround Point2d.origin (t / 9000)
     in
         { fire | position = newPosition }
 
@@ -755,8 +756,14 @@ moveWorld newTime model =
         deltaT =
             newTime - model.time
 
+        afterEating : Model
+        afterEating =
+            model.agents
+                |> List.filterMap (isEating model.time)
+                |> List.foldl eat model
+
         newFoods =
-            model.foods
+            afterEating.foods
                 |> List.filterMap (rotFood deltaT)
     in
         { model
@@ -765,11 +772,70 @@ moveWorld newTime model =
         }
 
 
+isEating : Time -> Agent -> Maybe ( String, Int )
+isEating currentTime agent =
+    let
+        topAction =
+            getActions agent
+                |> List.sortBy (computeUtility agent currentTime >> (*) -1)
+                |> List.head
+                |> Maybe.map .outcome
+    in
+        case topAction of
+            Just (EatFood foodID) ->
+                Just ( agent.name, foodID )
+
+            _ ->
+                Nothing
+
+
+eat : ( String, Int ) -> Model -> Model
+eat ( agentName, foodID ) model =
+    let
+        isTargeted =
+            .id >> (==) foodID
+
+        foodAvailable : Bool
+        foodAvailable =
+            List.any isTargeted model.foods
+
+        isAvailable =
+            .name >> (==) agentName
+
+        agentAvailable : Bool
+        agentAvailable =
+            List.any isAvailable model.agents
+
+        bite : Food -> Food
+        bite food =
+            if (food |> isTargeted) && agentAvailable then
+                { food | joules = food.joules - 20000000 }
+            else
+                food
+
+        swallow : Agent -> Agent
+        swallow agent =
+            if (agent |> isAvailable) && foodAvailable then
+                { agent | hunger = agent.hunger - 0.2 |> clamp 0 1 }
+            else
+                agent
+
+        newFoods =
+            model.foods
+                |> List.map bite
+
+        newAgents =
+            model.agents
+                |> List.map swallow
+    in
+        { model | foods = newFoods, agents = newAgents }
+
+
 rotFood : Time -> Food -> Maybe Food
 rotFood deltaT food =
     let
         newJoules =
-            food.joules - deltaT * 200000
+            food.joules - deltaT * 20000
     in
         if newJoules <= 0 then
             Nothing
