@@ -10,8 +10,7 @@ import Task exposing (perform)
 import Types
     exposing
         ( Action
-        , ActionGenerator
-        , ActionGeneratorList(ActionGeneratorList)
+        , ActionGenerator(ActionGenerator)
         , ActionOutcome
             ( ArrestMomentum
             , CallOut
@@ -97,12 +96,11 @@ defaultAgents =
       , velocity = Vector2d.fromComponents ( -1, -10 )
       , acceleration = Vector2d.zero
       , actionGenerators =
-            ActionGeneratorList
-                [ moveToFood
-                , stopAtFood
-                , avoidFire
-                , maintainPersonalSpace
-                ]
+            [ moveToFood
+            , stopAtFood
+            , avoidFire
+            , maintainPersonalSpace
+            ]
       , visibleActions = Dict.empty
       , variableActions = []
       , constantActions =
@@ -119,12 +117,11 @@ defaultAgents =
       , velocity = Vector2d.fromComponents ( -10, -20 )
       , acceleration = Vector2d.fromComponents ( -2, -1 )
       , actionGenerators =
-            ActionGeneratorList
-                [ moveToFood
-                , stopAtFood
-                , avoidFire
-                , maintainPersonalSpace
-                ]
+            [ moveToFood
+            , stopAtFood
+            , avoidFire
+            , maintainPersonalSpace
+            ]
       , visibleActions = Dict.empty
       , variableActions = []
       , constantActions =
@@ -141,11 +138,10 @@ defaultAgents =
       , velocity = Vector2d.fromComponents ( 0, 0 )
       , acceleration = Vector2d.fromComponents ( 0, 0 )
       , actionGenerators =
-            ActionGeneratorList
-                [ stopAtFood
-                , avoidFire
-                , maintainPersonalSpace
-                ]
+            [ stopAtFood
+            , avoidFire
+            , maintainPersonalSpace
+            ]
       , visibleActions = Dict.empty
       , variableActions = []
       , constantActions =

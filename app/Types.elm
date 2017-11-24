@@ -31,7 +31,7 @@ type alias Agent =
     , acceleration : Vector2d
     , constantActions : List Action
     , variableActions : List Action
-    , actionGenerators : ActionGeneratorList
+    , actionGenerators : List ActionGenerator
     , visibleActions : Dict String Bool
     , hunger : Float
     , timeLastShoutedFeedMe : Maybe Time
@@ -47,14 +47,8 @@ type alias Action =
     }
 
 
-type alias ActionGenerator =
-    { name : String
-    , generator : Model -> Agent -> List Action
-    }
-
-
-type ActionGeneratorList
-    = ActionGeneratorList (List ActionGenerator)
+type ActionGenerator
+    = ActionGenerator Name Generator
 
 
 type ActionOutcome
@@ -143,3 +137,11 @@ type alias Fire =
     , position : Point2d
     , originalPosition : Point2d
     }
+
+
+type alias Name =
+    String
+
+
+type alias Generator =
+    Model -> Agent -> List Action

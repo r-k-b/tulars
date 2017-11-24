@@ -4,8 +4,7 @@ import Time exposing (Time)
 import Types
     exposing
         ( Action
-        , ActionGenerator
-        , ActionGeneratorList(ActionGeneratorList)
+        , ActionGenerator(ActionGenerator)
         , Agent
         , Consideration
         , ConsiderationInput
@@ -163,22 +162,16 @@ getActions agent =
 
 computeVariableActions : Model -> Agent -> List Action
 computeVariableActions model agent =
-    generatorsToList agent.actionGenerators
-        |> List.map .generator
+    agent.actionGenerators
         |> applyList model agent
         |> List.concat
 
 
-applyList : Model -> Agent -> List (Model -> Agent -> List Action) -> List (List Action)
-applyList model agent fList =
-    case fList of
+applyList : Model -> Agent -> List ActionGenerator -> List (List Action)
+applyList model agent generators =
+    case generators of
         [] ->
             []
 
-        next :: rest ->
-            (next model agent) :: (applyList model agent rest)
-
-
-generatorsToList : ActionGeneratorList -> List ActionGenerator
-generatorsToList (ActionGeneratorList a) =
-    a
+        (ActionGenerator name gen) :: rest ->
+            (gen model agent) :: (applyList model agent rest)
