@@ -29,8 +29,8 @@ type alias Agent =
     , facing : Direction2d
     , velocity : Vector2d
     , acceleration : Vector2d
-    , constantActions : ActionList
-    , variableActions : ActionList
+    , constantActions : List Action
+    , variableActions : List Action
     , actionGenerators : ActionGeneratorList
     , visibleActions : Dict String Bool
     , hunger : Float
@@ -47,13 +47,9 @@ type alias Action =
     }
 
 
-type ActionList
-    = ActionList (List Action)
-
-
 type alias ActionGenerator =
     { name : String
-    , generator : Model -> Agent -> ActionList
+    , generator : Model -> Agent -> List Action
     }
 
 

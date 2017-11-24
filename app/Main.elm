@@ -12,7 +12,6 @@ import Types
         ( Action
         , ActionGenerator
         , ActionGeneratorList(ActionGeneratorList)
-        , ActionList(ActionList)
         , ActionOutcome
             ( ArrestMomentum
             , CallOut
@@ -46,7 +45,7 @@ import Util exposing (mousePosToVec2)
 import OpenSolid.Vector2d as Vector2d exposing (Vector2d)
 import OpenSolid.Point2d as Point2d
 import Time exposing (Time)
-import UtilityFunctions exposing (actionsToList, computeUtility, computeVariableActions, getActions)
+import UtilityFunctions exposing (computeUtility, computeVariableActions, getActions)
 
 
 main =
@@ -105,14 +104,11 @@ defaultAgents =
                 , maintainPersonalSpace
                 ]
       , visibleActions = Dict.empty
-      , variableActions =
-            ActionList
-                []
+      , variableActions = []
       , constantActions =
-            ActionList
-                [ stayNearOrigin
-                , justChill
-                ]
+            [ stayNearOrigin
+            , justChill
+            ]
       , hunger = 0.8
       , timeLastShoutedFeedMe = Nothing
       , callingOut = Nothing
@@ -130,14 +126,11 @@ defaultAgents =
                 , maintainPersonalSpace
                 ]
       , visibleActions = Dict.empty
-      , variableActions =
-            ActionList
-                []
+      , variableActions = []
       , constantActions =
-            ActionList
-                [ stayNearOrigin
-                , wander
-                ]
+            [ stayNearOrigin
+            , wander
+            ]
       , hunger = 0.0
       , timeLastShoutedFeedMe = Nothing
       , callingOut = Nothing
@@ -154,15 +147,12 @@ defaultAgents =
                 , maintainPersonalSpace
                 ]
       , visibleActions = Dict.empty
-      , variableActions =
-            ActionList
-                []
+      , variableActions = []
       , constantActions =
-            ActionList
-                [ justChill
-                , stayNearOrigin
-                , shoutFeedMe
-                ]
+            [ justChill
+            , stayNearOrigin
+            , shoutFeedMe
+            ]
       , hunger = 0.8
       , timeLastShoutedFeedMe = Nothing
       , callingOut = Nothing
@@ -265,10 +255,9 @@ shoutFeedMe =
 moveToFood : ActionGenerator
 moveToFood =
     let
-        generator : Model -> Agent -> ActionList
+        generator : Model -> Agent -> List Action
         generator model agent =
             List.map goalPerItem model.foods
-                |> ActionList
 
         goalPerItem : Food -> Action
         goalPerItem food =
@@ -308,10 +297,9 @@ moveToFood =
 stopAtFood : ActionGenerator
 stopAtFood =
     let
-        generator : Model -> Agent -> ActionList
+        generator : Model -> Agent -> List Action
         generator model agent =
             List.map goalPerItem model.foods
-                |> ActionList
 
         goalPerItem : Food -> Action
         goalPerItem food =
@@ -343,10 +331,9 @@ stopAtFood =
 eatFood : ActionGenerator
 eatFood =
     let
-        generator : Model -> Agent -> ActionList
+        generator : Model -> Agent -> List Action
         generator model agent =
             List.map goalPerItem model.foods
-                |> ActionList
 
         goalPerItem : Food -> Action
         goalPerItem food =
@@ -370,10 +357,9 @@ eatFood =
 avoidFire : ActionGenerator
 avoidFire =
     let
-        generator : Model -> Agent -> ActionList
+        generator : Model -> Agent -> List Action
         generator model agent =
             List.map goalPerItem model.fires
-                |> ActionList
 
         goalPerItem : Fire -> Action
         goalPerItem fire =
@@ -397,12 +383,11 @@ avoidFire =
 maintainPersonalSpace : ActionGenerator
 maintainPersonalSpace =
     let
-        generator : Model -> Agent -> ActionList
+        generator : Model -> Agent -> List Action
         generator model agent =
             model.agents
                 |> List.filter (\other -> other.name /= agent.name)
                 |> List.map (goalPerItem agent)
-                |> ActionList
 
         goalPerItem : Agent -> Agent -> Action
         goalPerItem agent otherAgent =
@@ -483,8 +468,8 @@ updateHelp msg model =
                         in
                             Dict.insert considerationName (not prior) viz
 
-                    updateAgentActions : ActionList -> ActionList
-                    updateAgentActions (ActionList list) =
+                    updateAgentActions : List Action -> List Action
+                    updateAgentActions list =
                         List.map
                             (\action ->
                                 if action.name == actionName then
@@ -493,7 +478,6 @@ updateHelp msg model =
                                     action
                             )
                             list
-                            |> ActionList
 
                     newAgents =
                         List.map
@@ -745,12 +729,10 @@ recomputeActions model agent =
         newActions =
             computeVariableActions model agent
                 |> List.map preserveProperties
-                |> ActionList
 
         preservableProperties : Dict.Dict String (Dict.Dict String Bool)
         preservableProperties =
             agent.variableActions
-                |> actionsToList
                 |> List.map (\action -> ( action.name, action.visibleConsiderations ))
                 |> Dict.fromList
 

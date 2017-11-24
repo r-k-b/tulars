@@ -6,7 +6,6 @@ import Types
         ( Action
         , ActionGenerator
         , ActionGeneratorList(ActionGeneratorList)
-        , ActionList(ActionList)
         , Agent
         , Consideration
         , ConsiderationInput
@@ -159,24 +158,18 @@ clampTo con x =
 -}
 getActions : Agent -> List Action
 getActions agent =
-    let
-        asList : ActionList -> List Action
-        asList (ActionList a) =
-            a
-    in
-        List.append (asList agent.constantActions) (asList agent.variableActions)
+    List.append agent.constantActions agent.variableActions
 
 
 computeVariableActions : Model -> Agent -> List Action
 computeVariableActions model agent =
-        generatorsToList agent.actionGenerators
-            |> List.map .generator
-            |> applyList model agent
-            |> List.map actionsToList
-            |> List.concat
+    generatorsToList agent.actionGenerators
+        |> List.map .generator
+        |> applyList model agent
+        |> List.concat
 
 
-applyList : Model -> Agent -> List (Model -> Agent -> ActionList) -> List ActionList
+applyList : Model -> Agent -> List (Model -> Agent -> List Action) -> List (List Action)
 applyList model agent fList =
     case fList of
         [] ->
@@ -188,8 +181,4 @@ applyList model agent fList =
 
 generatorsToList : ActionGeneratorList -> List ActionGenerator
 generatorsToList (ActionGeneratorList a) =
-    a
-
-actionsToList : ActionList -> List Action
-actionsToList (ActionList a) =
     a
