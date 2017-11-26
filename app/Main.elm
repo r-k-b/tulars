@@ -28,6 +28,7 @@ import Types
             , CurrentlyCallingOut
             , DistanceToTargetPoint
             , Hunger
+            , IsCurrentAction
             , TimeSinceLastShoutedFeedMe
             )
         , CurrentSignal
@@ -35,7 +36,7 @@ import Types
         , FireExtinguisher
         , Food
         , Holding(BothHands, EachHand, EmptyHanded, OnlyLeftHand, OnlyRightHand)
-        , InputFunction(Exponential, InverseNormal, Linear, Normal, Sigmoid)
+        , InputFunction(Asymmetric, Exponential, Linear, Normal, Sigmoid)
         , Model
         , Msg(InitTime, RAFtick, ToggleConditionDetailsVisibility, ToggleConditionsVisibility)
         , Signal(FeedMe)
@@ -133,6 +134,7 @@ defaultAgents =
             [ stayNearOrigin
             , justChill
             ]
+      , currentAction = "none"
       , hunger = 0.8
       , timeLastShoutedFeedMe = Nothing
       , callingOut = Nothing
@@ -158,6 +160,7 @@ defaultAgents =
             [ stayNearOrigin
             , wander
             ]
+      , currentAction = "none"
       , hunger = 0.0
       , timeLastShoutedFeedMe = Nothing
       , callingOut = Nothing
@@ -183,6 +186,7 @@ defaultAgents =
             , stayNearOrigin
             , shoutFeedMe
             ]
+      , currentAction = "none"
       , hunger = 0.8
       , timeLastShoutedFeedMe = Nothing
       , callingOut = Nothing
@@ -235,6 +239,7 @@ stayNearOrigin =
           , weighting = 1
           , offset = 0
           }
+        , defaultHysteresis 0.1
         ]
         Dict.empty
 
@@ -248,25 +253,18 @@ shoutFeedMe =
           , input = Hunger
           , inputMin = 0
           , inputMax = 1
-          , weighting = 1
+          , weighting = 0.5
           , offset = 0
           }
-        , { name = "haven't finished shouting"
-          , function = Sigmoid 11 0.5
+        , { name = "take a breath"
+          , function = Asymmetric 0.38 10 0.5 0.85 0.98 -1000 0.5 1
           , input = TimeSinceLastShoutedFeedMe
-          , inputMin = 3000
-          , inputMax = 0
-          , weighting = 1
-          , offset = 0.01
+          , inputMin = 10000
+          , inputMax = 1000
+          , weighting = -1
+          , offset = 1
           }
-        , { name = "haven't called for food in a while"
-          , function = Linear 1 0
-          , input = TimeSinceLastShoutedFeedMe
-          , inputMin = 6000
-          , inputMax = 10000
-          , weighting = 1
-          , offset = 0.01
-          }
+        , defaultHysteresis 1
         ]
         Dict.empty
 
@@ -307,6 +305,7 @@ moveToFood =
                   , weighting = 1
                   , offset = 0
                   }
+                , defaultHysteresis 0.1
                 ]
                 Dict.empty
     in
@@ -341,6 +340,7 @@ stopAtFood =
                   , weighting = 1
                   , offset = 0
                   }
+                , defaultHysteresis 0.1
                 ]
                 Dict.empty
     in
@@ -367,6 +367,7 @@ eatFood =
                   , weighting = 0.8
                   , offset = -0.01
                   }
+                , defaultHysteresis 0.1
                 ]
                 Dict.empty
     in
@@ -393,6 +394,7 @@ avoidFire =
                   , weighting = 3
                   , offset = 0
                   }
+                , defaultHysteresis 0.1
                 ]
                 Dict.empty
     in
@@ -421,6 +423,7 @@ maintainPersonalSpace =
                   , weighting = 1
                   , offset = 0
                   }
+                , defaultHysteresis 0.1
                 ]
                 Dict.empty
     in
@@ -599,6 +602,7 @@ moveAgent model currentTime dT agent =
             , timeLastShoutedFeedMe = newFeedMeTime
             , callingOut = newCall
             , hunger = newHunger
+            , currentAction = topAction |> Maybe.map .name |> Maybe.withDefault "none"
         }
 
 
@@ -864,6 +868,18 @@ rotFood deltaT food =
             Nothing
         else
             Just { food | joules = newJoules }
+
+
+defaultHysteresis : Float -> Consideration
+defaultHysteresis weighting =
+    { name = "hysteresis"
+    , function = Linear 1 0
+    , input = IsCurrentAction
+    , inputMin = 0
+    , inputMax = 1
+    , weighting = weighting
+    , offset = 1
+    }
 
 
 

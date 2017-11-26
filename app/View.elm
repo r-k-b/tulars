@@ -50,13 +50,14 @@ import Types
             , CurrentlyCallingOut
             , DistanceToTargetPoint
             , Hunger
+            , IsCurrentAction
             , TimeSinceLastShoutedFeedMe
             )
         , CurrentSignal
         , Fire
         , FireExtinguisher
         , Food
-        , InputFunction(Exponential, InverseNormal, Linear, Normal, Sigmoid)
+        , InputFunction(Asymmetric, Exponential, Linear, Normal, Sigmoid)
         , Model
         , Msg(ToggleConditionDetailsVisibility, ToggleConditionsVisibility)
         , Signal(Eating, FeedMe, GoAway)
@@ -391,10 +392,10 @@ renderConsideration : Agent -> Action -> Time -> Consideration -> Html Msg
 renderConsideration agent action currentTime con =
     let
         considerationValue =
-            computeConsideration agent currentTime Nothing con
+            computeConsideration agent currentTime Nothing action con
 
         rawValue =
-            getConsiderationRawValue agent currentTime con
+            getConsiderationRawValue agent currentTime action con
 
         isExpanded =
             Dict.get con.name action.visibleConsiderations
@@ -404,7 +405,7 @@ renderConsideration agent action currentTime con =
             if isExpanded then
                 [ ul []
                     [ li []
-                        [ codeText <| "Input: " ++ (renderCI currentTime agent con.input)
+                        [ codeText <| "Input: " ++ (renderCI currentTime agent action con.input)
                         ]
                     , li []
                         [ codeText <| "Output:    " ++ (prettyFloat 4 considerationValue)
@@ -439,15 +440,15 @@ renderConsideration agent action currentTime con =
                 , text ")  "
                 , text con.name
                 ]
-            , renderConsiderationChart agent currentTime con
+            , renderConsiderationChart agent currentTime action con
             ]
     in
         div [ style [ "flex-basis" => "20em" ] ]
             (List.append main details)
 
 
-renderConsiderationChart : Agent -> Time -> Consideration -> Html Msg
-renderConsiderationChart agent currentTime con =
+renderConsiderationChart : Agent -> Time -> Action -> Consideration -> Html Msg
+renderConsiderationChart agent currentTime action con =
     let
         data =
             inputMin
@@ -459,7 +460,7 @@ renderConsiderationChart agent currentTime con =
             max con.inputMin con.inputMax
 
         step =
-            (inputMax - inputMin) / 16
+            (inputMax - inputMin) / 64
 
         stepwise : Float -> Maybe ( ( Float, Float ), Float )
         stepwise previous =
@@ -468,7 +469,7 @@ renderConsiderationChart agent currentTime con =
             else
                 let
                     datapoint =
-                        ( previous, computeConsideration agent currentTime (Just previous) con )
+                        ( previous, computeConsideration agent currentTime (Just previous) action con )
 
                     newStep =
                         previous + step
@@ -505,11 +506,11 @@ renderConsiderationChart agent currentTime con =
         currentValPointToDataPoints data =
             let
                 x =
-                    getConsiderationRawValue agent currentTime con
+                    getConsiderationRawValue agent currentTime action con
                         |> clampTo con
 
                 y =
-                    computeConsideration agent currentTime (Just x) con
+                    computeConsideration agent currentTime (Just x) action con
             in
                 [ blueCircle ( x, y ) ]
 
@@ -603,15 +604,34 @@ renderUF f =
         Sigmoid bend center ->
             "Sigmoid (bend = " ++ (toString bend) ++ ", center = " ++ (toString center) ++ ")"
 
-        Normal tightness center ->
-            "Normal (tightness = " ++ (toString tightness) ++ ", center = " ++ (toString center) ++ ")"
+        Normal tightness center squareness ->
+            let
+                vals =
+                    [ "tightness = " ++ (toString tightness)
+                    , "center = " ++ (toString center)
+                    , "squareness = " ++ (toString squareness)
+                    ]
+            in
+                "Normal (" ++ String.join ", " vals ++ ")"
 
-        InverseNormal tightness center ->
-            "InverseNormal (tightness = " ++ (toString tightness) ++ ", center = " ++ (toString center) ++ ")"
+        Asymmetric centerA bendA offsetA squarenessA centerB bendB offsetB squarenessB ->
+            let
+                vals =
+                    [ "centerA=" ++ (prettyFloat 1 centerA)
+                    , "bendA=" ++ (prettyFloat 1 bendA)
+                    , "offsetA=" ++ (prettyFloat 1 offsetA)
+                    , "squarenessA=" ++ (prettyFloat 1 squarenessA)
+                    , "centerB=" ++ (prettyFloat 1 centerB)
+                    , "bendB=" ++ (prettyFloat 1 bendB)
+                    , "offsetB=" ++ (prettyFloat 1 offsetB)
+                    , "squarenessB=" ++ (prettyFloat 1 squarenessB)
+                    ]
+            in
+                "Asymmetric (" ++ String.join ", " vals ++ ")"
 
 
-renderCI : Time -> Agent -> ConsiderationInput -> String
-renderCI currentTime agent ci =
+renderCI : Time -> Agent -> Action -> ConsiderationInput -> String
+renderCI currentTime agent action ci =
     case ci of
         Hunger ->
             "Hunger"
@@ -644,7 +664,7 @@ renderCI currentTime agent ci =
                     ++ val
 
         CurrentlyCallingOut ->
-            "Currently calling out"
+            "Currently calling out "
                 ++ (toString <|
                         case agent.callingOut of
                             Nothing ->
@@ -653,6 +673,9 @@ renderCI currentTime agent ci =
                             Just _ ->
                                 1
                    )
+
+        IsCurrentAction ->
+            "Is action the current one? " ++ (toString <| action.name == agent.currentAction)
 
 
 vectorAngleDegrees : Vector2d.Vector2d -> Float

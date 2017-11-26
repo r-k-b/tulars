@@ -31,6 +31,7 @@ type alias Agent =
     , variableActions : List Action
     , actionGenerators : List ActionGenerator
     , visibleActions : Dict String Bool
+    , currentAction : String
     , hunger : Float
     , timeLastShoutedFeedMe : Maybe Time
     , callingOut : Maybe CurrentSignal
@@ -90,6 +91,7 @@ type ConsiderationInput
     | CurrentSpeed
     | TimeSinceLastShoutedFeedMe
     | CurrentlyCallingOut
+    | IsCurrentAction
 
 
 type alias PhysicalProperties =
@@ -124,12 +126,16 @@ type alias Tightness =
     Float
 
 
+type alias Squareness =
+    Float
+
+
 type InputFunction
     = Linear Slope Offset
     | Exponential Exponent
     | Sigmoid Bend Center
-    | Normal Tightness Center
-    | InverseNormal Tightness Center
+    | Normal Tightness Center Squareness
+    | Asymmetric Center Bend Offset Squareness Center Bend Offset Squareness
 
 
 type alias Food =

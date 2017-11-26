@@ -13,9 +13,10 @@ import Types
             , CurrentlyCallingOut
             , DistanceToTargetPoint
             , Hunger
+            , IsCurrentAction
             , TimeSinceLastShoutedFeedMe
             )
-        , InputFunction(Exponential, InverseNormal, Linear, Normal, Sigmoid)
+        , InputFunction(Asymmetric, Exponential, Linear, Normal, Sigmoid)
         , Model
         )
 import OpenSolid.Point2d as Point2d
@@ -26,7 +27,7 @@ computeUtility : Agent -> Time -> Action -> Float
 computeUtility agent currentTime action =
     let
         tiny =
-            List.map (computeConsideration agent currentTime Nothing) action.considerations
+            List.map (computeConsideration agent currentTime Nothing action) action.considerations
                 |> List.foldl (*) 1
 
         undoTiny =
@@ -41,13 +42,13 @@ computeUtility agent currentTime action =
 {-| Provide a "forced" value to override the consideration's
 regular input value. Useful for graphing.
 -}
-computeConsideration : Agent -> Time -> Maybe Float -> Consideration -> Float
-computeConsideration agent currentTime forced consideration =
+computeConsideration : Agent -> Time -> Maybe Float -> Action -> Consideration -> Float
+computeConsideration agent currentTime forced action consideration =
     let
         inputOrForced =
             case forced of
                 Nothing ->
-                    getConsiderationRawValue agent currentTime consideration
+                    getConsiderationRawValue agent currentTime action consideration
                         |> clampTo consideration
 
                 Just x ->
@@ -57,6 +58,7 @@ computeConsideration agent currentTime forced consideration =
             linearTransform 0 1 consideration.inputMin consideration.inputMax inputOrForced
 
         output =
+            -- see also: https://www.desmos.com/calculator/ubiswoml1r
             case consideration.function of
                 Linear m b ->
                     m * mappedInput + b
@@ -67,11 +69,21 @@ computeConsideration agent currentTime forced consideration =
                 Sigmoid bend center ->
                     1 / (1 + e ^ (-bend * (mappedInput - center)))
 
-                Normal tightness center ->
-                    e ^ (-tightness * (mappedInput + center) ^ 2)
+                Normal tightness center squareness ->
+                    e ^ (-(tightness ^ squareness) * (abs (mappedInput - center)) ^ squareness)
 
-                InverseNormal tightness center ->
-                    1 - e ^ (-tightness * (mappedInput + center) ^ 2)
+                Asymmetric centerA bendA offsetA squarenessA centerB bendB offsetB squarenessB ->
+                    let
+                        f ctr bend offset sqns x =
+                            (atan (bend * (x - ctr))) / (sqns * pi) + offset
+
+                        a =
+                            f centerA bendA offsetA squarenessA mappedInput
+
+                        b =
+                            f centerB bendB offsetB squarenessB mappedInput
+                    in
+                        a * b
 
         normalizedOutput =
             output |> nansToZero |> clamp 0 1
@@ -101,8 +113,8 @@ linearTransform bMin bMax aMin aMax x =
         scale * (x + offset)
 
 
-getConsiderationRawValue : Agent -> Time -> Consideration -> Float
-getConsiderationRawValue agent currentTime consideration =
+getConsiderationRawValue : Agent -> Time -> Action -> Consideration -> Float
+getConsiderationRawValue agent currentTime action consideration =
     case consideration.input of
         Hunger ->
             agent.hunger
@@ -139,6 +151,12 @@ getConsiderationRawValue agent currentTime consideration =
 
                 Just _ ->
                     1
+
+        IsCurrentAction ->
+            if agent.currentAction == action.name then
+                1
+            else
+                0
 
 
 clampTo : Consideration -> Float -> Float
