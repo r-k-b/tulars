@@ -54,6 +54,7 @@ import Types
             )
         , CurrentSignal
         , Fire
+        , FireExtinguisher
         , Food
         , InputFunction(Exponential, InverseNormal, Linear, Normal, Sigmoid)
         , Model
@@ -137,6 +138,8 @@ mainMap model =
                 (List.map renderFood model.foods)
             , g [ id "fires" ]
                 (List.map renderFire model.fires)
+            , g [ id "extinguishers" ]
+                (List.map renderExtinguisher model.extinguishers)
             , borderIndicator 200
             , borderIndicator 300
             ]
@@ -735,6 +738,12 @@ renderName agent =
 renderFood : Food -> Svg Msg
 renderFood food =
     renderEmoji "🍽" food.physics.position
+
+
+renderExtinguisher : FireExtinguisher -> Svg Msg
+renderExtinguisher extinguisher =
+    -- todo: replace 🚒 with the fire extinguisher symbol in Unicode 11
+    renderEmoji "🚒" extinguisher.physics.position
 
 
 renderFire : Fire -> Svg Msg

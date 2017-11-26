@@ -13,6 +13,7 @@ type alias Model =
     , agents : List Agent
     , foods : List Food
     , fires : List Fire
+    , extinguishers : List FireExtinguisher
     }
 
 

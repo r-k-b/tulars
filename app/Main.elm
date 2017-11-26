@@ -32,8 +32,9 @@ import Types
             )
         , CurrentSignal
         , Fire
+        , FireExtinguisher
         , Food
-        , Holding(EmptyHanded, OnlyLeftHand, OnlyRightHand, EachHand, BothHands)
+        , Holding(BothHands, EachHand, EmptyHanded, OnlyLeftHand, OnlyRightHand)
         , InputFunction(Exponential, InverseNormal, Linear, Normal, Sigmoid)
         , Model
         , Msg(InitTime, RAFtick, ToggleConditionDetailsVisibility, ToggleConditionsVisibility)
@@ -63,11 +64,12 @@ main =
 
 init : ( Model, Cmd Msg )
 init =
-    ( Model 0 defaultAgents defaultFoods defaultFires
+    ( Model 0 defaultAgents defaultFoods defaultFires defaultExtinguishers
     , perform InitTime Time.now
     )
 
 
+defaultFoods : List Food
 defaultFoods =
     [ { id = 1
       , physics =
@@ -81,6 +83,7 @@ defaultFoods =
     ]
 
 
+defaultFires : List Fire
 defaultFires =
     [ { id = 1
       , physics =
@@ -89,6 +92,21 @@ defaultFires =
             , velocity = Vector2d.fromComponents ( 0, 0 )
             , acceleration = Vector2d.zero
             }
+      }
+    ]
+
+
+defaultExtinguishers : List FireExtinguisher
+defaultExtinguishers =
+    [ { id = 1
+      , physics =
+            { facing = Direction2d.fromAngle (degrees 0)
+            , position = Point2d.fromCoordinates ( -20, -20 )
+            , velocity = Vector2d.fromComponents ( 0, 0 )
+            , acceleration = Vector2d.zero
+            }
+      , capacity = 100
+      , remaining = 100
       }
     ]
 
@@ -429,7 +447,7 @@ updateHelp msg model =
                 moveWorld newT model
 
             InitTime t ->
-                Model t agents foods fires
+                { model | time = t }
 
             ToggleConditionsVisibility agentName actionName ->
                 let
@@ -451,7 +469,7 @@ updateHelp msg model =
                             )
                             model.agents
                 in
-                    Model time newAgents foods fires
+                    { model | agents = newAgents }
 
             ToggleConditionDetailsVisibility agentName actionName considerationName ->
                 let
@@ -487,7 +505,7 @@ updateHelp msg model =
                             )
                             model.agents
                 in
-                    Model time newAgents foods fires
+                    { model | agents = newAgents }
 
 
 moveAgent : Model -> Time -> Time -> Agent -> Agent
