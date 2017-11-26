@@ -25,10 +25,7 @@ type Msg
 
 type alias Agent =
     { name : String
-    , position : Point2d
-    , facing : Direction2d
-    , velocity : Vector2d
-    , acceleration : Vector2d
+    , physics : PhysicalProperties
     , constantActions : List Action
     , variableActions : List Action
     , actionGenerators : List ActionGenerator
@@ -36,6 +33,7 @@ type alias Agent =
     , hunger : Float
     , timeLastShoutedFeedMe : Maybe Time
     , callingOut : Maybe CurrentSignal
+    , holding : Holding
     }
 
 
@@ -93,6 +91,14 @@ type ConsiderationInput
     | CurrentlyCallingOut
 
 
+type alias PhysicalProperties =
+    { position : Point2d
+    , facing : Direction2d
+    , velocity : Vector2d
+    , acceleration : Vector2d
+    }
+
+
 type alias Exponent =
     Float
 
@@ -127,15 +133,14 @@ type InputFunction
 
 type alias Food =
     { id : Int
-    , position : Point2d
+    , physics : PhysicalProperties
     , joules : Float
     }
 
 
 type alias Fire =
     { id : Int
-    , position : Point2d
-    , originalPosition : Point2d
+    , physics : PhysicalProperties
     }
 
 
@@ -145,3 +150,24 @@ type alias Name =
 
 type alias Generator =
     Model -> Agent -> List Action
+
+
+type Holding
+    = EmptyHanded
+    | OnlyLeftHand Portable
+    | OnlyRightHand Portable
+    | EachHand Portable Portable
+    | BothHands Portable
+
+
+type Portable
+    = Extinguisher FireExtinguisher
+    | Edible Food
+
+
+type alias FireExtinguisher =
+    { id : Int
+    , physics : PhysicalProperties
+    , capacity : Float
+    , remaining : Float
+    }

@@ -108,13 +108,13 @@ getConsiderationRawValue agent currentTime consideration =
             agent.hunger
 
         DistanceToTargetPoint point ->
-            point |> Point2d.distanceFrom agent.position
+            point |> Point2d.distanceFrom agent.physics.position
 
         Constant f ->
             f
 
         CurrentSpeed ->
-            agent.velocity
+            agent.physics.velocity
                 |> Vector2d.length
 
         TimeSinceLastShoutedFeedMe ->

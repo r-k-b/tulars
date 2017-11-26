@@ -238,7 +238,7 @@ agentVelocityArrow : Agent -> Svg msg
 agentVelocityArrow agent =
     let
         exaggerated =
-            scaleBy 2 agent.velocity
+            scaleBy 2 agent.physics.velocity
 
         exaggeratedLength =
             Vector2d.length exaggerated
@@ -258,7 +258,7 @@ agentVelocityArrow agent =
                 ]
             , groupAttributes = []
             }
-            agent.position
+            agent.physics.position
             exaggerated
 
 
@@ -273,23 +273,23 @@ renderAgent agent =
                 Just calling ->
                     case calling.signal of
                         FeedMe ->
-                            [ renderEmoji "😮" agent.position
-                                |> Svg.scaleAbout agent.position 2
+                            [ renderEmoji "😮" agent.physics.position
+                                |> Svg.scaleAbout agent.physics.position 2
                             ]
 
                         GoAway ->
-                            [ renderEmoji "😣" agent.position ]
+                            [ renderEmoji "😣" agent.physics.position ]
 
                         Eating ->
-                            [ renderEmoji "🍖" agent.position ]
+                            [ renderEmoji "🍖" agent.physics.position ]
     in
         g [ id <| "agent " ++ agent.name ]
             (List.append
-                [ Svg.point2d agentPoint agent.position
-                , Svg.direction2d facingArrow agent.position agent.facing
+                [ Svg.point2d agentPoint agent.physics.position
+                , Svg.direction2d facingArrow agent.physics.position agent.physics.facing
                 , agentVelocityArrow agent
                 , renderName agent
-                    |> Svg.scaleAbout agent.position 0.7
+                    |> Svg.scaleAbout agent.physics.position 0.7
                 ]
                 call
             )
@@ -621,7 +621,7 @@ renderCI currentTime agent ci =
 
         CurrentSpeed ->
             "Current Speed "
-                ++ (agent.velocity
+                ++ (agent.physics.velocity
                         |> Vector2d.length
                         |> prettyFloat 2
                    )
@@ -706,7 +706,7 @@ renderArrowToAgent agent =
         , groupAttributes = []
         }
         Point2d.origin
-        (Vector2d.from Point2d.origin agent.position)
+        (Vector2d.from Point2d.origin agent.physics.position)
 
 
 renderEmoji : String -> Point2d.Point2d -> Html Msg
@@ -727,14 +727,14 @@ renderName agent =
         ]
         (Point2d.translateBy
             (Vector2d.fromComponents ( 0, -10 ))
-            agent.position
+            agent.physics.position
         )
         agent.name
 
 
 renderFood : Food -> Svg Msg
 renderFood food =
-    renderEmoji "🍽" food.position
+    renderEmoji "🍽" food.physics.position
 
 
 renderFire : Fire -> Svg Msg
@@ -764,15 +764,15 @@ renderFire fire =
 
         redness =
             Svg.circle
-                [ cx (fire.position |> xCoordinate |> inPx)
-                , cy (fire.position |> yCoordinate |> inPx)
+                [ cx (fire.physics.position |> xCoordinate |> inPx)
+                , cy (fire.physics.position |> yCoordinate |> inPx)
                 , r "50px"
                 , fill "url(#fireRednessGradient)"
                 ]
                 []
     in
         g [ id <| "fire_" ++ (toString fire.id) ]
-            [ renderEmoji "🔥" fire.position
+            [ renderEmoji "🔥" fire.physics.position
             , gradient
             , redness
             ]

@@ -33,6 +33,7 @@ import Types
         , CurrentSignal
         , Fire
         , Food
+        , Holding(EmptyHanded, OnlyLeftHand, OnlyRightHand, EachHand, BothHands)
         , InputFunction(Exponential, InverseNormal, Linear, Normal, Sigmoid)
         , Model
         , Msg(InitTime, RAFtick, ToggleConditionDetailsVisibility, ToggleConditionsVisibility)
@@ -69,31 +70,38 @@ init =
 
 defaultFoods =
     [ { id = 1
-      , position = Point2d.fromCoordinates ( -100, 100 )
+      , physics =
+            { facing = Direction2d.fromAngle (degrees 0)
+            , position = Point2d.fromCoordinates ( -100, 100 )
+            , velocity = Vector2d.zero
+            , acceleration = Vector2d.zero
+            }
       , joules = 3000000000
       }
     ]
 
 
 defaultFires =
-    let
-        p =
-            Point2d.fromCoordinates ( -100, 100 )
-
-        p2 =
-            Point2d.fromCoordinates ( -100, -100 )
-    in
-        [ { id = 1, position = p, originalPosition = p }
-        ]
+    [ { id = 1
+      , physics =
+            { facing = Direction2d.fromAngle (degrees 0)
+            , position = Point2d.fromCoordinates ( 100, -100 )
+            , velocity = Vector2d.fromComponents ( 0, 0 )
+            , acceleration = Vector2d.zero
+            }
+      }
+    ]
 
 
 defaultAgents : List Agent
 defaultAgents =
     [ { name = "Alf"
-      , facing = Direction2d.fromAngle (degrees 70)
-      , position = Point2d.fromCoordinates ( 200, 150 )
-      , velocity = Vector2d.fromComponents ( -1, -10 )
-      , acceleration = Vector2d.zero
+      , physics =
+            { facing = Direction2d.fromAngle (degrees 70)
+            , position = Point2d.fromCoordinates ( 200, 150 )
+            , velocity = Vector2d.fromComponents ( -1, -10 )
+            , acceleration = Vector2d.zero
+            }
       , actionGenerators =
             [ moveToFood
             , stopAtFood
@@ -110,12 +118,15 @@ defaultAgents =
       , hunger = 0.8
       , timeLastShoutedFeedMe = Nothing
       , callingOut = Nothing
+      , holding = EmptyHanded
       }
     , { name = "Bob"
-      , facing = Direction2d.fromAngle (degrees 200)
-      , position = Point2d.fromCoordinates ( 100, 250 )
-      , velocity = Vector2d.fromComponents ( -10, -20 )
-      , acceleration = Vector2d.fromComponents ( -2, -1 )
+      , physics =
+            { facing = Direction2d.fromAngle (degrees 200)
+            , position = Point2d.fromCoordinates ( 100, 250 )
+            , velocity = Vector2d.fromComponents ( -10, -20 )
+            , acceleration = Vector2d.fromComponents ( -2, -1 )
+            }
       , actionGenerators =
             [ moveToFood
             , stopAtFood
@@ -132,12 +143,15 @@ defaultAgents =
       , hunger = 0.0
       , timeLastShoutedFeedMe = Nothing
       , callingOut = Nothing
+      , holding = EmptyHanded
       }
     , { name = "Charlie"
-      , facing = Direction2d.fromAngle (degrees 150)
-      , position = Point2d.fromCoordinates ( -120, -120 )
-      , velocity = Vector2d.fromComponents ( 0, 0 )
-      , acceleration = Vector2d.fromComponents ( 0, 0 )
+      , physics =
+            { facing = Direction2d.fromAngle (degrees 150)
+            , position = Point2d.fromCoordinates ( -120, -120 )
+            , velocity = Vector2d.fromComponents ( 0, 0 )
+            , acceleration = Vector2d.fromComponents ( 0, 0 )
+            }
       , actionGenerators =
             [ stopAtFood
             , eatFood
@@ -154,6 +168,7 @@ defaultAgents =
       , hunger = 0.8
       , timeLastShoutedFeedMe = Nothing
       , callingOut = Nothing
+      , holding = EmptyHanded
       }
     ]
 
@@ -175,31 +190,19 @@ justChill =
 
 
 wander =
-    let
-        foodPoint =
-            Point2d.fromCoordinates ( 100, 100 )
-    in
-        Action
-            "wander"
-            Wander
-            [ { name = "always 0.04"
-              , function = Linear 1 0
-              , input = Constant 0.02
-              , inputMin = 0
-              , inputMax = 1
-              , weighting = 1
-              , offset = 0
-              }
-            , { name = "in range of food item"
-              , function = Exponential 0.01
-              , input = DistanceToTargetPoint foodPoint
-              , inputMin = 24
-              , inputMax = 25
-              , weighting = 1
-              , offset = 0
-              }
-            ]
-            Dict.empty
+    Action
+        "wander"
+        Wander
+        [ { name = "always 0.04"
+          , function = Linear 1 0
+          , input = Constant 0.02
+          , inputMin = 0
+          , inputMax = 1
+          , weighting = 1
+          , offset = 0
+          }
+        ]
+        Dict.empty
 
 
 stayNearOrigin =
@@ -261,7 +264,7 @@ moveToFood =
         goalPerItem food =
             Action
                 ("move toward edible food" |> withSuffix food.id)
-                (MoveTo food.position)
+                (MoveTo food.physics.position)
                 [ { name = "hunger"
                   , function = Linear 1 0
                   , input = Hunger
@@ -272,7 +275,7 @@ moveToFood =
                   }
                 , { name = "too far from food item"
                   , function = Exponential 2
-                  , input = DistanceToTargetPoint food.position
+                  , input = DistanceToTargetPoint food.physics.position
                   , inputMin = 3000
                   , inputMax = 20
                   , weighting = 0.5
@@ -280,7 +283,7 @@ moveToFood =
                   }
                 , { name = "in range of food item"
                   , function = Exponential 0.01
-                  , input = DistanceToTargetPoint food.position
+                  , input = DistanceToTargetPoint food.physics.position
                   , inputMin = 20
                   , inputMax = 25
                   , weighting = 1
@@ -306,7 +309,7 @@ stopAtFood =
                 ArrestMomentum
                 [ { name = "in range of food item"
                   , function = Exponential 0.01
-                  , input = DistanceToTargetPoint food.position
+                  , input = DistanceToTargetPoint food.physics.position
                   , inputMin = 25
                   , inputMax = 20
                   , weighting = 1
@@ -340,7 +343,7 @@ eatFood =
                 (EatFood food.id)
                 [ { name = "in range of meal"
                   , function = Exponential 0.01
-                  , input = DistanceToTargetPoint food.position
+                  , input = DistanceToTargetPoint food.physics.position
                   , inputMin = 20
                   , inputMax = 19
                   , weighting = 0.8
@@ -363,10 +366,10 @@ avoidFire =
         goalPerItem fire =
             Action
                 ("get away from the fire" |> withSuffix fire.id)
-                (MoveAwayFrom fire.position)
+                (MoveAwayFrom fire.physics.position)
                 [ { name = "too close to fire"
                   , function = Linear 1 0
-                  , input = DistanceToTargetPoint fire.position
+                  , input = DistanceToTargetPoint fire.physics.position
                   , inputMin = 100
                   , inputMax = 10
                   , weighting = 3
@@ -391,10 +394,10 @@ maintainPersonalSpace =
         goalPerItem agent otherAgent =
             Action
                 ("maintain personal space from " ++ otherAgent.name)
-                (MoveAwayFrom otherAgent.position)
+                (MoveAwayFrom otherAgent.physics.position)
                 [ { name = "space invaded"
                   , function = Linear 1 0
-                  , input = DistanceToTargetPoint otherAgent.position
+                  , input = DistanceToTargetPoint otherAgent.physics.position
                   , inputMin = 15
                   , inputMax = 5
                   , weighting = 1
@@ -423,13 +426,7 @@ updateHelp msg model =
     in
         case msg of
             RAFtick newT ->
-                let
-                    dMove =
-                        (moveAgent model newT <| newT - time)
-                            >> (recomputeActions model)
-                in
-                    Model time (List.map dMove agents) foods (List.map (moveFire newT) fires)
-                        |> moveWorld newT
+                moveWorld newT model
 
             InitTime t ->
                 Model t agents foods fires
@@ -497,19 +494,19 @@ moveAgent : Model -> Time -> Time -> Agent -> Agent
 moveAgent model currentTime dT agent =
     let
         dV =
-            Vector2d.scaleBy (dT / 1000) agent.velocity
+            Vector2d.scaleBy (dT / 1000) agent.physics.velocity
 
         newPosition =
-            Point2d.translateBy dV agent.position
+            Point2d.translateBy dV agent.physics.position
 
         newVelocity =
             -- how do we adjust for large/small dT?
-            agent.velocity
+            agent.physics.velocity
                 |> applyFriction
                 |> Vector2d.sum deltaAcceleration
 
         deltaAcceleration =
-            Vector2d.scaleBy (dT / 1000) agent.acceleration
+            Vector2d.scaleBy (dT / 1000) agent.physics.acceleration
 
         topMovementActionIsArrestMomentum =
             getActions agent
@@ -535,7 +532,7 @@ moveAgent model currentTime dT agent =
 
         newFacing =
             Vector2d.direction newAcceleration
-                |> withDefault agent.facing
+                |> withDefault agent.physics.facing
 
         topAction =
             getActions agent
@@ -566,12 +563,21 @@ moveAgent model currentTime dT agent =
                 + 0.000003
                 * dT
                 |> clamp 0 1
+
+        newPhysics =
+            let
+                p =
+                    agent.physics
+            in
+                { p
+                    | position = newPosition
+                    , velocity = newVelocity
+                    , acceleration = newAcceleration
+                    , facing = newFacing
+                }
     in
         { agent
-            | position = newPosition
-            , velocity = newVelocity
-            , acceleration = newAcceleration
-            , facing = newFacing
+            | physics = newPhysics
             , timeLastShoutedFeedMe = newFeedMeTime
             , callingOut = newCall
             , hunger = newHunger
@@ -584,7 +590,7 @@ getMovementVector currentTime deltaTime agent action =
         MoveTo point ->
             let
                 weighted =
-                    Vector2d.from agent.position point
+                    Vector2d.from agent.physics.position point
                         |> Vector2d.normalize
                         |> Vector2d.scaleBy weighting
 
@@ -596,7 +602,7 @@ getMovementVector currentTime deltaTime agent action =
         MoveAwayFrom point ->
             let
                 weighted =
-                    Vector2d.from point agent.position
+                    Vector2d.from point agent.physics.position
                         |> Vector2d.normalize
                         |> Vector2d.scaleBy weighting
 
@@ -616,7 +622,7 @@ getMovementVector currentTime deltaTime agent action =
 
                     False ->
                         Just
-                            (agent.velocity
+                            (agent.physics.velocity
                                 |> Vector2d.flip
                                 |> Vector2d.normalize
                                 |> Vector2d.scaleBy weighting
@@ -627,7 +633,7 @@ getMovementVector currentTime deltaTime agent action =
                 weighting =
                     computeUtility agent currentTime action
             in
-                agent.facing
+                agent.physics.facing
                     |> Direction2d.toVector
                     |> Vector2d.rotateBy (degrees 10 * (deltaTime / 1000))
                     |> Just
@@ -640,16 +646,6 @@ getMovementVector currentTime deltaTime agent action =
 
         EatFood _ ->
             Nothing
-
-
-moveFire : Time -> Fire -> Fire
-moveFire t fire =
-    let
-        newPosition =
-            fire.originalPosition
-                |> Point2d.rotateAround Point2d.origin (t / 9000)
-    in
-        { fire | position = newPosition }
 
 
 isMovementAction : Action -> Bool
@@ -756,6 +752,14 @@ moveWorld newTime model =
         deltaT =
             newTime - model.time
 
+        newAgents =
+            let
+                dMove =
+                    (moveAgent model newTime deltaT)
+                        >> (recomputeActions model)
+            in
+                List.map dMove model.agents
+
         afterEating : Model
         afterEating =
             model.agents
@@ -769,6 +773,7 @@ moveWorld newTime model =
         { model
             | time = newTime
             , foods = newFoods
+            , agents = newAgents
         }
 
 
