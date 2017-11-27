@@ -5,19 +5,33 @@ import Types
     exposing
         ( Action
         , ActionGenerator(ActionGenerator)
+        , ActionOutcome
+            ( ArrestMomentum
+            , CallOut
+            , DoNothing
+            , EatHeldFood
+            , MoveAwayFrom
+            , MoveTo
+            , PickUpFood
+            , Wander
+            )
         , Agent
         , Consideration
         , ConsiderationInput
             ( Constant
             , CurrentSpeed
             , CurrentlyCallingOut
+            , DesiresToEat
             , DistanceToTargetPoint
             , Hunger
+            , IsCarryingFood
             , IsCurrentAction
             , TimeSinceLastShoutedFeedMe
             )
+        , Holding(BothHands, EachHand, EmptyHanded, OnlyLeftHand, OnlyRightHand)
         , InputFunction(Asymmetric, Exponential, Linear, Normal, Sigmoid)
         , Model
+        , Portable(Edible)
         )
 import OpenSolid.Point2d as Point2d
 import OpenSolid.Vector2d as Vector2d
@@ -153,10 +167,54 @@ getConsiderationRawValue agent currentTime action consideration =
                     1
 
         IsCurrentAction ->
-            if agent.currentAction == action.name then
-                1
-            else
-                0
+            agent.currentAction
+                == action.name
+                |> true1false0
+
+        DesiresToEat ->
+            agent.desireToEat
+                |> true1false0
+
+        IsCarryingFood ->
+            isHolding portableIsFood agent.holding
+                |> true1false0
+
+
+true1false0 : Bool -> Float
+true1false0 b =
+    if b then
+        1
+    else
+        0
+
+
+portableIsFood : Portable -> Bool
+portableIsFood p =
+    case p of
+        Edible _ ->
+            True
+
+        _ ->
+            False
+
+
+isHolding : (Portable -> Bool) -> Holding -> Bool
+isHolding f held =
+    case held of
+        EmptyHanded ->
+            False
+
+        OnlyLeftHand p ->
+            f p
+
+        OnlyRightHand p ->
+            f p
+
+        EachHand pL pR ->
+            (f pL) || (f pR)
+
+        BothHands p ->
+            f p
 
 
 clampTo : Consideration -> Float -> Float
@@ -193,3 +251,69 @@ applyList model agent generators =
 
         (ActionGenerator name gen) :: rest ->
             (gen model agent) :: (applyList model agent rest)
+
+
+isMovementAction : Action -> Bool
+isMovementAction action =
+    case action.outcome of
+        ArrestMomentum ->
+            True
+
+        MoveTo _ ->
+            True
+
+        MoveAwayFrom _ ->
+            True
+
+        Wander ->
+            True
+
+        DoNothing ->
+            False
+
+        CallOut _ _ ->
+            False
+
+        PickUpFood _ ->
+            False
+
+        EatHeldFood ->
+            False
+
+
+signalsDesireToEat : Action -> Bool
+signalsDesireToEat action =
+    case action.outcome of
+        ArrestMomentum ->
+            False
+
+        MoveTo _ ->
+            False
+
+        MoveAwayFrom _ ->
+            False
+
+        Wander ->
+            False
+
+        DoNothing ->
+            False
+
+        CallOut _ _ ->
+            False
+
+        PickUpFood _ ->
+            True
+
+        EatHeldFood ->
+            True
+
+
+onlyArrestMomentum : Action -> Maybe Action
+onlyArrestMomentum action =
+    case action.outcome of
+        ArrestMomentum ->
+            Just action
+
+        _ ->
+            Nothing

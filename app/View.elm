@@ -48,8 +48,10 @@ import Types
             ( Constant
             , CurrentSpeed
             , CurrentlyCallingOut
+            , DesiresToEat
             , DistanceToTargetPoint
             , Hunger
+            , IsCarryingFood
             , IsCurrentAction
             , TimeSinceLastShoutedFeedMe
             )
@@ -67,10 +69,12 @@ import Formatting exposing (roundTo, padLeft, print, (<>))
 import UtilityFunctions
     exposing
         ( clampTo
-        , getActions
         , computeConsideration
         , computeUtility
+        , getActions
         , getConsiderationRawValue
+        , isHolding
+        , portableIsFood
         )
 import Plot
 
@@ -676,6 +680,12 @@ renderCI currentTime agent action ci =
 
         IsCurrentAction ->
             "Is action the current one? " ++ (toString <| action.name == agent.currentAction)
+
+        DesiresToEat ->
+            "Is the top priority to eat? " ++ (toString <| agent.desireToEat)
+
+        IsCarryingFood ->
+            "Am I carrying some food? " ++ (toString <| isHolding portableIsFood agent.holding)
 
 
 vectorAngleDegrees : Vector2d.Vector2d -> Float

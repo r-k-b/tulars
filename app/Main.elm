@@ -7,6 +7,7 @@ import Maybe exposing (withDefault)
 import Mouse exposing (Position)
 import OpenSolid.Direction2d as Direction2d
 import Task exposing (perform)
+import List.Extra as ListE
 import Types
     exposing
         ( Action
@@ -15,9 +16,10 @@ import Types
             ( ArrestMomentum
             , CallOut
             , DoNothing
-            , EatFood
+            , EatHeldFood
             , MoveAwayFrom
             , MoveTo
+            , PickUpFood
             , Wander
             )
         , Agent
@@ -28,6 +30,7 @@ import Types
             , CurrentlyCallingOut
             , DistanceToTargetPoint
             , Hunger
+            , IsCarryingFood
             , IsCurrentAction
             , TimeSinceLastShoutedFeedMe
             )
@@ -39,6 +42,7 @@ import Types
         , InputFunction(Asymmetric, Exponential, Linear, Normal, Sigmoid)
         , Model
         , Msg(InitTime, RAFtick, ToggleConditionDetailsVisibility, ToggleConditionsVisibility)
+        , Portable(Edible)
         , Signal(FeedMe)
         )
 import View exposing (view)
@@ -47,7 +51,15 @@ import Util exposing (mousePosToVec2)
 import OpenSolid.Vector2d as Vector2d exposing (Vector2d)
 import OpenSolid.Point2d as Point2d
 import Time exposing (Time)
-import UtilityFunctions exposing (computeUtility, computeVariableActions, getActions)
+import UtilityFunctions
+    exposing
+        ( computeUtility
+        , computeVariableActions
+        , getActions
+        , isMovementAction
+        , onlyArrestMomentum
+        , signalsDesireToEat
+        )
 
 
 main =
@@ -124,7 +136,8 @@ defaultAgents =
       , actionGenerators =
             [ moveToFood
             , stopAtFood
-            , eatFood
+            , pickUpFoodToEat
+            , eatCarriedFood
             , avoidFire
             , maintainPersonalSpace
             ]
@@ -139,6 +152,7 @@ defaultAgents =
       , timeLastShoutedFeedMe = Nothing
       , callingOut = Nothing
       , holding = EmptyHanded
+      , desireToEat = False
       }
     , { name = "Bob"
       , physics =
@@ -150,7 +164,8 @@ defaultAgents =
       , actionGenerators =
             [ moveToFood
             , stopAtFood
-            , eatFood
+            , pickUpFoodToEat
+            , eatCarriedFood
             , avoidFire
             , maintainPersonalSpace
             ]
@@ -165,6 +180,7 @@ defaultAgents =
       , timeLastShoutedFeedMe = Nothing
       , callingOut = Nothing
       , holding = EmptyHanded
+      , desireToEat = False
       }
     , { name = "Charlie"
       , physics =
@@ -175,7 +191,8 @@ defaultAgents =
             }
       , actionGenerators =
             [ stopAtFood
-            , eatFood
+            , pickUpFoodToEat
+            , eatCarriedFood
             , avoidFire
             , maintainPersonalSpace
             ]
@@ -191,6 +208,7 @@ defaultAgents =
       , timeLastShoutedFeedMe = Nothing
       , callingOut = Nothing
       , holding = EmptyHanded
+      , desireToEat = False
       }
     ]
 
@@ -347,8 +365,8 @@ stopAtFood =
         ActionGenerator "stop at food" generator
 
 
-eatFood : ActionGenerator
-eatFood =
+pickUpFoodToEat : ActionGenerator
+pickUpFoodToEat =
     let
         generator : Model -> Agent -> List Action
         generator model agent =
@@ -357,9 +375,9 @@ eatFood =
         goalPerItem : Food -> Action
         goalPerItem food =
             Action
-                ("eat meal" |> withSuffix food.id)
-                (EatFood food.id)
-                [ { name = "in range of meal"
+                ("pick up food to eat" |> withSuffix food.id)
+                (PickUpFood food.id)
+                [ { name = "in pickup range"
                   , function = Exponential 0.01
                   , input = DistanceToTargetPoint food.physics.position
                   , inputMin = 20
@@ -367,11 +385,85 @@ eatFood =
                   , weighting = 0.8
                   , offset = -0.01
                   }
+                , { name = "hunger"
+                  , function = Linear 1 0
+                  , input = Hunger
+                  , inputMin = 0
+                  , inputMax = 1
+                  , weighting = 3
+                  , offset = 0
+                  }
                 , defaultHysteresis 0.1
                 ]
                 Dict.empty
     in
-        ActionGenerator "stop at food" generator
+        ActionGenerator "pick up food to eat" generator
+
+
+eatCarriedFood : ActionGenerator
+eatCarriedFood =
+    let
+        generator : Model -> Agent -> List Action
+        generator model agent =
+            List.filterMap identity <|
+                case agent.holding of
+                    EmptyHanded ->
+                        []
+
+                    OnlyLeftHand (Edible food) ->
+                        [ goalPerItem agent ]
+
+                    OnlyLeftHand _ ->
+                        []
+
+                    OnlyRightHand (Edible food) ->
+                        [ goalPerItem agent ]
+
+                    OnlyRightHand _ ->
+                        []
+
+                    EachHand _ (Edible food) ->
+                        [ goalPerItem agent ]
+
+                    EachHand (Edible food) _ ->
+                        [ goalPerItem agent ]
+
+                    EachHand _ _ ->
+                        []
+
+                    BothHands (Edible food) ->
+                        [ goalPerItem agent ]
+
+                    BothHands _ ->
+                        []
+
+        goalPerItem : Agent -> Maybe Action
+        goalPerItem agent =
+            Action
+                ("eat carried meal")
+                (EatHeldFood)
+                [ { name = "currently carrying food"
+                  , function = Linear 1 0
+                  , input = IsCarryingFood
+                  , inputMin = 0
+                  , inputMax = 1
+                  , weighting = 1
+                  , offset = 0
+                  }
+                , { name = "hunger"
+                  , function = Linear 1 0
+                  , input = Hunger
+                  , inputMin = 0
+                  , inputMax = 1
+                  , weighting = 3
+                  , offset = 0
+                  }
+                , defaultHysteresis 0.1
+                ]
+                Dict.empty
+                |> Just
+    in
+        ActionGenerator "eat carried food" generator
 
 
 avoidFire : ActionGenerator
@@ -458,7 +550,7 @@ updateHelp msg model =
                         let
                             prior =
                                 Dict.get actionName viz
-                                    |> Maybe.withDefault False
+                                    |> withDefault False
                         in
                             Dict.insert actionName (not prior) viz
 
@@ -480,7 +572,7 @@ updateHelp msg model =
                         let
                             prior =
                                 Dict.get considerationName viz
-                                    |> Maybe.withDefault False
+                                    |> withDefault False
                         in
                             Dict.insert considerationName (not prior) viz
 
@@ -541,7 +633,7 @@ moveAgent model currentTime dT agent =
                 Just arrestMomentumAction ->
                     getMovementVector currentTime dT agent arrestMomentumAction
                         |> Maybe.map List.singleton
-                        |> Maybe.withDefault []
+                        |> withDefault []
 
                 Nothing ->
                     List.filterMap (getMovementVector currentTime dT agent) (getActions agent)
@@ -555,6 +647,7 @@ moveAgent model currentTime dT agent =
             Vector2d.direction newAcceleration
                 |> withDefault agent.physics.facing
 
+        topAction : Maybe Action
         topAction =
             getActions agent
                 |> List.sortBy (computeUtility agent currentTime >> (*) -1)
@@ -576,7 +669,7 @@ moveAgent model currentTime dT agent =
                             ( agent.timeLastShoutedFeedMe, Nothing )
                 )
                 topAction
-                |> Maybe.withDefault
+                |> withDefault
                     ( agent.timeLastShoutedFeedMe, Nothing )
 
         newHunger =
@@ -596,13 +689,19 @@ moveAgent model currentTime dT agent =
                     , acceleration = newAcceleration
                     , facing = newFacing
                 }
+
+        desireToEat =
+            topAction
+                |> Maybe.map signalsDesireToEat
+                |> withDefault False
     in
         { agent
             | physics = newPhysics
             , timeLastShoutedFeedMe = newFeedMeTime
             , callingOut = newCall
             , hunger = newHunger
-            , currentAction = topAction |> Maybe.map .name |> Maybe.withDefault "none"
+            , currentAction = topAction |> Maybe.map .name |> withDefault "none"
+            , desireToEat = desireToEat
         }
 
 
@@ -666,42 +765,10 @@ getMovementVector currentTime deltaTime agent action =
         CallOut signal intensity ->
             Nothing
 
-        EatFood _ ->
+        PickUpFood _ ->
             Nothing
 
-
-isMovementAction : Action -> Bool
-isMovementAction action =
-    case action.outcome of
-        ArrestMomentum ->
-            True
-
-        MoveTo _ ->
-            True
-
-        MoveAwayFrom _ ->
-            True
-
-        Wander ->
-            True
-
-        DoNothing ->
-            False
-
-        CallOut _ _ ->
-            False
-
-        EatFood _ ->
-            False
-
-
-onlyArrestMomentum : Action -> Maybe Action
-onlyArrestMomentum action =
-    case action.outcome of
-        ArrestMomentum ->
-            Just action
-
-        _ ->
+        EatHeldFood ->
             Nothing
 
 
@@ -756,7 +823,7 @@ recomputeActions model agent =
             let
                 oldVCs =
                     Dict.get action.name preservableProperties
-                        |> Maybe.withDefault Dict.empty
+                        |> withDefault Dict.empty
             in
                 { action | visibleConsiderations = oldVCs }
     in
@@ -782,80 +849,188 @@ moveWorld newTime model =
             in
                 List.map dMove model.agents
 
-        afterEating : Model
-        afterEating =
-            model.agents
-                |> List.filterMap (isEating model.time)
-                |> List.foldl eat model
-
-        newFoods =
-            afterEating.foods
+        foodsAfterDecay =
+            model.foods
                 |> List.filterMap (rotFood deltaT)
+
+        foldOverPickedFood : List Agent -> (List Agent, List Food) -> (List Agent, List Food)
+        foldOverPickedFood agents (agentAcc, foodAcc) =
+          case agents of
+            [] ->
+              (agentAcc, foodAcc)
+            nextAgent :: restAgents ->
+              let
+              in
+                (agentAcc :: updatedAgent, updatedFoods)
+
+
+        (agentsAfterPickingUpFood, pickedFood) =
+            List.foldl
+
+                ([], foodsAfterDecay)
+                newAgents
+
     in
         { model
             | time = newTime
-            , foods = newFoods
-            , agents = newAgents
+            , foods = foodsAfterDecay
+            , agents = agentsAfterPickingUpFood
         }
 
 
-isEating : Time -> Agent -> Maybe ( String, Int )
-isEating currentTime agent =
+isPickingUpFood : Time -> Agent -> Bool
+isPickingUpFood currentTime agent =
+    getActions agent
+        |> List.sortBy (computeUtility agent currentTime >> (*) -1)
+        |> List.head
+        |> Maybe.map .outcome
+        |> Maybe.map
+            (\outcome ->
+                case outcome of
+                    EatHeldFood ->
+                        True
+
+                    _ ->
+                        False
+            )
+        |> withDefault False
+
+
+pickUpFood : Agent -> List Food -> ( Agent, List Food )
+pickUpFood agent foods =
     let
-        topAction =
-            getActions agent
-                |> List.sortBy (computeUtility agent currentTime >> (*) -1)
-                |> List.head
-                |> Maybe.map .outcome
-    in
-        case topAction of
-            Just (EatFood foodID) ->
-                Just ( agent.name, foodID )
-
-            _ ->
-                Nothing
-
-
-eat : ( String, Int ) -> Model -> Model
-eat ( agentName, foodID ) model =
-    let
-        isTargeted =
-            .id >> (==) foodID
+        foodIsAvailable : Food -> Bool
+        foodIsAvailable food =
+            food.id == foodID
 
         foodAvailable : Bool
         foodAvailable =
-            List.any isTargeted model.foods
+            model.foods
+                |> List.any foodIsAvailable
 
-        isAvailable =
-            .name >> (==) agentName
+        isAvailable : Agent -> Bool
+        isAvailable agent =
+            let
+                isAvailable =
+                    agent.name == agentName
+
+                handsAreFree =
+                    case agent.holding of
+                        EmptyHanded ->
+                            True
+
+                        OnlyLeftHand _ ->
+                            False
+
+                        OnlyRightHand _ ->
+                            False
+
+                        EachHand _ _ ->
+                            False
+
+                        BothHands _ ->
+                            False
+            in
+                isAvailable && handsAreFree
 
         agentAvailable : Bool
         agentAvailable =
             List.any isAvailable model.agents
 
-        bite : Food -> Food
-        bite food =
-            if (food |> isTargeted) && agentAvailable then
-                { food | joules = food.joules - 20000000 }
+        pickup : Food -> Maybe Food
+        pickup food =
+            if (food |> foodIsAvailable) && agentAvailable then
+                Nothing
             else
-                food
+                Just food
 
-        swallow : Agent -> Agent
-        swallow agent =
+        carry : Agent -> Agent
+        carry agent =
             if (agent |> isAvailable) && foodAvailable then
-                { agent | hunger = agent.hunger - 0.2 |> clamp 0 1 }
+                let
+                    maybeFood =
+                        newFoods |> List.head
+                in
+                    case maybeFood of
+                        Nothing ->
+                            -- Shouldn't get here...
+                            agent
+
+                        Just food ->
+                            { agent | holding = OnlyRightHand (Edible food) }
             else
                 agent
 
         newFoods =
             model.foods
-                |> List.map bite
+                |> List.filterMap pickup
 
         newAgents =
             model.agents
-                |> List.map swallow
+                |> List.map carry
     in
-        { model | foods = newFoods, agents = newAgents }
+        ( newFoods, newAgents )
+
+
+eat : Agent -> Agent
+eat agent =
+    let
+        ( hunger, holding ) =
+            if agent.holding |> isHolding someFood then
+                ( agent.hunger - 1 |> clamp 0 1
+                , EmptyHanded
+                )
+            else
+                ( agent.hunger, agent.holding )
+
+        someFood : Portable -> Bool
+        someFood p =
+            case p of
+                Edible _ ->
+                    True
+
+                _ ->
+                    False
+    in
+        { agent | hunger = hunger, holding = holding }
+
+
+isHolding : (Portable -> Bool) -> Holding -> Bool
+isHolding f held =
+    case held of
+        EmptyHanded ->
+            False
+
+        OnlyLeftHand p ->
+            f p
+
+        OnlyRightHand p ->
+            f p
+
+        EachHand pL pR ->
+            (f pL) || (f pR)
+
+        BothHands p ->
+            f p
+
+
+mapHeld : (Portable -> Portable) -> Holding -> Holding
+mapHeld f held =
+    case held of
+        EmptyHanded ->
+            EmptyHanded
+
+        OnlyLeftHand p ->
+            OnlyLeftHand <| f p
+
+        OnlyRightHand p ->
+            OnlyRightHand <| f p
+
+        EachHand pL pR ->
+            EachHand (f pL) (f pR)
+
+        BothHands p ->
+            BothHands <| f p
 
 
 rotFood : Time -> Food -> Maybe Food

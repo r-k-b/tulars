@@ -19,6 +19,10 @@
         - [ ] From attacks
         - [ ] From hunger
       - [ ] ...recognize unpleasant areas
+  - [ ] Give agents a 'frustration' feeling
+    - [ ] Give agents a way to break out of unproductive patterns
+      - [ ] Define "unproductivity" for actions
+        - [ ] e.g., not getting closer to food to eat
   - [ ] Group those agents into factions
   - [ ] Allow live display and control over the space
     - [x] Render the space

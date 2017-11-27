@@ -36,6 +36,7 @@ type alias Agent =
     , timeLastShoutedFeedMe : Maybe Time
     , callingOut : Maybe CurrentSignal
     , holding : Holding
+    , desireToEat : Bool
     }
 
 
@@ -58,7 +59,8 @@ type ActionOutcome
     | ArrestMomentum
     | CallOut Signal Float
     | Wander
-    | EatFood Int
+    | PickUpFood Int
+    | EatHeldFood
 
 
 type Signal
@@ -92,6 +94,8 @@ type ConsiderationInput
     | TimeSinceLastShoutedFeedMe
     | CurrentlyCallingOut
     | IsCurrentAction
+    | DesiresToEat
+    | IsCarryingFood
 
 
 type alias PhysicalProperties =
