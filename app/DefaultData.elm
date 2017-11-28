@@ -113,7 +113,6 @@ agents =
             , eatCarriedFood
             , avoidFire
             , maintainPersonalSpace
-            , hoverNear "Bob"
             ]
       , visibleActions = Dict.empty
       , variableActions = []
@@ -169,6 +168,7 @@ agents =
             , eatCarriedFood
             , avoidFire
             , maintainPersonalSpace
+            , hoverNear "Bob"
             ]
       , visibleActions = Dict.empty
       , variableActions = []
@@ -530,7 +530,6 @@ hoverNear targetAgentName =
                   , weighting = 0.6
                   , offset = 0
                   }
-                , defaultHysteresis 0.1
                 ]
                 Dict.empty
     in
