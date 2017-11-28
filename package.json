@@ -22,6 +22,8 @@
   "dependencies": {
     "chokidar": "1.7.0",
     "chokidar-cli": "1.2.0",
-    "elm": "0.18.0"
+    "elm": "0.18.0",
+    "elm-analyse": "0.12.1",
+    "g": "2.0.1"
   }
 }

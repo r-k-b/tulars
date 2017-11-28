@@ -1,4 +1,17 @@
-module UtilityFunctions exposing (..)
+module UtilityFunctions
+    exposing
+        ( clampTo
+        , computeConsideration
+        , computeUtility
+        , computeVariableActions
+        , getActions
+        , getConsiderationRawValue
+        , isHolding
+        , isMovementAction
+        , onlyArrestMomentum
+        , portableIsFood
+        , signalsDesireToEat
+        )
 
 import Time exposing (Time)
 import Types
@@ -84,12 +97,12 @@ computeConsideration agent currentTime forced action consideration =
                     1 / (1 + e ^ (-bend * (mappedInput - center)))
 
                 Normal tightness center squareness ->
-                    e ^ (-(tightness ^ squareness) * (abs (mappedInput - center)) ^ squareness)
+                    e ^ (-(tightness ^ squareness) * abs (mappedInput - center) ^ squareness)
 
                 Asymmetric centerA bendA offsetA squarenessA centerB bendB offsetB squarenessB ->
                     let
                         f ctr bend offset sqns x =
-                            (atan (bend * (x - ctr))) / (sqns * pi) + offset
+                            atan (bend * (x - ctr)) / (sqns * pi) + offset
 
                         a =
                             f centerA bendA offsetA squarenessA mappedInput
@@ -107,7 +120,7 @@ computeConsideration agent currentTime forced action consideration =
 
 nansToZero : Float -> Float
 nansToZero n =
-    case (isNaN n) of
+    case isNaN n of
         True ->
             0
 
@@ -144,19 +157,12 @@ getConsiderationRawValue agent currentTime action consideration =
                 |> Vector2d.length
 
         TimeSinceLastShoutedFeedMe ->
-            let
-                timeSince =
-                    case agent.timeLastShoutedFeedMe of
-                        Nothing ->
-                            10000
+            case agent.timeLastShoutedFeedMe of
+                Nothing ->
+                    10000
 
-                        Just t ->
-                            currentTime - t
-            in
-                if isNaN timeSince then
-                    Debug.crash "wtf"
-                else
-                    timeSince
+                Just t ->
+                    currentTime - t
 
         CurrentlyCallingOut ->
             case agent.callingOut of
@@ -211,7 +217,7 @@ isHolding f held =
             f p
 
         EachHand pL pR ->
-            (f pL) || (f pR)
+            f pL || f pR
 
         BothHands p ->
             f p
@@ -249,8 +255,8 @@ applyList model agent generators =
         [] ->
             []
 
-        (ActionGenerator name gen) :: rest ->
-            (gen model agent) :: (applyList model agent rest)
+        (ActionGenerator _ gen) :: rest ->
+            gen model agent :: applyList model agent rest
 
 
 isMovementAction : Action -> Bool

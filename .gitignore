@@ -6,3 +6,6 @@ repl-temp-*
 
 node_modules
 .idea
+
+# firebase
+.firebaserc

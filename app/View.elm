@@ -1,40 +1,31 @@
 module View exposing (view)
 
 import Dict
-import Html exposing (Attribute, Html, code, div, h2, h3, h4, h5, li, text, ul)
+import Html exposing (Html, code, div, h2, h3, h4, h5, li, table, td, text, th, tr, ul)
 import Html.Attributes exposing (class, style)
-import Html.Events exposing (on, onClick)
-import Json.Decode as Decode
+import Html.Events exposing (onClick)
 import List.Extra as ListE
-import Mouse exposing (Position)
 import OpenSolid.BoundingBox2d as BoundingBox2d exposing (BoundingBox2d)
 import OpenSolid.Point2d as Point2d exposing (xCoordinate, yCoordinate)
-import OpenSolid.Svg as Svg exposing (render2d, relativeTo)
-import OpenSolid.Vector2d as Vector2d exposing (Vector2d, scaleBy, sum)
+import OpenSolid.Svg as Svg exposing (DirectionOptions, relativeTo)
+import OpenSolid.Vector2d as Vector2d exposing (scaleBy)
 import OpenSolid.Circle2d as Circle2d
 import OpenSolid.Frame2d as Frame2d
-import Svg exposing (Svg, g, rect, stop, svg)
+import Svg exposing (Svg, g, stop)
 import Svg.Attributes as Attributes
     exposing
         ( cx
         , cy
         , fill
-        , height
         , id
         , offset
         , r
-        , rx
-        , ry
         , stopColor
         , stopOpacity
         , stroke
-        , transform
         , viewBox
-        , width
-        , x
         , x1
         , x2
-        , y
         , y1
         , y2
         )
@@ -55,17 +46,22 @@ import Types
             , IsCurrentAction
             , TimeSinceLastShoutedFeedMe
             )
-        , CurrentSignal
         , Fire
         , FireExtinguisher
         , Food
+        , Holding
+            ( EmptyHanded
+            , OnlyLeftHand
+            , OnlyRightHand
+            , EachHand
+            , BothHands
+            )
         , InputFunction(Asymmetric, Exponential, Linear, Normal, Sigmoid)
         , Model
         , Msg(ToggleConditionDetailsVisibility, ToggleConditionsVisibility)
         , Signal(Eating, FeedMe, GoAway)
         )
-import Util exposing (mousePosToVec2)
-import Formatting exposing (roundTo, padLeft, print, (<>))
+import Formatting exposing (print)
 import UtilityFunctions
     exposing
         ( clampTo
@@ -77,6 +73,7 @@ import UtilityFunctions
         , portableIsFood
         )
 import Plot
+import Tuple exposing (first, second)
 
 
 view : Model -> Html Msg
@@ -88,7 +85,7 @@ view model =
             ]
         , div
             [ agentInfoGridItemStyle ]
-            [ agentsInfo model model.time model.agents
+            [ agentsInfo model.time model.agents
             ]
         ]
 
@@ -104,7 +101,7 @@ bb =
 
 
 render2dResponsive : BoundingBox2d -> Svg msg -> Html msg
-render2dResponsive boundingBox svg =
+render2dResponsive boundingBox svgMsg =
     let
         { minX, maxY } =
             BoundingBox2d.extrema boundingBox
@@ -113,24 +110,24 @@ render2dResponsive boundingBox svg =
             Frame2d.atPoint (Point2d.fromCoordinates ( minX, maxY ))
                 |> Frame2d.flipY
 
-        ( width, height ) =
+        ( bbWidth, bbHeight ) =
             BoundingBox2d.dimensions boundingBox
 
         coords =
             [ 0
             , 0
-            , width
-            , height
+            , bbWidth
+            , bbHeight
             ]
                 |> List.map toString
                 |> String.join " "
     in
         Svg.svg
-            [ Attributes.width (toString width)
-            , Attributes.height (toString height)
+            [ Attributes.width (toString bbWidth)
+            , Attributes.height (toString bbHeight)
             , viewBox coords
             ]
-            [ relativeTo topLeftFrame svg ]
+            [ relativeTo topLeftFrame svgMsg ]
 
 
 mainMap : Model -> Html.Html Msg
@@ -152,7 +149,7 @@ mainMap model =
 
 
 borderIndicator : Float -> Svg Msg
-borderIndicator r =
+borderIndicator radius =
     Svg.circle2d
         [ Attributes.fillOpacity "0"
         , Attributes.stroke "grey"
@@ -160,26 +157,28 @@ borderIndicator r =
         ]
         (Circle2d.with
             { centerPoint = Point2d.origin
-            , radius = r
+            , radius = radius
             }
         )
 
 
-agentsInfo : Model -> Time -> List Agent -> Html.Html Msg
-agentsInfo model currentTime agents =
+agentsInfo : Time -> List Agent -> Html.Html Msg
+agentsInfo currentTime agents =
     div []
         [ h2 []
             [ text "Agents" ]
         , div
             []
-            (List.map (renderAgentInfo model currentTime) agents)
+            (List.map (renderAgentInfo currentTime) agents)
         ]
 
 
+(=>) : a -> b -> ( a, b )
 (=>) =
     (,)
 
 
+pageGridContainerStyle : Html.Attribute msg
 pageGridContainerStyle =
     style
         [ "display" => "grid"
@@ -193,6 +192,7 @@ pageGridContainerStyle =
         ]
 
 
+mapGridItemStyle : Html.Attribute msg
 mapGridItemStyle =
     style
         [ "grid-column" => "1 / 2"
@@ -202,17 +202,13 @@ mapGridItemStyle =
         ]
 
 
+agentInfoGridItemStyle : Html.Attribute msg
 agentInfoGridItemStyle =
     style
         [ "grid-column" => "2 / 4"
         , "grid-row" => "1 / 3"
         , "overflow" => "auto"
         ]
-
-
-px : Int -> String
-px number =
-    toString number ++ "px"
 
 
 inPx : Float -> String
@@ -230,6 +226,7 @@ agentPoint =
     }
 
 
+facingArrow : DirectionOptions Msg
 facingArrow =
     { length = 20
     , tipLength = 5
@@ -303,12 +300,13 @@ renderAgent agent =
             )
 
 
-renderAgentInfo : Model -> Time -> Agent -> Html Msg
-renderAgentInfo model currentTime agent =
+renderAgentInfo : Time -> Agent -> Html Msg
+renderAgentInfo currentTime agent =
     div []
         [ h3
             [ style [ "margin-bottom" => "0.1em" ] ]
             [ text agent.name ]
+        , agentStats agent
         , div [ style indentWithLine ]
             (getActions agent
                 |> List.map (renderAction agent currentTime)
@@ -316,24 +314,47 @@ renderAgentInfo model currentTime agent =
         ]
 
 
-renderCalling : Maybe CurrentSignal -> Html Msg
-renderCalling currentSignal =
-    case currentSignal of
-        Nothing ->
-            text "Nothing"
+agentStats : Agent -> Html Msg
+agentStats agent =
+    let
+        stats : List ( String, String )
+        stats =
+            [ "hunger" => prettyFloat 3 agent.hunger
+            , "food targeted" => toString agent.desireToEat
+            , "holding" => carryingAsString agent.holding
+            ]
 
-        Just calling ->
-            case calling.signal of
-                FeedMe ->
-                    text "Feed Me!"
+        cell elem =
+            text >> List.singleton >> elem [ style [ "padding-right" => "1em" ] ]
+    in
+        table [ style [ "font-family" => "monospace" ] ]
+            [ tr []
+                (stats |> List.map (first >> cell th))
+            , tr []
+                (stats |> List.map (second >> cell td))
+            ]
 
-                GoAway ->
-                    text "Go away"
 
-                Eating ->
-                    text "nom nom nom"
+carryingAsString : Holding -> String
+carryingAsString held =
+    case held of
+        EmptyHanded ->
+            "nothing"
+
+        OnlyLeftHand _ ->
+            "left hand"
+
+        OnlyRightHand _ ->
+            "right hand"
+
+        EachHand _ _ ->
+            "each hand"
+
+        BothHands _ ->
+            "both hands"
 
 
+indentWithLine : List ( String, String )
 indentWithLine =
     [ "margin-left" => "0.2em"
     , "padding-left" => "1em"
@@ -409,13 +430,13 @@ renderConsideration agent action currentTime con =
             if isExpanded then
                 [ ul []
                     [ li []
-                        [ codeText <| "Input: " ++ (renderCI currentTime agent action con.input)
+                        [ codeText <| "Input: " ++ renderCI currentTime agent action con.input
                         ]
                     , li []
-                        [ codeText <| "Output:    " ++ (prettyFloat 4 considerationValue)
+                        [ codeText <| "Output:    " ++ prettyFloat 4 considerationValue
                         ]
                     , li []
-                        [ codeText <| "Raw Value: " ++ (prettyFloat 4 rawValue)
+                        [ codeText <| "Raw Value: " ++ prettyFloat 4 rawValue
                         ]
                     , li []
                         [ codeText <| "Min: " ++ (prettyFloat 4 <| con.inputMin) ++ ", Max: " ++ (prettyFloat 2 <| con.inputMax)
@@ -454,9 +475,6 @@ renderConsideration agent action currentTime con =
 renderConsiderationChart : Agent -> Time -> Action -> Consideration -> Html Msg
 renderConsiderationChart agent currentTime action con =
     let
-        data =
-            inputMin
-
         inputMin =
             min con.inputMin con.inputMax
 
@@ -497,7 +515,7 @@ renderConsiderationChart agent currentTime action con =
         customLineToDataPoints : Float -> List (Plot.DataPoint msg)
         customLineToDataPoints data =
             ListE.unfoldr stepwise data
-                |> List.map (\( x, y ) -> Plot.clear x y)
+                |> List.map (\( xVal, yVal ) -> Plot.clear xVal yVal)
 
         customLine : Plot.Series Float msg
         customLine =
@@ -507,20 +525,20 @@ renderConsiderationChart agent currentTime action con =
             }
 
         currentValPointToDataPoints : Float -> List (Plot.DataPoint msg)
-        currentValPointToDataPoints data =
+        currentValPointToDataPoints _ =
             let
-                x =
+                xVal =
                     getConsiderationRawValue agent currentTime action con
                         |> clampTo con
 
-                y =
-                    computeConsideration agent currentTime (Just x) action con
+                yVal =
+                    computeConsideration agent currentTime (Just xVal) action con
             in
-                [ blueCircle ( x, y ) ]
+                [ blueCircle ( xVal, yVal ) ]
 
         blueCircle : ( Float, Float ) -> Plot.DataPoint msg
-        blueCircle ( x, y ) =
-            Plot.dot (Plot.viewCircle 10 "#ff0000") x y
+        blueCircle ( xVal, yVal ) =
+            Plot.dot (Plot.viewCircle 10 "#ff0000") xVal yVal
 
         currentValPoint : Plot.Series Float msg
         currentValPoint =
@@ -600,20 +618,20 @@ renderUF : InputFunction -> String
 renderUF f =
     case f of
         Linear m b ->
-            "Linear (slope = " ++ (toString m) ++ ", offset = " ++ (toString b) ++ ")"
+            "Linear (slope = " ++ toString m ++ ", offset = " ++ toString b ++ ")"
 
         Exponential exponent ->
-            "Exponential (exponent = " ++ (toString exponent) ++ ")"
+            "Exponential (exponent = " ++ toString exponent ++ ")"
 
         Sigmoid bend center ->
-            "Sigmoid (bend = " ++ (toString bend) ++ ", center = " ++ (toString center) ++ ")"
+            "Sigmoid (bend = " ++ toString bend ++ ", center = " ++ toString center ++ ")"
 
         Normal tightness center squareness ->
             let
                 vals =
-                    [ "tightness = " ++ (toString tightness)
-                    , "center = " ++ (toString center)
-                    , "squareness = " ++ (toString squareness)
+                    [ "tightness = " ++ toString tightness
+                    , "center = " ++ toString center
+                    , "squareness = " ++ toString squareness
                     ]
             in
                 "Normal (" ++ String.join ", " vals ++ ")"
@@ -621,14 +639,14 @@ renderUF f =
         Asymmetric centerA bendA offsetA squarenessA centerB bendB offsetB squarenessB ->
             let
                 vals =
-                    [ "centerA=" ++ (prettyFloat 1 centerA)
-                    , "bendA=" ++ (prettyFloat 1 bendA)
-                    , "offsetA=" ++ (prettyFloat 1 offsetA)
-                    , "squarenessA=" ++ (prettyFloat 1 squarenessA)
-                    , "centerB=" ++ (prettyFloat 1 centerB)
-                    , "bendB=" ++ (prettyFloat 1 bendB)
-                    , "offsetB=" ++ (prettyFloat 1 offsetB)
-                    , "squarenessB=" ++ (prettyFloat 1 squarenessB)
+                    [ "centerA=" ++ prettyFloat 1 centerA
+                    , "bendA=" ++ prettyFloat 1 bendA
+                    , "offsetA=" ++ prettyFloat 1 offsetA
+                    , "squarenessA=" ++ prettyFloat 1 squarenessA
+                    , "centerB=" ++ prettyFloat 1 centerB
+                    , "bendB=" ++ prettyFloat 1 bendB
+                    , "offsetB=" ++ prettyFloat 1 offsetB
+                    , "squarenessB=" ++ prettyFloat 1 squarenessB
                     ]
             in
                 "Asymmetric (" ++ String.join ", " vals ++ ")"
@@ -641,10 +659,10 @@ renderCI currentTime agent action ci =
             "Hunger"
 
         DistanceToTargetPoint p ->
-            "Distance to point " ++ (prettyPoint2d p)
+            "Distance to point " ++ prettyPoint2d p
 
         Constant p ->
-            "Constant " ++ (prettyFloat 2 p)
+            "Constant " ++ prettyFloat 2 p
 
         CurrentSpeed ->
             "Current Speed "
@@ -688,21 +706,6 @@ renderCI currentTime agent action ci =
             "Am I carrying some food? " ++ (toString <| isHolding portableIsFood agent.holding)
 
 
-vectorAngleDegrees : Vector2d.Vector2d -> Float
-vectorAngleDegrees vec =
-    let
-        ( length, polarAngle ) =
-            Vector2d.polarComponents vec
-    in
-        polarAngle / (turns 1) * 360
-
-
-prettyPoint2dHtml : Point2d.Point2d -> Html Msg
-prettyPoint2dHtml p =
-    prettyPoint2d p
-        |> codeText
-
-
 prettyPoint2d : Point2d.Point2d -> String
 prettyPoint2d p =
     "(" ++ (prettyFloat 1 <| xCoordinate p) ++ ", " ++ (prettyFloat 1 <| yCoordinate p) ++ ")"
@@ -722,27 +725,6 @@ codeText s =
 prettyFloat : Int -> Float -> String
 prettyFloat dp n =
     print (Formatting.roundTo dp |> Formatting.padLeft 6 ' ') n
-
-
-renderArrowToAgent : Agent -> Svg msg
-renderArrowToAgent agent =
-    Svg.vector2d
-        { tipLength = 30
-        , tipWidth = 15
-        , tipAttributes =
-            [ Attributes.fill "orange"
-            , Attributes.stroke "blue"
-            , Attributes.strokeWidth "2"
-            ]
-        , stemAttributes =
-            [ Attributes.stroke "blue"
-            , Attributes.strokeWidth "3"
-            , Attributes.strokeDasharray "3 3"
-            ]
-        , groupAttributes = []
-        }
-        Point2d.origin
-        (Vector2d.from Point2d.origin agent.physics.position)
 
 
 renderEmoji : String -> Point2d.Point2d -> Html Msg
@@ -773,9 +755,10 @@ renderFood food =
     renderEmoji "🍽" food.physics.position
 
 
+{-| todo: replace 🚒 with the fire extinguisher symbol in Unicode 11
+-}
 renderExtinguisher : FireExtinguisher -> Svg Msg
 renderExtinguisher extinguisher =
-    -- todo: replace 🚒 with the fire extinguisher symbol in Unicode 11
     renderEmoji "🚒" extinguisher.physics.position
 
 
@@ -813,7 +796,7 @@ renderFire fire =
                 ]
                 []
     in
-        g [ id <| "fire_" ++ (toString fire.id) ]
+        g [ id <| "fire_" ++ toString fire.id ]
             [ renderEmoji "🔥" fire.physics.position
             , gradient
             , redness

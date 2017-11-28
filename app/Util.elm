@@ -1,9 +1,6 @@
-module Util exposing (..)
+module Util exposing (mousePosToVec2)
 
-import Mouse exposing (Position)
-import OpenSolid.Point2d exposing (Point2d)
-import OpenSolid.Vector2d as V2 exposing (Vector2d, difference, sum)
-import Types exposing (Model)
+import OpenSolid.Vector2d as V2 exposing (Vector2d)
 
 
 mousePosToVec2 : { x : Int, y : Int } -> Vector2d

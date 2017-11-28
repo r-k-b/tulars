@@ -1,10 +1,46 @@
-module Types exposing (..)
+module Types
+    exposing
+        ( Action
+        , ActionGenerator(ActionGenerator)
+        , ActionOutcome
+            ( ArrestMomentum
+            , CallOut
+            , DoNothing
+            , EatHeldFood
+            , MoveAwayFrom
+            , MoveTo
+            , PickUpFood
+            , Wander
+            )
+        , Agent
+        , Consideration
+        , ConsiderationInput
+            ( Constant
+            , CurrentlyCallingOut
+            , CurrentSpeed
+            , DesiresToEat
+            , DistanceToTargetPoint
+            , Hunger
+            , IsCarryingFood
+            , IsCurrentAction
+            , TimeSinceLastShoutedFeedMe
+            )
+        , CurrentSignal
+        , Fire
+        , FireExtinguisher
+        , Food
+        , Holding(BothHands, EachHand, EmptyHanded, OnlyLeftHand, OnlyRightHand)
+        , InputFunction(Asymmetric, Exponential, Linear, Normal, Sigmoid)
+        , Model
+        , Msg(InitTime, RAFtick, ToggleConditionDetailsVisibility, ToggleConditionsVisibility)
+        , Portable(Edible)
+        , Signal(Eating, FeedMe, GoAway)
+        )
 
 import Dict exposing (Dict)
-import Mouse exposing (Position)
 import OpenSolid.Direction2d exposing (Direction2d)
 import OpenSolid.Point2d exposing (Point2d)
-import OpenSolid.Vector2d as V2 exposing (Vector2d)
+import OpenSolid.Vector2d exposing (Vector2d)
 import Time exposing (Time)
 
 
@@ -37,6 +73,8 @@ type alias Agent =
     , callingOut : Maybe CurrentSignal
     , holding : Holding
     , desireToEat : Bool
+
+    -- , desireToStayStill : Bool
     }
 
 
