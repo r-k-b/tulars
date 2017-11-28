@@ -39,7 +39,7 @@ import Types
         , FireExtinguisher
         , Food
         , Holding(BothHands, EachHand, EmptyHanded, OnlyLeftHand, OnlyRightHand)
-        , InputFunction(Asymmetric, Exponential, Linear, Sigmoid)
+        , InputFunction(Asymmetric, Exponential, Linear, Normal, Sigmoid)
         , Model
         , Portable(Edible)
         , Signal(FeedMe)
@@ -113,6 +113,7 @@ agents =
             , eatCarriedFood
             , avoidFire
             , maintainPersonalSpace
+            , hoverNear "Bob"
             ]
       , visibleActions = Dict.empty
       , variableActions = []
@@ -297,6 +298,14 @@ moveToFood =
                   , input = DistanceToTargetPoint food.physics.position
                   , inputMin = 20
                   , inputMax = 25
+                  , weighting = 1
+                  , offset = 0
+                  }
+                , { name = "not already carrying food"
+                  , function = Linear 1 0
+                  , input = IsCarryingFood
+                  , inputMin = 1
+                  , inputMax = 0
                   , weighting = 1
                   , offset = 0
                   }
@@ -490,6 +499,35 @@ maintainPersonalSpace =
                   , inputMin = 15
                   , inputMax = 5
                   , weighting = 1
+                  , offset = 0
+                  }
+                , defaultHysteresis 0.1
+                ]
+                Dict.empty
+    in
+        ActionGenerator "avoid fire" generator
+
+
+hoverNear : String -> ActionGenerator
+hoverNear targetAgentName =
+    let
+        generator : Model -> Agent -> List Action
+        generator model _ =
+            model.agents
+                |> List.filter (\other -> other.name == targetAgentName)
+                |> List.map goalPerItem
+
+        goalPerItem : Agent -> Action
+        goalPerItem otherAgent =
+            Action
+                ("hang around " ++ targetAgentName)
+                (MoveTo otherAgent.physics.position)
+                [ { name = "close, but not close enough"
+                  , function = Normal 2.6 0.5 10
+                  , input = DistanceToTargetPoint otherAgent.physics.position
+                  , inputMin = 30
+                  , inputMax = 70
+                  , weighting = 0.6
                   , offset = 0
                   }
                 , defaultHysteresis 0.1

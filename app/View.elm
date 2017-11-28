@@ -322,6 +322,7 @@ agentStats agent =
             [ "hunger" => prettyFloat 3 agent.hunger
             , "food targeted" => toString agent.desireToEat
             , "holding" => carryingAsString agent.holding
+            , "current action" => agent.currentAction
             ]
 
         cell elem =

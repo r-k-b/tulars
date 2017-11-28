@@ -419,7 +419,7 @@ foldOverPickedFood currentTime agent ( agentAcc, foodAcc ) =
                 Just action ->
                     case action.outcome of
                         PickUpFood foodID ->
-                            pickUpFood agent (Debug.log "foodID" foodID) foodAcc
+                            pickUpFood agent foodID foodAcc
 
                         _ ->
                             ( agent, foodAcc )
@@ -465,14 +465,14 @@ pickUpFood agent foodID foods =
 
         carry : Agent
         carry =
-            if Debug.log "agentIsAvailable && foodAvailable" agentIsAvailable && foodAvailable then
+            if agentIsAvailable && foodAvailable then
                 case newFoods |> List.head of
                     Nothing ->
                         -- Shouldn't get here...
                         agent
 
                     Just food ->
-                        { agent | holding = OnlyRightHand (Edible (Debug.log "carried food" food)) }
+                        { agent | holding = OnlyRightHand (Edible food) }
             else
                 agent
 
