@@ -472,21 +472,20 @@ pickUpFood agent foodID foods =
             else
                 Just food
 
+        newFoods =
+            foods |> List.filterMap pickup
+
         carry : Agent
         carry =
             if agentIsAvailable && foodAvailable then
-                case newFoods |> List.head of
+                case foods |> List.head of
                     Nothing ->
-                        -- Shouldn't get here...
                         agent
 
                     Just food ->
                         { agent | holding = OnlyRightHand (Edible food) }
             else
                 agent
-
-        newFoods =
-            foods |> List.filterMap pickup
     in
         ( carry, newFoods )
 
