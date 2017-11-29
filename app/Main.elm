@@ -178,6 +178,7 @@ moveAgent currentTime dT agent =
 
         newAcceleration =
             List.foldl Vector2d.sum Vector2d.zero movementVectors
+                |> deadzone
                 |> Vector2d.normalize
                 |> Vector2d.scaleBy 64
 
@@ -248,6 +249,14 @@ moveAgent currentTime dT agent =
             , desireToEat = desireToEat
             , holding = newHolding
         }
+
+
+deadzone : Vector2d -> Vector2d
+deadzone v =
+    if Vector2d.length v > 0.005 then
+        v
+    else
+        Vector2d.zero
 
 
 getMovementVector : Time -> Time -> Agent -> Action -> Maybe Vector2d
