@@ -33,7 +33,7 @@ module Types
         , InputFunction(Asymmetric, Exponential, Linear, Normal, Sigmoid)
         , Model
         , Msg(InitTime, RAFtick, ToggleConditionDetailsVisibility, ToggleConditionsVisibility)
-        , Portable(Edible)
+        , Portable(Edible, Extinguisher)
         , Signal(Eating, FeedMe, GoAway)
         )
 
@@ -184,6 +184,7 @@ type alias Food =
     { id : Int
     , physics : PhysicalProperties
     , joules : Float
+    , freshJoules : Float
     }
 
 

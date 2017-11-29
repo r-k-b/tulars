@@ -56,6 +56,7 @@ foods =
             , acceleration = Vector2d.zero
             }
       , joules = 3000000000
+      , freshJoules = 3000000000
       }
     , { id = 2
       , physics =
@@ -65,6 +66,7 @@ foods =
             , acceleration = Vector2d.zero
             }
       , joules = 3000000000
+      , freshJoules = 3000000000
       }
     ]
 

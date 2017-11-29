@@ -59,6 +59,7 @@ import Types
         , InputFunction(Asymmetric, Exponential, Linear, Normal, Sigmoid)
         , Model
         , Msg(ToggleConditionDetailsVisibility, ToggleConditionsVisibility)
+        , Portable(Edible, Extinguisher)
         , Signal(Eating, FeedMe, GoAway)
         )
 import Formatting exposing (print)
@@ -342,17 +343,27 @@ carryingAsString held =
         EmptyHanded ->
             "nothing"
 
-        OnlyLeftHand _ ->
-            "left hand"
+        OnlyLeftHand p ->
+            "left hand: " ++ portableAsString p
 
-        OnlyRightHand _ ->
-            "right hand"
+        OnlyRightHand p ->
+            "right hand: " ++ portableAsString p
 
-        EachHand _ _ ->
-            "each hand"
+        EachHand pL pR ->
+            "left/right: " ++ portableAsString pL ++ ", " ++ portableAsString pR
 
-        BothHands _ ->
-            "both hands"
+        BothHands p ->
+            "both hands: " ++ portableAsString p
+
+
+portableAsString : Portable -> String
+portableAsString p =
+    case p of
+        Extinguisher ext ->
+            "extinguisher @ " ++ prettyFloat 0 (ext.remaining / ext.capacity * 100) ++ "%"
+
+        Edible food ->
+            "food @ " ++ prettyFloat 0 (food.joules / food.freshJoules * 100) ++ "%"
 
 
 indentWithLine : List ( String, String )
