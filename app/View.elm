@@ -10,6 +10,7 @@ import OpenSolid.Point2d as Point2d exposing (xCoordinate, yCoordinate)
 import OpenSolid.Svg as Svg exposing (DirectionOptions, relativeTo)
 import OpenSolid.Vector2d as Vector2d exposing (scaleBy)
 import OpenSolid.Circle2d as Circle2d
+import OpenSolid.Direction2d as Direction2d
 import OpenSolid.Frame2d as Frame2d
 import Svg exposing (Svg, g, stop)
 import Svg.Attributes as Attributes
@@ -288,17 +289,63 @@ renderAgent agent =
 
                         Eating ->
                             [ renderEmoji "🍖" agent.physics.position ]
+
+        leftHand =
+            Point2d.fromCoordinates ( -10, 10 )
+
+        rightHand =
+            Point2d.fromCoordinates ( 10, 10 )
+
+        bothHands =
+            Point2d.fromCoordinates ( 0, 12 )
+
+        held =
+            case agent.holding of
+                EmptyHanded ->
+                    []
+
+                OnlyLeftHand p ->
+                    [ renderPortable p leftHand ]
+
+                OnlyRightHand p ->
+                    [ renderPortable p rightHand ]
+
+                EachHand pL pR ->
+                    [ renderPortable pL leftHand
+                    , renderPortable pR rightHand
+                    ]
+
+                BothHands p ->
+                    [ renderPortable p bothHands ]
     in
         g [ id <| "agent " ++ agent.name ]
-            (List.append
-                [ Svg.point2d agentPoint agent.physics.position
-                , Svg.direction2d facingArrow agent.physics.position agent.physics.facing
-                , agentVelocityArrow agent
-                , renderName agent
-                    |> Svg.scaleAbout agent.physics.position 0.7
-                ]
-                call
+            ([ Svg.point2d agentPoint agent.physics.position
+             , Svg.direction2d facingArrow agent.physics.position agent.physics.facing
+             , agentVelocityArrow agent
+             , renderName agent
+                |> Svg.scaleAbout agent.physics.position 0.7
+             , g [] held
+                |> Svg.translateBy (Vector2d.from Point2d.origin agent.physics.position)
+                |> Svg.rotateAround agent.physics.position (Direction2d.angle agent.physics.facing - pi / 2)
+             ]
+                |> append call
             )
+
+
+renderPortable : Portable -> Point2d.Point2d -> Svg Msg
+renderPortable p pOffset =
+    Svg.scaleAbout pOffset 0.6 <|
+        case p of
+            Edible _ ->
+                renderEmoji "🍽" pOffset
+
+            Extinguisher _ ->
+                renderEmoji "🚒" pOffset
+
+
+append : List a -> List a -> List a
+append =
+    flip List.append
 
 
 renderAgentInfo : Time -> Agent -> Html Msg
