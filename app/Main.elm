@@ -9,8 +9,10 @@ import Types
         ( Action
         , ActionOutcome
             ( ArrestMomentum
+            , BeggingForFood
             , CallOut
             , DoNothing
+            , DropHeldFood
             , EatHeldFood
             , MoveAwayFrom
             , MoveTo
@@ -24,6 +26,7 @@ import Types
         , Model
         , Msg(InitTime, RAFtick, ToggleConditionDetailsVisibility, ToggleConditionsVisibility)
         , Portable(Edible)
+        , Signal(Bored, FeedMe)
         )
 import View exposing (view)
 import AnimationFrame exposing (times)
@@ -36,6 +39,7 @@ import UtilityFunctions
         ( computeUtility
         , computeVariableActions
         , getActions
+        , isBeggingRelated
         , isMovementAction
         , onlyArrestMomentum
         , signalsDesireToEat
@@ -193,21 +197,29 @@ moveAgent currentTime dT agent =
                 |> List.head
 
         ( newFeedMeTime, newCall ) =
-            Maybe.map
-                (\topAct ->
-                    case topAct.outcome of
-                        CallOut signal _ ->
-                            case agent.callingOut of
-                                Nothing ->
-                                    ( Just currentTime, Just <| CurrentSignal signal currentTime )
+            topAction
+                |> Maybe.map
+                    (\topAct ->
+                        case topAct.outcome of
+                            CallOut FeedMe _ ->
+                                case agent.callingOut of
+                                    Nothing ->
+                                        ( Just currentTime, Just <| CurrentSignal FeedMe currentTime )
 
-                                Just _ ->
-                                    ( agent.timeLastShoutedFeedMe, Just <| CurrentSignal signal currentTime )
+                                    Just currentCall ->
+                                        ( agent.timeLastShoutedFeedMe, Just <| CurrentSignal FeedMe currentTime )
 
-                        _ ->
-                            ( agent.timeLastShoutedFeedMe, Nothing )
-                )
-                topAction
+                            CallOut Bored _ ->
+                                case agent.callingOut of
+                                    Nothing ->
+                                        ( agent.timeLastShoutedFeedMe, Just <| CurrentSignal Bored currentTime )
+
+                                    Just currentCall ->
+                                        ( agent.timeLastShoutedFeedMe, Just <| CurrentSignal Bored currentTime )
+
+                            _ ->
+                                ( agent.timeLastShoutedFeedMe, Nothing )
+                    )
                 |> withDefault
                     ( agent.timeLastShoutedFeedMe, Nothing )
 
@@ -234,6 +246,11 @@ moveAgent currentTime dT agent =
                 |> Maybe.map signalsDesireToEat
                 |> withDefault False
 
+        beggingForFood =
+            topAction
+                |> Maybe.andThen isBeggingRelated
+                |> withDefault agent.beggingForFood
+
         ( newHunger, newHolding ) =
             if desireToEat then
                 agent |> eat
@@ -248,6 +265,7 @@ moveAgent currentTime dT agent =
             , currentAction = topAction |> Maybe.map .name |> withDefault "none"
             , desireToEat = desireToEat
             , holding = newHolding
+            , beggingForFood = beggingForFood
         }
 
 
@@ -319,6 +337,12 @@ getMovementVector currentTime deltaTime agent action =
             Nothing
 
         EatHeldFood ->
+            Nothing
+
+        DropHeldFood ->
+            Nothing
+
+        BeggingForFood _ ->
             Nothing
 
 

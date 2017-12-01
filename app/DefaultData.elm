@@ -18,6 +18,7 @@ import Types
             ( ArrestMomentum
             , CallOut
             , DoNothing
+            , DropHeldFood
             , EatHeldFood
             , MoveAwayFrom
             , MoveTo
@@ -42,7 +43,7 @@ import Types
         , InputFunction(Asymmetric, Exponential, Linear, Normal, Sigmoid)
         , Model
         , Portable(Edible)
-        , Signal(FeedMe)
+        , Signal(Bored, FeedMe)
         )
 
 
@@ -121,9 +122,11 @@ agents =
       , constantActions =
             [ stayNearOrigin
             , justChill
+            , emoteBored
             ]
       , currentAction = "none"
       , hunger = 0.8
+      , beggingForFood = False
       , timeLastShoutedFeedMe = Nothing
       , callingOut = Nothing
       , holding = EmptyHanded
@@ -149,9 +152,11 @@ agents =
       , constantActions =
             [ stayNearOrigin
             , wander
+            , emoteBored
             ]
       , currentAction = "none"
       , hunger = 0.0
+      , beggingForFood = False
       , timeLastShoutedFeedMe = Nothing
       , callingOut = Nothing
       , holding = EmptyHanded
@@ -176,11 +181,13 @@ agents =
       , variableActions = []
       , constantActions =
             [ justChill
+            , emoteBored
             , stayNearOrigin
             , shoutFeedMe
             ]
       , currentAction = "none"
       , hunger = 0.8
+      , beggingForFood = False
       , timeLastShoutedFeedMe = Nothing
       , callingOut = Nothing
       , holding = EmptyHanded
@@ -213,7 +220,7 @@ wander =
         Wander
         [ { name = "always 0.04"
           , function = Linear 1 0
-          , input = Constant 0.02
+          , input = Constant 0.04
           , inputMin = 0
           , inputMax = 1
           , weighting = 1
@@ -263,6 +270,23 @@ shoutFeedMe =
           , offset = 1
           }
         , defaultHysteresis 1
+        ]
+        Dict.empty
+
+
+emoteBored : Action
+emoteBored =
+    Action
+        "emote 'bored...'"
+        (CallOut Bored 1.0)
+        [ { name = "always 0.03"
+          , function = Linear 1 0
+          , input = Constant 0.03
+          , inputMin = 0
+          , inputMax = 1
+          , weighting = 1
+          , offset = 0
+          }
         ]
         Dict.empty
 
@@ -382,6 +406,94 @@ pickUpFoodToEat =
                   , offset = 0
                   }
                 , defaultHysteresis 0.1
+                ]
+                Dict.empty
+    in
+        ActionGenerator "pick up food to eat" generator
+
+
+dropFoodForAgent : ActionGenerator
+dropFoodForAgent =
+    let
+        generator : Model -> Agent -> List Action
+        generator model _ =
+            model.agents
+                |> List.filter .beggingForFood
+                |> List.map goalPerItem
+
+        goalPerItem : Agent -> Action
+        goalPerItem agent =
+            Action
+                ("drop food for beggar (" ++ agent.name ++ ")")
+                DropHeldFood
+                [ { name = "I am carrying some food"
+                  , function = Linear 1 0
+                  , input = IsCarryingFood
+                  , inputMin = 20
+                  , inputMax = 10
+                  , weighting = 1
+                  , offset = 0
+                  }
+                , { name = "beggar is nearby"
+                  , function = Linear 1 0
+                  , input = DistanceToTargetPoint agent.physics.position
+                  , inputMin = 20
+                  , inputMax = 10
+                  , weighting = 1
+                  , offset = 0
+                  }
+                , { name = "I don't want to eat the food"
+                  , function = Linear 1 0
+                  , input = Hunger
+                  , inputMin = 1
+                  , inputMax = 0.5
+                  , weighting = 1
+                  , offset = 0
+                  }
+                ]
+                Dict.empty
+    in
+        ActionGenerator "pick up food to eat" generator
+
+
+moveToGiveFoodToAgent : ActionGenerator
+moveToGiveFoodToAgent =
+    let
+        generator : Model -> Agent -> List Action
+        generator model _ =
+            model.agents
+                |> List.filter .beggingForFood
+                |> List.map goalPerItem
+
+        goalPerItem : Agent -> Action
+        goalPerItem agent =
+            Action
+                ("drop food for beggar (" ++ agent.name ++ ")")
+                DropHeldFood
+                [ { name = "I am carrying some food"
+                  , function = Linear 1 0
+                  , input = IsCarryingFood
+                  , inputMin = 20
+                  , inputMax = 10
+                  , weighting = 1
+                  , offset = 0
+                  }
+                , { name = "beggar is nearby"
+                  , function = Linear 1 0
+                  , input = DistanceToTargetPoint agent.physics.position
+                  , inputMin = 20
+                  , inputMax = 10
+                  , weighting = 1
+                  , offset = 0
+                  }
+                , { name = "I don't want to eat the food"
+                  , function = Linear 1 0
+                  , input = Hunger
+                  , inputMin = 1
+                  , inputMax = 0.5
+                  , weighting = 1
+                  , offset = 0
+                  }
                 ]
                 Dict.empty
     in

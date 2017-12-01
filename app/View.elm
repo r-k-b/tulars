@@ -61,7 +61,7 @@ import Types
         , Model
         , Msg(ToggleConditionDetailsVisibility, ToggleConditionsVisibility)
         , Portable(Edible, Extinguisher)
-        , Signal(Eating, FeedMe, GoAway)
+        , Signal(Bored, Eating, FeedMe, GoAway)
         )
 import Formatting exposing (print)
 import UtilityFunctions
@@ -289,6 +289,11 @@ renderAgent agent =
 
                         Eating ->
                             [ renderEmoji "🍖" agent.physics.position ]
+
+                        Bored ->
+                            [ renderEmoji "😑" agent.physics.position
+                                |> Svg.scaleAbout agent.physics.position 0.7
+                            ]
 
         leftHand =
             Point2d.fromCoordinates ( -10, 10 )

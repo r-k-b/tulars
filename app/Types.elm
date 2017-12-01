@@ -4,8 +4,10 @@ module Types
         , ActionGenerator(ActionGenerator)
         , ActionOutcome
             ( ArrestMomentum
+            , BeggingForFood
             , CallOut
             , DoNothing
+            , DropHeldFood
             , EatHeldFood
             , MoveAwayFrom
             , MoveTo
@@ -34,7 +36,7 @@ module Types
         , Model
         , Msg(InitTime, RAFtick, ToggleConditionDetailsVisibility, ToggleConditionsVisibility)
         , Portable(Edible, Extinguisher)
-        , Signal(Eating, FeedMe, GoAway)
+        , Signal(Bored, Eating, FeedMe, GoAway)
         )
 
 import Dict exposing (Dict)
@@ -69,6 +71,7 @@ type alias Agent =
     , visibleActions : Dict String Bool
     , currentAction : String
     , hunger : Float
+    , beggingForFood : Bool
     , timeLastShoutedFeedMe : Maybe Time
     , callingOut : Maybe CurrentSignal
     , holding : Holding
@@ -99,12 +102,15 @@ type ActionOutcome
     | Wander
     | PickUpFood Int
     | EatHeldFood
+    | DropHeldFood
+    | BeggingForFood Bool
 
 
 type Signal
     = FeedMe
     | GoAway
     | Eating
+    | Bored
 
 
 type alias CurrentSignal =

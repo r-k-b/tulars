@@ -6,6 +6,7 @@ module UtilityFunctions
         , computeVariableActions
         , getActions
         , getConsiderationRawValue
+        , isBeggingRelated
         , isHolding
         , isMovementAction
         , onlyArrestMomentum
@@ -20,8 +21,10 @@ import Types
         , ActionGenerator(ActionGenerator)
         , ActionOutcome
             ( ArrestMomentum
+            , BeggingForFood
             , CallOut
             , DoNothing
+            , DropHeldFood
             , EatHeldFood
             , MoveAwayFrom
             , MoveTo
@@ -159,7 +162,7 @@ getConsiderationRawValue agent currentTime action consideration =
         TimeSinceLastShoutedFeedMe ->
             case agent.timeLastShoutedFeedMe of
                 Nothing ->
-                    10000
+                    9001
 
                 Just t ->
                     currentTime - t
@@ -286,6 +289,22 @@ isMovementAction action =
         EatHeldFood ->
             False
 
+        DropHeldFood ->
+            False
+
+        BeggingForFood _ ->
+            False
+
+
+isBeggingRelated : Action -> Maybe Bool
+isBeggingRelated action =
+    case action.outcome of
+        BeggingForFood bool ->
+            Just bool
+
+        _ ->
+            Nothing
+
 
 signalsDesireToEat : Action -> Bool
 signalsDesireToEat action =
@@ -313,6 +332,12 @@ signalsDesireToEat action =
 
         EatHeldFood ->
             True
+
+        DropHeldFood ->
+            False
+
+        BeggingForFood bool ->
+            bool
 
 
 onlyArrestMomentum : Action -> Maybe Action

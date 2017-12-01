@@ -1,4 +1,4 @@
-- [ ] Have many agents interacting in interesting ways, with individual 
+- [ ] Have many agents interacting in interesting ways, with individual
       utility functions.
   - [ ] Allow live display and control over utility functions.
     - [ ] Represent Considerations and Actions
@@ -8,10 +8,12 @@
     - [x] Allow agents to move
     - [ ] Allow agents to derive utility from...
       - [ ] ...social interaction
-      - [ ] ...reducing entropy 
-      - [x] ...eating 
-      - [x] ...moving about 
-      - [ ] ...resting 
+      - [ ] ...reducing entropy
+        - [ ] by fighting fires
+        - [ ] by cleaning up trash
+      - [x] ...eating
+      - [x] ...moving about
+      - [ ] ...resting
   - [ ] Give agents things/places/events to avoid
     - [ ] Allow agents to...
       - [ ] ...take damage
@@ -19,11 +21,16 @@
         - [ ] From attacks
         - [ ] From hunger
       - [ ] ...recognize unpleasant areas
+  - [ ] Give agents reasons to cooperate
+    - [ ] feeding the hungry 
   - [ ] Give agents a 'frustration' feeling
     - [ ] Give agents a way to break out of unproductive patterns
       - [ ] Define "unproductivity" for actions
         - [ ] e.g., not getting closer to food to eat
   - [ ] Group those agents into factions
+  - [ ] Allow agents to navigate complex environments
+    - [ ] with a [navmesh]?
+      - [ ] or a [dynamic navmesh]?
   - [ ] Allow live display and control over the space
     - [x] Render the space
     - [ ] Render agents
@@ -34,10 +41,10 @@
     - [ ] Render objects in the world
       - [x] Fire
         - [x] Render a filled red circle that fades out at the edge
-        - [x] Show a fire icon at the centre 
-      - [x] Food 
+        - [x] Show a fire icon at the centre
+      - [x] Food
       - [ ] Food Store
-      - [ ] Trash 
+      - [ ] Trash
       - [ ] Rest areas
     - [ ] Allow moving agents via click-drag
     - [ ] Allow adding / removing objects in the space
@@ -47,3 +54,6 @@
     - [ ] Draw a graph
   - [ ] Have dynamic obstacles in the space
     - [ ] add pathfinding
+    
+[navmesh]: https://en.wikipedia.org/wiki/Navigation_mesh
+[dynamic navmesh]: http://www.staff.science.uu.nl/~gerae101/pdf/CAVW_Dynamic_ECM.pdf
