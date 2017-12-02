@@ -121,6 +121,7 @@ agents =
             , maintainPersonalSpace
             , dropFoodForBeggar
             , moveToGiveFoodToBeggar
+            , setBeggingState
             ]
       , visibleActions = Dict.empty
       , variableActions = []
@@ -128,6 +129,7 @@ agents =
             [ stayNearOrigin
             , justChill
             , emoteBored
+            , shoutFeedMe
             ]
       , currentAction = "none"
       , currentOutcome = "none"
@@ -154,6 +156,7 @@ agents =
             , maintainPersonalSpace
             , dropFoodForBeggar
             , moveToGiveFoodToBeggar
+            , setBeggingState
             ]
       , visibleActions = Dict.empty
       , variableActions = []
@@ -161,6 +164,7 @@ agents =
             [ stayNearOrigin
             , wander
             , emoteBored
+            , shoutFeedMe
             ]
       , currentAction = "none"
       , currentOutcome = "none"
