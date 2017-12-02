@@ -21,9 +21,9 @@
         - [ ] From attacks
         - [ ] From hunger
       - [ ] ...recognize unpleasant areas
-  - [ ] Give agents reasons to cooperate
-    - [ ] feeding the hungry 
-      - [ ] giving carried food to the hungry 
+  - [x] Give agents reasons to cooperate
+    - [x] feeding the hungry 
+      - [x] giving carried food to the hungry 
   - [ ] Give agents a 'frustration' feeling
     - [ ] Give agents a way to break out of unproductive patterns
       - [ ] Define "unproductivity" for actions
