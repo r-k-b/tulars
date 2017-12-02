@@ -14,6 +14,7 @@ module UtilityFunctions
         , signalsDesireToEat
         )
 
+import Dict
 import Time exposing (Time)
 import Types
     exposing
@@ -160,12 +161,13 @@ getConsiderationRawValue agent currentTime action consideration =
                 |> Vector2d.length
 
         TimeSinceLastShoutedFeedMe ->
-            case agent.timeLastShoutedFeedMe of
-                Nothing ->
-                    9001
+            Debug.log "TimeSinceLastShoutedFeedMe" <|
+                case Dict.get "CallOut(FeedMe)" agent.topActionLastStartTimes of
+                    Nothing ->
+                        1 / 0
 
-                Just t ->
-                    currentTime - t
+                    Just time ->
+                        currentTime - time
 
         CurrentlyCallingOut ->
             case agent.callingOut of
@@ -268,10 +270,10 @@ isMovementAction action =
         ArrestMomentum ->
             True
 
-        MoveTo _ ->
+        MoveTo _ _ ->
             True
 
-        MoveAwayFrom _ ->
+        MoveAwayFrom _ _ ->
             True
 
         Wander ->
@@ -312,10 +314,10 @@ signalsDesireToEat action =
         ArrestMomentum ->
             False
 
-        MoveTo _ ->
+        MoveTo _ _ ->
             False
 
-        MoveAwayFrom _ ->
+        MoveAwayFrom _ _ ->
             False
 
         Wander ->

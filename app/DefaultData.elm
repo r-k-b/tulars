@@ -125,12 +125,13 @@ agents =
             , emoteBored
             ]
       , currentAction = "none"
+      , currentOutcome = "none"
       , hunger = 0.8
       , beggingForFood = False
-      , timeLastShoutedFeedMe = Nothing
       , callingOut = Nothing
       , holding = EmptyHanded
       , desireToEat = False
+      , topActionLastStartTimes = Dict.empty
       }
     , { name = "Bob"
       , physics =
@@ -155,12 +156,13 @@ agents =
             , emoteBored
             ]
       , currentAction = "none"
+      , currentOutcome = "none"
       , hunger = 0.0
       , beggingForFood = False
-      , timeLastShoutedFeedMe = Nothing
       , callingOut = Nothing
       , holding = EmptyHanded
       , desireToEat = False
+      , topActionLastStartTimes = Dict.empty
       }
     , { name = "Charlie"
       , physics =
@@ -186,12 +188,13 @@ agents =
             , shoutFeedMe
             ]
       , currentAction = "none"
+      , currentOutcome = "none"
       , hunger = 0.8
       , beggingForFood = False
-      , timeLastShoutedFeedMe = Nothing
       , callingOut = Nothing
       , holding = EmptyHanded
       , desireToEat = False
+      , topActionLastStartTimes = Dict.empty
       }
     ]
 
@@ -234,7 +237,7 @@ stayNearOrigin : Action
 stayNearOrigin =
     Action
         "stay within 200 or 300 units of the origin"
-        (MoveTo Point2d.origin)
+        (MoveTo "origin" Point2d.origin)
         [ { name = "distance from origin"
           , function = Linear 1 0
           , input = DistanceToTargetPoint Point2d.origin
@@ -302,7 +305,7 @@ moveToFood =
         goalPerItem food =
             Action
                 ("move toward edible food" |> withSuffix food.id)
-                (MoveTo food.physics.position)
+                (MoveTo ("food" |> withSuffix food.id) food.physics.position)
                 [ { name = "hunger"
                   , function = Linear 1 0
                   , input = Hunger
@@ -577,7 +580,7 @@ avoidFire =
         goalPerItem fire =
             Action
                 ("get away from the fire" |> withSuffix fire.id)
-                (MoveAwayFrom fire.physics.position)
+                (MoveAwayFrom ("fire" |> withSuffix fire.id) fire.physics.position)
                 [ { name = "too close to fire"
                   , function = Linear 1 0
                   , input = DistanceToTargetPoint fire.physics.position
@@ -606,7 +609,7 @@ maintainPersonalSpace =
         goalPerItem otherAgent =
             Action
                 ("maintain personal space from " ++ otherAgent.name)
-                (MoveAwayFrom otherAgent.physics.position)
+                (MoveAwayFrom otherAgent.name otherAgent.physics.position)
                 [ { name = "space invaded"
                   , function = Linear 1 0
                   , input = DistanceToTargetPoint otherAgent.physics.position
@@ -635,7 +638,7 @@ hoverNear targetAgentName =
         goalPerItem otherAgent =
             Action
                 ("hang around " ++ targetAgentName)
-                (MoveTo otherAgent.physics.position)
+                (MoveTo otherAgent.name otherAgent.physics.position)
                 [ { name = "close, but not close enough"
                   , function = Normal 2.6 0.5 10
                   , input = DistanceToTargetPoint otherAgent.physics.position

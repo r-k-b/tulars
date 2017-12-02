@@ -70,9 +70,10 @@ type alias Agent =
     , actionGenerators : List ActionGenerator
     , visibleActions : Dict String Bool
     , currentAction : String
+    , currentOutcome : String
     , hunger : Float
     , beggingForFood : Bool
-    , timeLastShoutedFeedMe : Maybe Time
+    , topActionLastStartTimes : Dict String Time
     , callingOut : Maybe CurrentSignal
     , holding : Holding
     , desireToEat : Bool
@@ -95,8 +96,8 @@ type ActionGenerator
 
 type ActionOutcome
     = DoNothing
-    | MoveTo Point2d
-    | MoveAwayFrom Point2d
+    | MoveTo String Point2d
+    | MoveAwayFrom String Point2d
     | ArrestMomentum
     | CallOut Signal Float
     | Wander

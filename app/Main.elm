@@ -1,6 +1,6 @@
 module Main exposing (main)
 
-import Dict
+import Dict exposing (Dict)
 import Html
 import Maybe exposing (withDefault)
 import Task exposing (perform)
@@ -26,7 +26,7 @@ import Types
         , Model
         , Msg(InitTime, RAFtick, ToggleConditionDetailsVisibility, ToggleConditionsVisibility)
         , Portable(Edible)
-        , Signal(Bored, FeedMe)
+        , Signal(Bored, Eating, FeedMe, GoAway)
         )
 import View exposing (view)
 import AnimationFrame exposing (times)
@@ -196,32 +196,25 @@ moveAgent currentTime dT agent =
                 |> List.sortBy (computeUtility agent currentTime >> (*) -1)
                 |> List.head
 
-        ( newFeedMeTime, newCall ) =
+        newOutcome =
             topAction
-                |> Maybe.map
-                    (\topAct ->
-                        case topAct.outcome of
-                            CallOut FeedMe _ ->
-                                case agent.callingOut of
-                                    Nothing ->
-                                        ( Just currentTime, Just <| CurrentSignal FeedMe currentTime )
+                |> Maybe.map .outcome
+                |> Maybe.map outcomeToString
+                |> withDefault "none"
 
-                                    Just currentCall ->
-                                        ( agent.timeLastShoutedFeedMe, Just <| CurrentSignal FeedMe currentTime )
+        newtopActionLastStartTimes : Dict String Time
+        newtopActionLastStartTimes =
+            if newOutcome == agent.currentOutcome then
+                agent.topActionLastStartTimes
+            else
+                agent.topActionLastStartTimes
+                    |> Dict.insert newOutcome currentTime
 
-                            CallOut Bored _ ->
-                                case agent.callingOut of
-                                    Nothing ->
-                                        ( agent.timeLastShoutedFeedMe, Just <| CurrentSignal Bored currentTime )
-
-                                    Just currentCall ->
-                                        ( agent.timeLastShoutedFeedMe, Just <| CurrentSignal Bored currentTime )
-
-                            _ ->
-                                ( agent.timeLastShoutedFeedMe, Nothing )
-                    )
-                |> withDefault
-                    ( agent.timeLastShoutedFeedMe, Nothing )
+        newCall : Maybe CurrentSignal
+        newCall =
+            topAction
+                |> Maybe.andThen extractCallouts
+                |> updateCurrentSignal currentTime agent.callingOut
 
         increasedHunger =
             agent.hunger
@@ -259,14 +252,45 @@ moveAgent currentTime dT agent =
     in
         { agent
             | physics = newPhysics
-            , timeLastShoutedFeedMe = newFeedMeTime
+            , topActionLastStartTimes = newtopActionLastStartTimes
             , callingOut = newCall
             , hunger = newHunger
             , currentAction = topAction |> Maybe.map .name |> withDefault "none"
+            , currentOutcome = newOutcome
             , desireToEat = desireToEat
             , holding = newHolding
             , beggingForFood = beggingForFood
         }
+
+
+extractCallouts : Action -> Maybe Signal
+extractCallouts action =
+    case action.outcome of
+        CallOut x _ ->
+            Just x
+
+        _ ->
+            Nothing
+
+
+{-| If the signal type is unchanged, preserve the original time.
+-}
+updateCurrentSignal : Time -> Maybe CurrentSignal -> Maybe Signal -> Maybe CurrentSignal
+updateCurrentSignal time currentSignal maybeNewSignal =
+    case maybeNewSignal of
+        Nothing ->
+            Nothing
+
+        Just newSignal ->
+            case currentSignal of
+                Nothing ->
+                    Just { signal = newSignal, started = time }
+
+                Just priorSignal ->
+                    if priorSignal.signal == newSignal then
+                        Just priorSignal
+                    else
+                        Just { signal = newSignal, started = time }
 
 
 deadzone : Vector2d -> Vector2d
@@ -280,7 +304,7 @@ deadzone v =
 getMovementVector : Time -> Time -> Agent -> Action -> Maybe Vector2d
 getMovementVector currentTime deltaTime agent action =
     case action.outcome of
-        MoveTo point ->
+        MoveTo _ point ->
             let
                 weighted =
                     Vector2d.from agent.physics.position point
@@ -292,7 +316,7 @@ getMovementVector currentTime deltaTime agent action =
             in
                 Just weighted
 
-        MoveAwayFrom point ->
+        MoveAwayFrom _ point ->
             let
                 weighted =
                     Vector2d.from point agent.physics.position
@@ -623,6 +647,56 @@ rotFood deltaT food =
             Nothing
         else
             Just { food | joules = newJoules }
+
+
+outcomeToString : ActionOutcome -> String
+outcomeToString outcome =
+    case outcome of
+        DoNothing ->
+            "DoNothing"
+
+        MoveTo desc _ ->
+            "MoveTo(" ++ desc ++ ")"
+
+        MoveAwayFrom desc _ ->
+            "MoveAwayFrom(" ++ desc ++ ")"
+
+        ArrestMomentum ->
+            "ArrestMomentum"
+
+        CallOut signal _ ->
+            "CallOut(" ++ signalToString signal ++ ")"
+
+        Wander ->
+            "Wander"
+
+        PickUpFood id ->
+            "PickUpFood(id#" ++ toString id ++ ")"
+
+        EatHeldFood ->
+            "EatHeldFood"
+
+        DropHeldFood ->
+            "DropHeldFood"
+
+        BeggingForFood bool ->
+            "BeggingForFood(" ++ toString bool ++ ")"
+
+
+signalToString : Signal -> String
+signalToString signal =
+    case signal of
+        FeedMe ->
+            "FeedMe"
+
+        GoAway ->
+            "GoAway"
+
+        Eating ->
+            "Eating"
+
+        Bored ->
+            "Bored"
 
 
 

@@ -738,7 +738,7 @@ renderCI currentTime agent action ci =
         TimeSinceLastShoutedFeedMe ->
             let
                 val =
-                    case agent.timeLastShoutedFeedMe of
+                    case Dict.get "CallOut FeedMe" agent.topActionLastStartTimes of
                         Nothing ->
                             "Never"
 
