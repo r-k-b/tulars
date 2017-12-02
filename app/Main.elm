@@ -25,6 +25,7 @@ import Types
         , Holding(BothHands, EachHand, EmptyHanded, OnlyLeftHand, OnlyRightHand)
         , Model
         , Msg(InitTime, RAFtick, ToggleConditionDetailsVisibility, ToggleConditionsVisibility)
+        , PhysicalProperties
         , Portable(Edible)
         , Signal(Bored, Eating, FeedMe, GoAway)
         )
@@ -451,11 +452,17 @@ moveWorld newTime model =
                 (foldOverPickedFood newTime)
                 ( [], foodsAfterDecay )
                 newAgents
+
+        ( agentsAfterDroppingFood, includingDroppedFood ) =
+            List.foldr
+                (foldOverDroppedFood newTime)
+                ( [], pickedFood )
+                agentsAfterPickingUpFood
     in
         { model
             | time = newTime
-            , foods = pickedFood
-            , agents = agentsAfterPickingUpFood
+            , foods = includingDroppedFood
+            , agents = agentsAfterDroppingFood
         }
 
 
@@ -477,6 +484,31 @@ foldOverPickedFood currentTime agent ( agentAcc, foodAcc ) =
                     case action.outcome of
                         PickUpFood foodID ->
                             pickUpFood agent foodID foodAcc
+
+                        _ ->
+                            ( agent, foodAcc )
+    in
+        ( updatedAgent :: agentAcc, updatedFoods )
+
+
+foldOverDroppedFood : Time -> Agent -> ( List Agent, List Food ) -> ( List Agent, List Food )
+foldOverDroppedFood currentTime agent ( agentAcc, foodAcc ) =
+    let
+        topAction : Maybe Action
+        topAction =
+            getActions agent
+                |> List.sortBy (computeUtility agent currentTime >> (*) -1)
+                |> List.head
+
+        ( updatedAgent, updatedFoods ) =
+            case topAction of
+                Nothing ->
+                    ( agent, foodAcc )
+
+                Just action ->
+                    case action.outcome of
+                        DropHeldFood ->
+                            dropFood agent foodAcc
 
                         _ ->
                             ( agent, foodAcc )
@@ -536,6 +568,72 @@ pickUpFood agent foodID foods =
                 agent
     in
         ( carry, newFoods )
+
+
+dropFood : Agent -> List Food -> ( Agent, List Food )
+dropFood agent extantFoods =
+    let
+        droppedFoods : List Food
+        droppedFoods =
+            List.map (usePhysics agent.physics) <|
+                case agent.holding of
+                    EmptyHanded ->
+                        []
+
+                    OnlyLeftHand (Edible x) ->
+                        [ x ]
+
+                    OnlyLeftHand _ ->
+                        []
+
+                    OnlyRightHand (Edible x) ->
+                        [ x ]
+
+                    OnlyRightHand _ ->
+                        []
+
+                    EachHand (Edible x) (Edible y) ->
+                        [ x, y ]
+
+                    EachHand (Edible x) _ ->
+                        [ x ]
+
+                    EachHand _ (Edible x) ->
+                        [ x ]
+
+                    EachHand _ _ ->
+                        []
+
+                    BothHands (Edible x) ->
+                        [ x ]
+
+                    BothHands _ ->
+                        []
+
+        sansFood : Holding
+        sansFood =
+            mapHeld unhandHeldFood agent.holding
+    in
+        ( { agent | holding = sansFood }, List.append extantFoods droppedFoods )
+
+
+unhandHeldFood : Portable -> Maybe Portable
+unhandHeldFood portable =
+    case portable of
+        Edible _ ->
+            Nothing
+
+        _ ->
+            Just portable
+
+
+type alias Physical a =
+    { a | physics : PhysicalProperties }
+
+
+usePhysics : PhysicalProperties -> Physical a -> Physical a
+usePhysics newPhysics target =
+    { target | physics = newPhysics }
 
 
 eat : Agent -> ( Float, Holding )

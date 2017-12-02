@@ -36,6 +36,7 @@ module Types
         , InputFunction(Asymmetric, Exponential, Linear, Normal, Sigmoid)
         , Model
         , Msg(InitTime, RAFtick, ToggleConditionDetailsVisibility, ToggleConditionsVisibility)
+        , PhysicalProperties
         , Portable(Edible, Extinguisher)
         , Signal(Bored, Eating, FeedMe, GoAway)
         )
