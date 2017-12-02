@@ -43,6 +43,7 @@ import Types
             , DesiresToEat
             , DistanceToTargetPoint
             , Hunger
+            , IAmBeggingForFood
             , IsCarryingFood
             , IsCurrentAction
             , TimeSinceLastShoutedFeedMe
@@ -768,6 +769,9 @@ renderCI currentTime agent action ci =
 
         IsCarryingFood ->
             "Am I carrying some food? " ++ (toString <| isHolding portableIsFood agent.holding)
+
+        IAmBeggingForFood ->
+            "Am I begging for food? " ++ (toString <| agent.beggingForFood)
 
 
 prettyPoint2d : Point2d.Point2d -> String

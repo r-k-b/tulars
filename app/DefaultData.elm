@@ -16,6 +16,7 @@ import Types
         , ActionGenerator(ActionGenerator)
         , ActionOutcome
             ( ArrestMomentum
+            , BeggingForFood
             , CallOut
             , DoNothing
             , DropHeldFood
@@ -32,6 +33,7 @@ import Types
             , CurrentSpeed
             , DistanceToTargetPoint
             , Hunger
+            , IAmBeggingForFood
             , IsCarryingFood
             , IsCurrentAction
             , TimeSinceLastShoutedFeedMe
@@ -45,6 +47,7 @@ import Types
         , Portable(Edible)
         , Signal(Bored, FeedMe)
         )
+import UtilityFunctions exposing (isHolding, portableIsFood)
 
 
 foods : List Food
@@ -116,6 +119,8 @@ agents =
             , eatCarriedFood
             , avoidFire
             , maintainPersonalSpace
+            , dropFoodForBeggar
+            , moveToGiveFoodToBeggar
             ]
       , visibleActions = Dict.empty
       , variableActions = []
@@ -147,6 +152,8 @@ agents =
             , eatCarriedFood
             , avoidFire
             , maintainPersonalSpace
+            , dropFoodForBeggar
+            , moveToGiveFoodToBeggar
             ]
       , visibleActions = Dict.empty
       , variableActions = []
@@ -178,6 +185,7 @@ agents =
             , avoidFire
             , maintainPersonalSpace
             , hoverNear "Bob"
+            , setBeggingState
             ]
       , visibleActions = Dict.empty
       , variableActions = []
@@ -271,6 +279,14 @@ shoutFeedMe =
           , inputMax = 1000
           , weighting = -1
           , offset = 1
+          }
+        , { name = "currently begging"
+          , function = Linear 1 0
+          , input = IAmBeggingForFood
+          , inputMin = 0
+          , inputMax = 1
+          , weighting = 1
+          , offset = 0
           }
         , defaultHysteresis 1
         ]
@@ -415,14 +431,63 @@ pickUpFoodToEat =
         ActionGenerator "pick up food to eat" generator
 
 
-dropFoodForAgent : ActionGenerator
-dropFoodForAgent =
+setBeggingState : ActionGenerator
+setBeggingState =
     let
         generator : Model -> Agent -> List Action
-        generator model _ =
-            model.agents
-                |> List.filter .beggingForFood
-                |> List.map goalPerItem
+        generator _ agent =
+            if agent.beggingForFood then
+                [ ceaseBegging ]
+            else
+                [ beginBegging ]
+
+        ceaseBegging : Action
+        ceaseBegging =
+            Action
+                "quit begging"
+                (BeggingForFood False)
+                [ { name = "I'm no longer hungry"
+                  , function = Linear 1 0
+                  , input = Hunger
+                  , inputMin = 0.3
+                  , inputMax = 0
+                  , weighting = 1
+                  , offset = 0
+                  }
+                ]
+                Dict.empty
+
+        beginBegging : Action
+        beginBegging =
+            Action
+                "start begging"
+                (BeggingForFood True)
+                [ { name = "I'm hungry"
+                  , function = Linear 1 0
+                  , input = Hunger
+                  , inputMin = 0.7
+                  , inputMax = 1
+                  , weighting = 1
+                  , offset = 0
+                  }
+                ]
+                Dict.empty
+    in
+        ActionGenerator "set begging state" generator
+
+
+dropFoodForBeggar : ActionGenerator
+dropFoodForBeggar =
+    let
+        generator : Model -> Agent -> List Action
+        generator model agent =
+            if isHolding portableIsFood agent.holding then
+                model.agents
+                    |> List.filter (\other -> other.name /= agent.name)
+                    |> List.filter .beggingForFood
+                    |> List.map goalPerItem
+            else
+                []
 
         goalPerItem : Agent -> Action
         goalPerItem agent =
@@ -432,15 +497,15 @@ dropFoodForAgent =
                 [ { name = "I am carrying some food"
                   , function = Linear 1 0
                   , input = IsCarryingFood
-                  , inputMin = 20
-                  , inputMax = 10
+                  , inputMin = 0
+                  , inputMax = 1
                   , weighting = 1
                   , offset = 0
                   }
                 , { name = "beggar is nearby"
                   , function = Linear 1 0
                   , input = DistanceToTargetPoint agent.physics.position
-                  , inputMin = 20
+                  , inputMin = 40
                   , inputMax = 10
                   , weighting = 1
                   , offset = 0
@@ -459,8 +524,8 @@ dropFoodForAgent =
         ActionGenerator "pick up food to eat" generator
 
 
-moveToGiveFoodToAgent : ActionGenerator
-moveToGiveFoodToAgent =
+moveToGiveFoodToBeggar : ActionGenerator
+moveToGiveFoodToBeggar =
     let
         generator : Model -> Agent -> List Action
         generator model _ =
@@ -471,21 +536,21 @@ moveToGiveFoodToAgent =
         goalPerItem : Agent -> Action
         goalPerItem agent =
             Action
-                ("drop food for beggar (" ++ agent.name ++ ")")
-                DropHeldFood
+                ("move to give food to beggar (" ++ agent.name ++ ")")
+                (MoveTo ("giveFoodTo(" ++ agent.name ++ ")") agent.physics.position)
                 [ { name = "I am carrying some food"
                   , function = Linear 1 0
                   , input = IsCarryingFood
-                  , inputMin = 20
-                  , inputMax = 10
+                  , inputMin = 0
+                  , inputMax = 1
                   , weighting = 1
                   , offset = 0
                   }
-                , { name = "beggar is nearby"
+                , { name = "beggar is reasonably close"
                   , function = Linear 1 0
                   , input = DistanceToTargetPoint agent.physics.position
-                  , inputMin = 20
-                  , inputMax = 10
+                  , inputMin = 500
+                  , inputMax = 0
                   , weighting = 1
                   , offset = 0
                   }
@@ -618,7 +683,6 @@ maintainPersonalSpace =
                   , weighting = 1
                   , offset = 0
                   }
-                , defaultHysteresis 0.1
                 ]
                 Dict.empty
     in

@@ -23,6 +23,7 @@ module Types
             , DesiresToEat
             , DistanceToTargetPoint
             , Hunger
+            , IAmBeggingForFood
             , IsCarryingFood
             , IsCurrentAction
             , TimeSinceLastShoutedFeedMe
@@ -132,7 +133,7 @@ type alias Consideration =
 
 
 type ConsiderationInput
-    = Hunger
+    = Hunger {- Hunger increases over time -}
     | DistanceToTargetPoint Point2d
     | Constant Float
     | CurrentSpeed
@@ -140,6 +141,7 @@ type ConsiderationInput
     | CurrentlyCallingOut
     | IsCurrentAction
     | DesiresToEat
+    | IAmBeggingForFood
     | IsCarryingFood
 
 

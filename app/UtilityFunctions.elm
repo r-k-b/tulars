@@ -41,6 +41,7 @@ import Types
             , DesiresToEat
             , DistanceToTargetPoint
             , Hunger
+            , IAmBeggingForFood
             , IsCarryingFood
             , IsCurrentAction
             , TimeSinceLastShoutedFeedMe
@@ -161,13 +162,12 @@ getConsiderationRawValue agent currentTime action consideration =
                 |> Vector2d.length
 
         TimeSinceLastShoutedFeedMe ->
-            Debug.log "TimeSinceLastShoutedFeedMe" <|
-                case Dict.get "CallOut(FeedMe)" agent.topActionLastStartTimes of
-                    Nothing ->
-                        1 / 0
+            case Dict.get "CallOut(FeedMe)" agent.topActionLastStartTimes of
+                Nothing ->
+                    1 / 0
 
-                    Just time ->
-                        currentTime - time
+                Just time ->
+                    currentTime - time
 
         CurrentlyCallingOut ->
             case agent.callingOut of
@@ -188,6 +188,10 @@ getConsiderationRawValue agent currentTime action consideration =
 
         IsCarryingFood ->
             isHolding portableIsFood agent.holding
+                |> true1false0
+
+        IAmBeggingForFood ->
+            agent.beggingForFood
                 |> true1false0
 
 
