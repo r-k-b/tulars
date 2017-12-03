@@ -23,6 +23,7 @@ import Types
             , EatHeldFood
             , MoveAwayFrom
             , MoveTo
+            , PickUpExtinguisher
             , PickUpFood
             , Wander
             )
@@ -34,6 +35,7 @@ import Types
             , DistanceToTargetPoint
             , Hunger
             , IAmBeggingForFood
+            , IsCarryingExtinguisher
             , IsCarryingFood
             , IsCurrentAction
             , TimeSinceLastShoutedFeedMe
@@ -122,6 +124,7 @@ agents =
             , dropFoodForBeggar
             , moveToGiveFoodToBeggar
             , setBeggingState
+            , fightFires
             ]
       , visibleActions = Dict.empty
       , variableActions = []
@@ -157,6 +160,7 @@ agents =
             , dropFoodForBeggar
             , moveToGiveFoodToBeggar
             , setBeggingState
+            , fightFires
             ]
       , visibleActions = Dict.empty
       , variableActions = []
@@ -190,6 +194,7 @@ agents =
             , maintainPersonalSpace
             , hoverNear "Bob"
             , setBeggingState
+            , fightFires
             ]
       , visibleActions = Dict.empty
       , variableActions = []
@@ -663,6 +668,85 @@ avoidFire =
                 Dict.empty
     in
         ActionGenerator "avoid fire" generator
+
+
+fightFires : ActionGenerator
+fightFires =
+    let
+        generator : Model -> Agent -> List Action
+        generator model _ =
+            if List.length model.fires > 0 then
+                List.map getWithinFightingRange model.fires
+                    ++ List.map pickupNearbyExtinguishers model.extinguishers
+                    ++ List.map moveToGetExtinguishers model.extinguishers
+            else
+                []
+
+        getWithinFightingRange : Fire -> Action
+        getWithinFightingRange fire =
+            Action
+                ("get within range" |> withSuffix fire.id)
+                (MoveTo ("fire" |> withSuffix fire.id) fire.physics.position)
+                [ { name = "close enough"
+                  , function = Asymmetric 0.3 10 0.5 0.8 0.97 -1000 0.5 1
+                  , input = DistanceToTargetPoint fire.physics.position
+                  , inputMin = 50
+                  , inputMax = 400
+                  , weighting = 3
+                  , offset = 0
+                  }
+                , { name = "carrying an extinguisher"
+                  , function = Linear 1 0
+                  , input = IsCarryingExtinguisher
+                  , inputMin = 0
+                  , inputMax = 1
+                  , weighting = 1
+                  , offset = 0
+                  }
+                ]
+                Dict.empty
+
+        pickupNearbyExtinguishers : FireExtinguisher -> Action
+        pickupNearbyExtinguishers fext =
+            Action
+                ("pick up a nearby fire extinguisher" |> withSuffix fext.id)
+                (PickUpExtinguisher fext.id)
+                [ { name = "in pickup range"
+                  , function = Exponential 0.01
+                  , input = DistanceToTargetPoint fext.physics.position
+                  , inputMin = 26
+                  , inputMax = 25
+                  , weighting = 2
+                  , offset = 0
+                  }
+                ]
+                Dict.empty
+
+        moveToGetExtinguishers : FireExtinguisher -> Action
+        moveToGetExtinguishers fext =
+            Action
+                ("move to get an extinguisher" |> withSuffix fext.id)
+                (MoveTo ("fire extinguisher" |> withSuffix fext.id) fext.physics.position)
+                [ { name = "get close enough to pick it up"
+                  , function = Asymmetric 0.3 10 0.5 0.8 0.97 -1000 0.5 1
+                  , input = DistanceToTargetPoint fext.physics.position
+                  , inputMin = 20
+                  , inputMax = 400
+                  , weighting = 1
+                  , offset = 0
+                  }
+                , { name = "not already carrying an extinguisher"
+                  , function = Linear 1 0
+                  , input = IsCarryingExtinguisher
+                  , inputMin = 1
+                  , inputMax = 0
+                  , weighting = 1
+                  , offset = 0
+                  }
+                ]
+                Dict.empty
+    in
+        ActionGenerator "fight fires" generator
 
 
 maintainPersonalSpace : ActionGenerator

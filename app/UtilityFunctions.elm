@@ -10,6 +10,7 @@ module UtilityFunctions
         , isHolding
         , isMovementAction
         , onlyArrestMomentum
+        , portableIsExtinguisher
         , portableIsFood
         , signalsDesireToEat
         )
@@ -29,6 +30,7 @@ import Types
             , EatHeldFood
             , MoveAwayFrom
             , MoveTo
+            , PickUpExtinguisher
             , PickUpFood
             , Wander
             )
@@ -42,6 +44,7 @@ import Types
             , DistanceToTargetPoint
             , Hunger
             , IAmBeggingForFood
+            , IsCarryingExtinguisher
             , IsCarryingFood
             , IsCurrentAction
             , TimeSinceLastShoutedFeedMe
@@ -49,7 +52,7 @@ import Types
         , Holding(BothHands, EachHand, EmptyHanded, OnlyLeftHand, OnlyRightHand)
         , InputFunction(Asymmetric, Exponential, Linear, Normal, Sigmoid)
         , Model
-        , Portable(Edible)
+        , Portable(Edible, Extinguisher)
         )
 import OpenSolid.Point2d as Point2d
 import OpenSolid.Vector2d as Vector2d
@@ -186,6 +189,10 @@ getConsiderationRawValue agent currentTime action consideration =
             agent.desireToEat
                 |> true1false0
 
+        IsCarryingExtinguisher ->
+            isHolding portableIsExtinguisher agent.holding
+                |> true1false0
+
         IsCarryingFood ->
             isHolding portableIsFood agent.holding
                 |> true1false0
@@ -201,6 +208,16 @@ true1false0 b =
         1
     else
         0
+
+
+portableIsExtinguisher : Portable -> Bool
+portableIsExtinguisher p =
+    case p of
+        Extinguisher _ ->
+            True
+
+        _ ->
+            False
 
 
 portableIsFood : Portable -> Bool
@@ -289,6 +306,9 @@ isMovementAction action =
         CallOut _ _ ->
             False
 
+        PickUpExtinguisher _ ->
+            False
+
         PickUpFood _ ->
             False
 
@@ -331,6 +351,9 @@ signalsDesireToEat action =
             False
 
         CallOut _ _ ->
+            False
+
+        PickUpExtinguisher _ ->
             False
 
         PickUpFood _ ->

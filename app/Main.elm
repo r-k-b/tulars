@@ -16,6 +16,7 @@ import Types
             , EatHeldFood
             , MoveAwayFrom
             , MoveTo
+            , PickUpExtinguisher
             , PickUpFood
             , Wander
             )
@@ -356,6 +357,9 @@ getMovementVector currentTime deltaTime agent action =
             Nothing
 
         CallOut _ _ ->
+            Nothing
+
+        PickUpExtinguisher _ ->
             Nothing
 
         PickUpFood _ ->
@@ -767,6 +771,9 @@ outcomeToString outcome =
 
         Wander ->
             "Wander"
+
+        PickUpExtinguisher id ->
+            "PickUpExtinguisher(id#" ++ toString id ++ ")"
 
         PickUpFood id ->
             "PickUpFood(id#" ++ toString id ++ ")"

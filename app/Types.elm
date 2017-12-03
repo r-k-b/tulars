@@ -11,6 +11,7 @@ module Types
             , EatHeldFood
             , MoveAwayFrom
             , MoveTo
+            , PickUpExtinguisher
             , PickUpFood
             , Wander
             )
@@ -24,6 +25,7 @@ module Types
             , DistanceToTargetPoint
             , Hunger
             , IAmBeggingForFood
+            , IsCarryingExtinguisher
             , IsCarryingFood
             , IsCurrentAction
             , TimeSinceLastShoutedFeedMe
@@ -103,6 +105,7 @@ type ActionOutcome
     | ArrestMomentum
     | CallOut Signal Float
     | Wander
+    | PickUpExtinguisher Int
     | PickUpFood Int
     | EatHeldFood
     | DropHeldFood
@@ -144,6 +147,7 @@ type ConsiderationInput
     | DesiresToEat
     | IAmBeggingForFood
     | IsCarryingFood
+    | IsCarryingExtinguisher
 
 
 type alias PhysicalProperties =

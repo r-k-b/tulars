@@ -44,6 +44,7 @@ import Types
             , DistanceToTargetPoint
             , Hunger
             , IAmBeggingForFood
+            , IsCarryingExtinguisher
             , IsCarryingFood
             , IsCurrentAction
             , TimeSinceLastShoutedFeedMe
@@ -73,6 +74,7 @@ import UtilityFunctions
         , getActions
         , getConsiderationRawValue
         , isHolding
+        , portableIsExtinguisher
         , portableIsFood
         )
 import Plot
@@ -766,6 +768,9 @@ renderCI currentTime agent action ci =
 
         DesiresToEat ->
             "Is the top priority to eat? " ++ (toString <| agent.desireToEat)
+
+        IsCarryingExtinguisher ->
+            "Am I carrying a fire extinguisher? " ++ (toString <| isHolding portableIsExtinguisher agent.holding)
 
         IsCarryingFood ->
             "Am I carrying some food? " ++ (toString <| isHolding portableIsFood agent.holding)
