@@ -4,32 +4,7 @@ import Dict exposing (Dict)
 import Html
 import Maybe exposing (withDefault)
 import Task exposing (perform)
-import Types
-    exposing
-        ( Action
-        , ActionOutcome
-            ( ArrestMomentum
-            , BeggingForFood
-            , CallOut
-            , DoNothing
-            , DropHeldFood
-            , EatHeldFood
-            , MoveAwayFrom
-            , MoveTo
-            , PickUpExtinguisher
-            , PickUpFood
-            , Wander
-            )
-        , Agent
-        , CurrentSignal
-        , Food
-        , Holding(BothHands, EachHand, EmptyHanded, OnlyLeftHand, OnlyRightHand)
-        , Model
-        , Msg(InitTime, RAFtick, ToggleConditionDetailsVisibility, ToggleConditionsVisibility)
-        , PhysicalProperties
-        , Portable(Edible)
-        , Signal(Bored, Eating, FeedMe, GoAway)
-        )
+import Types exposing (Action, ActionOutcome(ArrestMomentum, BeggingForFood, CallOut, DoNothing, DropHeldFood, EatHeldFood, MoveAwayFrom, MoveTo, PickUp, Wander), Agent, CurrentSignal, FireExtinguisher, Food, Holding(BothHands, EachHand, EmptyHanded, OnlyLeftHand, OnlyRightHand), Model, Msg(InitTime, RAFtick, ToggleConditionDetailsVisibility, ToggleConditionsVisibility), PhysicalProperties, Portable(Edible, Extinguisher), ReferenceToPortable(EdibleID, ExtinguisherID), Signal(Bored, Eating, FeedMe, GoAway))
 import View exposing (view)
 import AnimationFrame exposing (times)
 import OpenSolid.Direction2d as Direction2d
@@ -44,7 +19,6 @@ import UtilityFunctions
         , isBeggingRelated
         , isMovementAction
         , onlyArrestMomentum
-        , signalsDesireToEat
         )
 import DefaultData
 
@@ -236,18 +210,17 @@ moveAgent currentTime dT agent =
                     , facing = newFacing
                 }
 
-        desireToEat =
-            topAction
-                |> Maybe.map signalsDesireToEat
-                |> withDefault False
-
         beggingForFood =
             topAction
                 |> Maybe.andThen isBeggingRelated
                 |> withDefault agent.beggingForFood
 
         ( newHunger, newHolding ) =
-            if desireToEat then
+            if
+                topAction
+                    |> Maybe.map (.outcome >> (==) EatHeldFood)
+                    |> withDefault False
+            then
                 agent |> eat
             else
                 ( increasedHunger, agent.holding )
@@ -259,7 +232,6 @@ moveAgent currentTime dT agent =
             , hunger = newHunger
             , currentAction = topAction |> Maybe.map .name |> withDefault "none"
             , currentOutcome = newOutcome
-            , desireToEat = desireToEat
             , holding = newHolding
             , beggingForFood = beggingForFood
         }
@@ -359,10 +331,7 @@ getMovementVector currentTime deltaTime agent action =
         CallOut _ _ ->
             Nothing
 
-        PickUpExtinguisher _ ->
-            Nothing
-
-        PickUpFood _ ->
+        PickUp _ ->
             Nothing
 
         EatHeldFood ->
@@ -451,10 +420,10 @@ moveWorld newTime model =
             model.foods
                 |> List.filterMap (rotFood deltaT)
 
-        ( agentsAfterPickingUpFood, pickedFood ) =
+        ( agentsAfterPickingUpFood, pickedFood, pickedExtinguishers ) =
             List.foldr
-                (foldOverPickedFood newTime)
-                ( [], foodsAfterDecay )
+                (foldOverPickedItems newTime)
+                ( [], foodsAfterDecay, model.extinguishers )
                 newAgents
 
         ( agentsAfterDroppingFood, includingDroppedFood ) =
@@ -467,11 +436,16 @@ moveWorld newTime model =
             | time = newTime
             , foods = includingDroppedFood
             , agents = agentsAfterDroppingFood
+            , extinguishers = pickedExtinguishers
         }
 
 
-foldOverPickedFood : Time -> Agent -> ( List Agent, List Food ) -> ( List Agent, List Food )
-foldOverPickedFood currentTime agent ( agentAcc, foodAcc ) =
+foldOverPickedItems :
+    Time
+    -> Agent
+    -> ( List Agent, List Food, List FireExtinguisher )
+    -> ( List Agent, List Food, List FireExtinguisher )
+foldOverPickedItems currentTime agent ( agentAcc, foodAcc, extinguisherAcc ) =
     let
         topAction : Maybe Action
         topAction =
@@ -479,20 +453,59 @@ foldOverPickedFood currentTime agent ( agentAcc, foodAcc ) =
                 |> List.sortBy (computeUtility agent currentTime >> (*) -1)
                 |> List.head
 
-        ( updatedAgent, updatedFoods ) =
-            case topAction of
-                Nothing ->
-                    ( agent, foodAcc )
+        ( updatedAgent, updatedFoods, updatedExtinguishers ) =
+            let
+                noChange =
+                    ( agent, foodAcc, extinguisherAcc )
+            in
+                case topAction of
+                    Nothing ->
+                        noChange
 
-                Just action ->
-                    case action.outcome of
-                        PickUpFood foodID ->
-                            pickUpFood agent foodID foodAcc
+                    Just action ->
+                        case action.outcome of
+                            PickUp (EdibleID foodID) ->
+                                let
+                                    ( a, f ) =
+                                        pickUpFood agent foodID foodAcc
+                                in
+                                    ( a, f, extinguisherAcc )
 
-                        _ ->
-                            ( agent, foodAcc )
+                            PickUp (ExtinguisherID fextID) ->
+                                let
+                                    ( a, e ) =
+                                        pickUpExtinguisher agent fextID extinguisherAcc
+                                in
+                                    ( a, foodAcc, e )
+
+                            DoNothing ->
+                                noChange
+
+                            MoveTo _ _ ->
+                                noChange
+
+                            MoveAwayFrom _ _ ->
+                                noChange
+
+                            ArrestMomentum ->
+                                noChange
+
+                            CallOut _ _ ->
+                                noChange
+
+                            Wander ->
+                                noChange
+
+                            EatHeldFood ->
+                                noChange
+
+                            DropHeldFood ->
+                                noChange
+
+                            BeggingForFood _ ->
+                                noChange
     in
-        ( updatedAgent :: agentAcc, updatedFoods )
+        ( updatedAgent :: agentAcc, updatedFoods, updatedExtinguishers )
 
 
 foldOverDroppedFood : Time -> Agent -> ( List Agent, List Food ) -> ( List Agent, List Food )
@@ -523,13 +536,13 @@ foldOverDroppedFood currentTime agent ( agentAcc, foodAcc ) =
 pickUpFood : Agent -> Int -> List Food -> ( Agent, List Food )
 pickUpFood agent foodID foods =
     let
-        foodIsAvailable : Food -> Bool
-        foodIsAvailable food =
+        targetIsAvailable : Food -> Bool
+        targetIsAvailable food =
             food.id == foodID
 
         foodAvailable : Bool
         foodAvailable =
-            foods |> List.any foodIsAvailable
+            foods |> List.any targetIsAvailable
 
         agentIsAvailable : Bool
         agentIsAvailable =
@@ -551,13 +564,13 @@ pickUpFood agent foodID foods =
 
         pickup : Food -> Maybe Food
         pickup food =
-            if (food |> foodIsAvailable) && agentIsAvailable then
+            if (food |> targetIsAvailable) && agentIsAvailable then
                 Nothing
             else
                 Just food
 
         newFoods =
-            foods |> List.filterMap pickup
+            List.filterMap pickup foods
 
         carry : Agent
         carry =
@@ -572,6 +585,60 @@ pickUpFood agent foodID foods =
                 agent
     in
         ( carry, newFoods )
+
+
+pickUpExtinguisher : Agent -> Int -> List FireExtinguisher -> ( Agent, List FireExtinguisher )
+pickUpExtinguisher agent fextID extinguishers =
+    let
+        targetIsAvailable : FireExtinguisher -> Bool
+        targetIsAvailable fext =
+            fext.id == fextID
+
+        targetAvailable : Bool
+        targetAvailable =
+            extinguishers |> List.any targetIsAvailable
+
+        agentIsAvailable : Bool
+        agentIsAvailable =
+            case agent.holding of
+                EmptyHanded ->
+                    True
+
+                OnlyLeftHand _ ->
+                    False
+
+                OnlyRightHand _ ->
+                    False
+
+                EachHand _ _ ->
+                    False
+
+                BothHands _ ->
+                    False
+
+        pickup : FireExtinguisher -> Maybe FireExtinguisher
+        pickup fext =
+            if (fext |> targetIsAvailable) && agentIsAvailable then
+                Nothing
+            else
+                Just fext
+
+        newTargets =
+            List.filterMap pickup extinguishers
+
+        carry : Agent
+        carry =
+            if agentIsAvailable && targetAvailable then
+                case extinguishers |> List.head of
+                    Nothing ->
+                        agent
+
+                    Just fext ->
+                        { agent | holding = OnlyRightHand (Extinguisher fext) }
+            else
+                agent
+    in
+        ( carry, newTargets )
 
 
 dropFood : Agent -> List Food -> ( Agent, List Food )
@@ -772,10 +839,10 @@ outcomeToString outcome =
         Wander ->
             "Wander"
 
-        PickUpExtinguisher id ->
+        PickUp (ExtinguisherID id) ->
             "PickUpExtinguisher(id#" ++ toString id ++ ")"
 
-        PickUpFood id ->
+        PickUp (EdibleID id) ->
             "PickUpFood(id#" ++ toString id ++ ")"
 
         EatHeldFood ->

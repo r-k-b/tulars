@@ -11,8 +11,7 @@ module Types
             , EatHeldFood
             , MoveAwayFrom
             , MoveTo
-            , PickUpExtinguisher
-            , PickUpFood
+            , PickUp
             , Wander
             )
         , Agent
@@ -21,7 +20,6 @@ module Types
             ( Constant
             , CurrentlyCallingOut
             , CurrentSpeed
-            , DesiresToEat
             , DistanceToTargetPoint
             , Hunger
             , IAmBeggingForFood
@@ -40,6 +38,7 @@ module Types
         , Msg(InitTime, RAFtick, ToggleConditionDetailsVisibility, ToggleConditionsVisibility)
         , PhysicalProperties
         , Portable(Edible, Extinguisher)
+        , ReferenceToPortable(ExtinguisherID, EdibleID)
         , Signal(Bored, Eating, FeedMe, GoAway)
         )
 
@@ -80,7 +79,6 @@ type alias Agent =
     , topActionLastStartTimes : Dict String Time
     , callingOut : Maybe CurrentSignal
     , holding : Holding
-    , desireToEat : Bool
 
     -- , desireToStayStill : Bool
     }
@@ -105,8 +103,7 @@ type ActionOutcome
     | ArrestMomentum
     | CallOut Signal Float
     | Wander
-    | PickUpExtinguisher Int
-    | PickUpFood Int
+    | PickUp ReferenceToPortable
     | EatHeldFood
     | DropHeldFood
     | BeggingForFood Bool
@@ -144,7 +141,6 @@ type ConsiderationInput
     | TimeSinceLastShoutedFeedMe
     | CurrentlyCallingOut
     | IsCurrentAction
-    | DesiresToEat
     | IAmBeggingForFood
     | IsCarryingFood
     | IsCarryingExtinguisher
@@ -227,6 +223,11 @@ type Holding
 type Portable
     = Extinguisher FireExtinguisher
     | Edible Food
+
+
+type ReferenceToPortable
+    = ExtinguisherID Int
+    | EdibleID Int
 
 
 type alias FireExtinguisher =

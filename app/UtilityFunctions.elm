@@ -12,7 +12,6 @@ module UtilityFunctions
         , onlyArrestMomentum
         , portableIsExtinguisher
         , portableIsFood
-        , signalsDesireToEat
         )
 
 import Dict
@@ -30,8 +29,7 @@ import Types
             , EatHeldFood
             , MoveAwayFrom
             , MoveTo
-            , PickUpExtinguisher
-            , PickUpFood
+            , PickUp
             , Wander
             )
         , Agent
@@ -40,7 +38,6 @@ import Types
             ( Constant
             , CurrentSpeed
             , CurrentlyCallingOut
-            , DesiresToEat
             , DistanceToTargetPoint
             , Hunger
             , IAmBeggingForFood
@@ -53,6 +50,7 @@ import Types
         , InputFunction(Asymmetric, Exponential, Linear, Normal, Sigmoid)
         , Model
         , Portable(Edible, Extinguisher)
+        , ReferenceToPortable(EdibleID, ExtinguisherID)
         )
 import OpenSolid.Point2d as Point2d
 import OpenSolid.Vector2d as Vector2d
@@ -185,10 +183,6 @@ getConsiderationRawValue agent currentTime action consideration =
                 == action.name
                 |> true1false0
 
-        DesiresToEat ->
-            agent.desireToEat
-                |> true1false0
-
         IsCarryingExtinguisher ->
             isHolding portableIsExtinguisher agent.holding
                 |> true1false0
@@ -306,10 +300,7 @@ isMovementAction action =
         CallOut _ _ ->
             False
 
-        PickUpExtinguisher _ ->
-            False
-
-        PickUpFood _ ->
+        PickUp _ ->
             False
 
         EatHeldFood ->
@@ -330,43 +321,6 @@ isBeggingRelated action =
 
         _ ->
             Nothing
-
-
-signalsDesireToEat : Action -> Bool
-signalsDesireToEat action =
-    case action.outcome of
-        ArrestMomentum ->
-            False
-
-        MoveTo _ _ ->
-            False
-
-        MoveAwayFrom _ _ ->
-            False
-
-        Wander ->
-            False
-
-        DoNothing ->
-            False
-
-        CallOut _ _ ->
-            False
-
-        PickUpExtinguisher _ ->
-            False
-
-        PickUpFood _ ->
-            True
-
-        EatHeldFood ->
-            True
-
-        DropHeldFood ->
-            False
-
-        BeggingForFood bool ->
-            bool
 
 
 onlyArrestMomentum : Action -> Maybe Action

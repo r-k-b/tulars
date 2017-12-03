@@ -23,8 +23,7 @@ import Types
             , EatHeldFood
             , MoveAwayFrom
             , MoveTo
-            , PickUpExtinguisher
-            , PickUpFood
+            , PickUp
             , Wander
             )
         , Agent
@@ -47,6 +46,7 @@ import Types
         , InputFunction(Asymmetric, Exponential, Linear, Normal, Sigmoid)
         , Model
         , Portable(Edible)
+        , ReferenceToPortable(EdibleID, ExtinguisherID)
         , Signal(Bored, FeedMe)
         )
 import UtilityFunctions exposing (isHolding, portableIsFood)
@@ -140,7 +140,6 @@ agents =
       , beggingForFood = False
       , callingOut = Nothing
       , holding = EmptyHanded
-      , desireToEat = False
       , topActionLastStartTimes = Dict.empty
       }
     , { name = "Bob"
@@ -176,7 +175,6 @@ agents =
       , beggingForFood = False
       , callingOut = Nothing
       , holding = EmptyHanded
-      , desireToEat = False
       , topActionLastStartTimes = Dict.empty
       }
     , { name = "Charlie"
@@ -210,7 +208,6 @@ agents =
       , beggingForFood = False
       , callingOut = Nothing
       , holding = EmptyHanded
-      , desireToEat = False
       , topActionLastStartTimes = Dict.empty
       }
     ]
@@ -416,7 +413,7 @@ pickUpFoodToEat =
         goalPerItem food =
             Action
                 ("pick up food to eat" |> withSuffix food.id)
-                (PickUpFood food.id)
+                (PickUp <| EdibleID food.id)
                 [ { name = "in pickup range"
                   , function = Exponential 0.01
                   , input = DistanceToTargetPoint food.physics.position
@@ -458,8 +455,8 @@ setBeggingState =
                 [ { name = "I'm no longer hungry"
                   , function = Linear 1 0
                   , input = Hunger
-                  , inputMin = 0.3
-                  , inputMax = 0
+                  , inputMin = 0.4
+                  , inputMax = 0.3
                   , weighting = 1
                   , offset = 0
                   }
@@ -690,8 +687,8 @@ fightFires =
                 [ { name = "close enough"
                   , function = Asymmetric 0.3 10 0.5 0.8 0.97 -1000 0.5 1
                   , input = DistanceToTargetPoint fire.physics.position
-                  , inputMin = 50
-                  , inputMax = 400
+                  , inputMin = 400
+                  , inputMax = 30
                   , weighting = 3
                   , offset = 0
                   }
@@ -710,7 +707,7 @@ fightFires =
         pickupNearbyExtinguishers fext =
             Action
                 ("pick up a nearby fire extinguisher" |> withSuffix fext.id)
-                (PickUpExtinguisher fext.id)
+                (PickUp <| ExtinguisherID fext.id)
                 [ { name = "in pickup range"
                   , function = Exponential 0.01
                   , input = DistanceToTargetPoint fext.physics.position

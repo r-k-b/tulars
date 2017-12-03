@@ -40,7 +40,6 @@ import Types
             ( Constant
             , CurrentSpeed
             , CurrentlyCallingOut
-            , DesiresToEat
             , DistanceToTargetPoint
             , Hunger
             , IAmBeggingForFood
@@ -139,7 +138,9 @@ mainMap : Model -> Html.Html Msg
 mainMap model =
     render2dResponsive bb
         (g [ id "mainMap" ]
-            [ g [ id "agents" ]
+            [ borderIndicator 200
+            , borderIndicator 300
+            , g [ id "agents" ]
                 (List.map renderAgent model.agents)
             , g [ id "foods" ]
                 (List.map renderFood model.foods)
@@ -147,8 +148,6 @@ mainMap model =
                 (List.map renderFire model.fires)
             , g [ id "extinguishers" ]
                 (List.map renderExtinguisher model.extinguishers)
-            , borderIndicator 200
-            , borderIndicator 300
             ]
         )
 
@@ -376,7 +375,6 @@ agentStats agent =
         stats : List ( String, String )
         stats =
             [ "hunger" => prettyFloat 3 agent.hunger
-            , "food targeted" => toString agent.desireToEat
             , "holding" => carryingAsString agent.holding
             , "current action" => agent.currentAction
             ]
@@ -765,9 +763,6 @@ renderCI currentTime agent action ci =
 
         IsCurrentAction ->
             "Is action the current one? " ++ (toString <| action.name == agent.currentAction)
-
-        DesiresToEat ->
-            "Is the top priority to eat? " ++ (toString <| agent.desireToEat)
 
         IsCarryingExtinguisher ->
             "Am I carrying a fire extinguisher? " ++ (toString <| isHolding portableIsExtinguisher agent.holding)
