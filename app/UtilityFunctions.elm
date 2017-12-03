@@ -30,6 +30,7 @@ import Types
             , MoveAwayFrom
             , MoveTo
             , PickUp
+            , ShootExtinguisher
             , Wander
             )
         , Agent
@@ -46,11 +47,10 @@ import Types
             , IsCurrentAction
             , TimeSinceLastShoutedFeedMe
             )
-        , Holding(BothHands, EachHand, EmptyHanded, OnlyLeftHand, OnlyRightHand)
+        , Holding(BothHands, EmptyHanded)
         , InputFunction(Asymmetric, Exponential, Linear, Normal, Sigmoid)
         , Model
         , Portable(Edible, Extinguisher)
-        , ReferenceToPortable(EdibleID, ExtinguisherID)
         )
 import OpenSolid.Point2d as Point2d
 import OpenSolid.Vector2d as Vector2d
@@ -230,15 +230,6 @@ isHolding f held =
         EmptyHanded ->
             False
 
-        OnlyLeftHand p ->
-            f p
-
-        OnlyRightHand p ->
-            f p
-
-        EachHand pL pR ->
-            f pL || f pR
-
         BothHands p ->
             f p
 
@@ -310,6 +301,9 @@ isMovementAction action =
             False
 
         BeggingForFood _ ->
+            False
+
+        ShootExtinguisher _ ->
             False
 
 

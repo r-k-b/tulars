@@ -4,9 +4,11 @@ module DefaultData
         , extinguishers
         , fires
         , foods
+        , projectiles
         )
 
 import Dict
+import Maybe exposing (withDefault)
 import OpenSolid.Direction2d as Direction2d
 import OpenSolid.Point2d as Point2d
 import OpenSolid.Vector2d as Vector2d
@@ -24,6 +26,7 @@ import Types
             , MoveAwayFrom
             , MoveTo
             , PickUp
+            , ShootExtinguisher
             , Wander
             )
         , Agent
@@ -42,10 +45,11 @@ import Types
         , Fire
         , FireExtinguisher
         , Food
-        , Holding(BothHands, EachHand, EmptyHanded, OnlyLeftHand, OnlyRightHand)
+        , Holding(BothHands, EmptyHanded)
         , InputFunction(Asymmetric, Exponential, Linear, Normal, Sigmoid)
         , Model
         , Portable(Edible)
+        , Projectiles
         , ReferenceToPortable(EdibleID, ExtinguisherID)
         , Signal(Bored, FeedMe)
         )
@@ -103,6 +107,13 @@ extinguishers =
       , remaining = 100
       }
     ]
+
+
+projectiles : Projectiles
+projectiles =
+    { fireRetardant = []
+    , stones = []
+    }
 
 
 agents : List Agent
@@ -584,27 +595,6 @@ eatCarriedFood =
                     EmptyHanded ->
                         []
 
-                    OnlyLeftHand (Edible _) ->
-                        [ goalPerItem ]
-
-                    OnlyLeftHand _ ->
-                        []
-
-                    OnlyRightHand (Edible _) ->
-                        [ goalPerItem ]
-
-                    OnlyRightHand _ ->
-                        []
-
-                    EachHand _ (Edible _) ->
-                        [ goalPerItem ]
-
-                    EachHand (Edible _) _ ->
-                        [ goalPerItem ]
-
-                    EachHand _ _ ->
-                        []
-
                     BothHands (Edible _) ->
                         [ goalPerItem ]
 
@@ -660,7 +650,14 @@ avoidFire =
                   , weighting = 3
                   , offset = 0
                   }
-                , defaultHysteresis 0.1
+                , { name = "unless I've got an extinguisher"
+                  , function = Linear 1 0
+                  , input = IsCarryingExtinguisher
+                  , inputMin = 1
+                  , inputMax = 0
+                  , weighting = 0.9
+                  , offset = 0.1
+                  }
                 ]
                 Dict.empty
     in
@@ -671,13 +668,43 @@ fightFires : ActionGenerator
 fightFires =
     let
         generator : Model -> Agent -> List Action
-        generator model _ =
+        generator model agent =
             if List.length model.fires > 0 then
-                List.map getWithinFightingRange model.fires
+                List.map (shootExtinguisher agent) model.fires
+                    ++ List.map getWithinFightingRange model.fires
                     ++ List.map pickupNearbyExtinguishers model.extinguishers
                     ++ List.map moveToGetExtinguishers model.extinguishers
             else
                 []
+
+        shootExtinguisher : Agent -> Fire -> Action
+        shootExtinguisher agent fire =
+            let
+                direction =
+                    Direction2d.from agent.physics.position fire.physics.position
+                        |> withDefault (Direction2d.fromAngle 0)
+            in
+                Action
+                    ("use extinguisher on fire" |> withSuffix fire.id)
+                    (ShootExtinguisher direction)
+                    [ { name = "within range"
+                      , function = Linear 1 0
+                      , input = DistanceToTargetPoint fire.physics.position
+                      , inputMin = 60
+                      , inputMax = 55
+                      , weighting = 3
+                      , offset = 0
+                      }
+                    , { name = "carrying an extinguisher"
+                      , function = Linear 1 0
+                      , input = IsCarryingExtinguisher
+                      , inputMin = 0
+                      , inputMax = 1
+                      , weighting = 1
+                      , offset = 0
+                      }
+                    ]
+                    Dict.empty
 
         getWithinFightingRange : Fire -> Action
         getWithinFightingRange fire =

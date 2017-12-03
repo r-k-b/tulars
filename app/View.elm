@@ -51,17 +51,12 @@ import Types
         , Fire
         , FireExtinguisher
         , Food
-        , Holding
-            ( EmptyHanded
-            , OnlyLeftHand
-            , OnlyRightHand
-            , EachHand
-            , BothHands
-            )
+        , Holding(BothHands, EmptyHanded)
         , InputFunction(Asymmetric, Exponential, Linear, Normal, Sigmoid)
         , Model
         , Msg(ToggleConditionDetailsVisibility, ToggleConditionsVisibility)
         , Portable(Edible, Extinguisher)
+        , Retardant
         , Signal(Bored, Eating, FeedMe, GoAway)
         )
 import Formatting exposing (print)
@@ -148,6 +143,8 @@ mainMap model =
                 (List.map renderFire model.fires)
             , g [ id "extinguishers" ]
                 (List.map renderExtinguisher model.extinguishers)
+            , g [ id "retardantProjectiles" ]
+                (List.map renderRetardantCloud model.projectiles.fireRetardant)
             ]
         )
 
@@ -297,12 +294,6 @@ renderAgent agent =
                                 |> Svg.scaleAbout agent.physics.position 0.7
                             ]
 
-        leftHand =
-            Point2d.fromCoordinates ( -10, 10 )
-
-        rightHand =
-            Point2d.fromCoordinates ( 10, 10 )
-
         bothHands =
             Point2d.fromCoordinates ( 0, 12 )
 
@@ -310,17 +301,6 @@ renderAgent agent =
             case agent.holding of
                 EmptyHanded ->
                     []
-
-                OnlyLeftHand p ->
-                    [ renderPortable p leftHand ]
-
-                OnlyRightHand p ->
-                    [ renderPortable p rightHand ]
-
-                EachHand pL pR ->
-                    [ renderPortable pL leftHand
-                    , renderPortable pR rightHand
-                    ]
 
                 BothHands p ->
                     [ renderPortable p bothHands ]
@@ -395,15 +375,6 @@ carryingAsString held =
     case held of
         EmptyHanded ->
             "nothing"
-
-        OnlyLeftHand p ->
-            "left hand: " ++ portableAsString p
-
-        OnlyRightHand p ->
-            "right hand: " ++ portableAsString p
-
-        EachHand pL pR ->
-            "left/right: " ++ portableAsString pL ++ ", " ++ portableAsString pR
 
         BothHands p ->
             "both hands: " ++ portableAsString p
@@ -828,6 +799,11 @@ renderFood food =
 renderExtinguisher : FireExtinguisher -> Svg Msg
 renderExtinguisher extinguisher =
     renderEmoji "🚒" extinguisher.physics.position
+
+
+renderRetardantCloud : Retardant -> Svg Msg
+renderRetardantCloud retardant =
+    renderEmoji "☁" retardant.physics.position
 
 
 renderFire : Fire -> Svg Msg

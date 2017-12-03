@@ -12,6 +12,7 @@ module Types
             , MoveAwayFrom
             , MoveTo
             , PickUp
+            , ShootExtinguisher
             , Wander
             )
         , Agent
@@ -32,13 +33,15 @@ module Types
         , Fire
         , FireExtinguisher
         , Food
-        , Holding(BothHands, EachHand, EmptyHanded, OnlyLeftHand, OnlyRightHand)
+        , Holding(BothHands, EmptyHanded)
         , InputFunction(Asymmetric, Exponential, Linear, Normal, Sigmoid)
         , Model
         , Msg(InitTime, RAFtick, ToggleConditionDetailsVisibility, ToggleConditionsVisibility)
         , PhysicalProperties
         , Portable(Edible, Extinguisher)
+        , Projectiles
         , ReferenceToPortable(ExtinguisherID, EdibleID)
+        , Retardant
         , Signal(Bored, Eating, FeedMe, GoAway)
         )
 
@@ -55,6 +58,7 @@ type alias Model =
     , foods : List Food
     , fires : List Fire
     , extinguishers : List FireExtinguisher
+    , projectiles : Projectiles
     }
 
 
@@ -107,6 +111,7 @@ type ActionOutcome
     | EatHeldFood
     | DropHeldFood
     | BeggingForFood Bool
+    | ShootExtinguisher Direction2d
 
 
 type Signal
@@ -204,6 +209,12 @@ type alias Fire =
     }
 
 
+type alias Retardant =
+    { physics : PhysicalProperties
+    , intensity : Float
+    }
+
+
 type alias Name =
     String
 
@@ -214,9 +225,6 @@ type alias Generator =
 
 type Holding
     = EmptyHanded
-    | OnlyLeftHand Portable
-    | OnlyRightHand Portable
-    | EachHand Portable Portable
     | BothHands Portable
 
 
@@ -235,4 +243,10 @@ type alias FireExtinguisher =
     , physics : PhysicalProperties
     , capacity : Float
     , remaining : Float
+    }
+
+
+type alias Projectiles =
+    { fireRetardant : List Retardant
+    , stones : List Never
     }

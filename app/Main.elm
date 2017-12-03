@@ -4,7 +4,36 @@ import Dict exposing (Dict)
 import Html
 import Maybe exposing (withDefault)
 import Task exposing (perform)
-import Types exposing (Action, ActionOutcome(ArrestMomentum, BeggingForFood, CallOut, DoNothing, DropHeldFood, EatHeldFood, MoveAwayFrom, MoveTo, PickUp, Wander), Agent, CurrentSignal, FireExtinguisher, Food, Holding(BothHands, EachHand, EmptyHanded, OnlyLeftHand, OnlyRightHand), Model, Msg(InitTime, RAFtick, ToggleConditionDetailsVisibility, ToggleConditionsVisibility), PhysicalProperties, Portable(Edible, Extinguisher), ReferenceToPortable(EdibleID, ExtinguisherID), Signal(Bored, Eating, FeedMe, GoAway))
+import Types
+    exposing
+        ( Action
+        , ActionOutcome
+            ( ArrestMomentum
+            , BeggingForFood
+            , CallOut
+            , DoNothing
+            , DropHeldFood
+            , EatHeldFood
+            , MoveAwayFrom
+            , MoveTo
+            , PickUp
+            , ShootExtinguisher
+            , Wander
+            )
+        , Agent
+        , CurrentSignal
+        , FireExtinguisher
+        , Food
+        , Holding(BothHands, EmptyHanded)
+        , Model
+        , Msg(InitTime, RAFtick, ToggleConditionDetailsVisibility, ToggleConditionsVisibility)
+        , PhysicalProperties
+        , Portable(Edible, Extinguisher)
+        , Projectiles
+        , ReferenceToPortable(EdibleID, ExtinguisherID)
+        , Retardant
+        , Signal(Bored, Eating, FeedMe, GoAway)
+        )
 import View exposing (view)
 import AnimationFrame exposing (times)
 import OpenSolid.Direction2d as Direction2d
@@ -20,7 +49,7 @@ import UtilityFunctions
         , isMovementAction
         , onlyArrestMomentum
         )
-import DefaultData
+import DefaultData as DD
 
 
 main : Program Never Model Msg
@@ -39,7 +68,7 @@ main =
 
 init : ( Model, Cmd Msg )
 init =
-    ( Model (0 / 0) DefaultData.agents DefaultData.foods DefaultData.fires DefaultData.extinguishers
+    ( Model (0 / 0) DD.agents DD.foods DD.fires DD.extinguishers DD.projectiles
     , perform InitTime Time.now
     )
 
@@ -119,6 +148,44 @@ updateHelp msg model =
                         model.agents
             in
                 { model | agents = newAgents }
+
+
+moveProjectiles : Time -> Projectiles -> Projectiles
+moveProjectiles dTime projectiles =
+    let
+        retardants =
+            List.map (doPhysics dTime) projectiles.fireRetardant
+    in
+        Projectiles
+            retardants
+            projectiles.stones
+
+
+{-| todo: use verlet integration?
+-}
+doPhysics : Time -> Physical a -> Physical a
+doPhysics deltaTime x =
+    let
+        p =
+            x.physics
+
+        dV =
+            Vector2d.scaleBy (deltaTime / 1000) p.velocity
+
+        newPosition =
+            Point2d.translateBy dV p.position
+
+        newVelocity =
+            Vector2d.sum p.velocity p.acceleration
+
+        updatedPhysics =
+            { position = newPosition
+            , facing = p.facing
+            , velocity = newVelocity
+            , acceleration = p.acceleration
+            }
+    in
+        { x | physics = updatedPhysics }
 
 
 moveAgent : Time -> Time -> Agent -> Agent
@@ -343,6 +410,9 @@ getMovementVector currentTime deltaTime agent action =
         BeggingForFood _ ->
             Nothing
 
+        ShootExtinguisher _ ->
+            Nothing
+
 
 {-| Scales a vector, representing how much speed is lost to friction.
 -}
@@ -416,6 +486,20 @@ moveWorld newTime model =
             in
                 List.map dMove model.agents
 
+        movedProjectiles =
+            model.projectiles |> moveProjectiles deltaT
+
+        newRetardantProjectiles =
+            List.foldr
+                (createRetardantProjectiles newTime)
+                []
+                newAgents
+
+        projectiles =
+            { fireRetardant = movedProjectiles.fireRetardant ++ newRetardantProjectiles
+            , stones = movedProjectiles.stones
+            }
+
         foodsAfterDecay =
             model.foods
                 |> List.filterMap (rotFood deltaT)
@@ -437,7 +521,38 @@ moveWorld newTime model =
             , foods = includingDroppedFood
             , agents = agentsAfterDroppingFood
             , extinguishers = pickedExtinguishers
+            , projectiles = projectiles
         }
+
+
+createRetardantProjectiles : Time -> Agent -> List Retardant -> List Retardant
+createRetardantProjectiles currentTime agent acc =
+    let
+        topAction : Maybe Action
+        topAction =
+            getActions agent
+                |> List.sortBy (computeUtility agent currentTime >> (*) -1)
+                |> List.head
+    in
+        case topAction of
+            Nothing ->
+                acc
+
+            Just action ->
+                case action.outcome of
+                    ShootExtinguisher direction ->
+                        { intensity = 1
+                        , physics =
+                            { facing = direction
+                            , position = agent.physics.position
+                            , velocity = direction |> Direction2d.toVector |> Vector2d.scaleBy 100
+                            , acceleration = Vector2d.zero
+                            }
+                        }
+                            :: acc
+
+                    _ ->
+                        acc
 
 
 foldOverPickedItems :
@@ -504,6 +619,9 @@ foldOverPickedItems currentTime agent ( agentAcc, foodAcc, extinguisherAcc ) =
 
                             BeggingForFood _ ->
                                 noChange
+
+                            ShootExtinguisher _ ->
+                                noChange
     in
         ( updatedAgent :: agentAcc, updatedFoods, updatedExtinguishers )
 
@@ -550,15 +668,6 @@ pickUpFood agent foodID foods =
                 EmptyHanded ->
                     True
 
-                OnlyLeftHand _ ->
-                    False
-
-                OnlyRightHand _ ->
-                    False
-
-                EachHand _ _ ->
-                    False
-
                 BothHands _ ->
                     False
 
@@ -580,7 +689,7 @@ pickUpFood agent foodID foods =
                         agent
 
                     Just food ->
-                        { agent | holding = OnlyRightHand (Edible food) }
+                        { agent | holding = BothHands (Edible food) }
             else
                 agent
     in
@@ -604,15 +713,6 @@ pickUpExtinguisher agent fextID extinguishers =
                 EmptyHanded ->
                     True
 
-                OnlyLeftHand _ ->
-                    False
-
-                OnlyRightHand _ ->
-                    False
-
-                EachHand _ _ ->
-                    False
-
                 BothHands _ ->
                     False
 
@@ -634,7 +734,7 @@ pickUpExtinguisher agent fextID extinguishers =
                         agent
 
                     Just fext ->
-                        { agent | holding = OnlyRightHand (Extinguisher fext) }
+                        { agent | holding = BothHands (Extinguisher fext) }
             else
                 agent
     in
@@ -649,30 +749,6 @@ dropFood agent extantFoods =
             List.map (usePhysics agent.physics) <|
                 case agent.holding of
                     EmptyHanded ->
-                        []
-
-                    OnlyLeftHand (Edible x) ->
-                        [ x ]
-
-                    OnlyLeftHand _ ->
-                        []
-
-                    OnlyRightHand (Edible x) ->
-                        [ x ]
-
-                    OnlyRightHand _ ->
-                        []
-
-                    EachHand (Edible x) (Edible y) ->
-                        [ x, y ]
-
-                    EachHand (Edible x) _ ->
-                        [ x ]
-
-                    EachHand _ (Edible x) ->
-                        [ x ]
-
-                    EachHand _ _ ->
                         []
 
                     BothHands (Edible x) ->
@@ -750,15 +826,6 @@ isHolding f agent =
         EmptyHanded ->
             False
 
-        OnlyLeftHand p ->
-            f p
-
-        OnlyRightHand p ->
-            f p
-
-        EachHand pL pR ->
-            f pL || f pR
-
         BothHands p ->
             f p
 
@@ -768,37 +835,6 @@ mapHeld f held =
     case held of
         EmptyHanded ->
             EmptyHanded
-
-        OnlyLeftHand p ->
-            f p
-                |> Maybe.map OnlyLeftHand
-                |> withDefault EmptyHanded
-
-        OnlyRightHand p ->
-            f p
-                |> Maybe.map OnlyLeftHand
-                |> withDefault EmptyHanded
-
-        EachHand pL pR ->
-            let
-                left =
-                    f pL
-
-                right =
-                    f pR
-            in
-                case ( left, right ) of
-                    ( Nothing, Nothing ) ->
-                        EmptyHanded
-
-                    ( Just newPL, Nothing ) ->
-                        OnlyLeftHand newPL
-
-                    ( Nothing, Just newPR ) ->
-                        OnlyRightHand newPR
-
-                    ( Just newPL, Just newPR ) ->
-                        EachHand newPL newPR
 
         BothHands p ->
             f p
@@ -853,6 +889,9 @@ outcomeToString outcome =
 
         BeggingForFood bool ->
             "BeggingForFood(" ++ toString bool ++ ")"
+
+        ShootExtinguisher direction ->
+            "ShootExtinguisher(" ++ toString direction ++ ")"
 
 
 signalToString : Signal -> String
