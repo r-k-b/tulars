@@ -39,7 +39,7 @@ import AnimationFrame exposing (times)
 import OpenSolid.Direction2d as Direction2d
 import OpenSolid.Point2d as Point2d
 import OpenSolid.Vector2d as Vector2d exposing (Vector2d)
-import Time exposing (Time)
+import Time exposing (Time, inMilliseconds, second)
 import UtilityFunctions
     exposing
         ( computeUtility
@@ -495,8 +495,13 @@ moveWorld newTime model =
                 []
                 newAgents
 
+        retardantsWithDecay =
+            movedProjectiles.fireRetardant
+                ++ newRetardantProjectiles
+                |> List.filterMap (decayRetardant newTime)
+
         projectiles =
-            { fireRetardant = movedProjectiles.fireRetardant ++ newRetardantProjectiles
+            { fireRetardant = retardantsWithDecay
             , stones = movedProjectiles.stones
             }
 
@@ -541,11 +546,15 @@ createRetardantProjectiles currentTime agent acc =
             Just action ->
                 case action.outcome of
                     ShootExtinguisher direction ->
-                        { intensity = 1
+                        { expiry = currentTime + 1 * second
                         , physics =
                             { facing = direction
                             , position = agent.physics.position
-                            , velocity = direction |> Direction2d.toVector |> Vector2d.scaleBy 100
+                            , velocity =
+                                direction
+                                    |> Direction2d.toVector
+                                    |> Vector2d.scaleBy 100
+                                    |> Vector2d.rotateBy (currentTime |> angleFuzz 0.8)
                             , acceleration = Vector2d.zero
                             }
                         }
@@ -908,6 +917,23 @@ signalToString signal =
 
         Bored ->
             "Bored"
+
+
+decayRetardant : Time -> Retardant -> Maybe Retardant
+decayRetardant currentTime ret =
+    if currentTime > ret.expiry then
+        Nothing
+    else
+        Just ret
+
+
+angleFuzz : Float -> Time -> Float
+angleFuzz spread timeFloat =
+    let
+        time =
+            timeFloat |> inMilliseconds |> floor
+    in
+        ((time * 43993 % 4919 |> toFloat) / 4919 - 0.5) * spread
 
 
 

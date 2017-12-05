@@ -211,7 +211,7 @@ type alias Fire =
 
 type alias Retardant =
     { physics : PhysicalProperties
-    , intensity : Float
+    , expiry : Time
     }
 
 
