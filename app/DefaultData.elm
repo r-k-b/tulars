@@ -64,6 +64,7 @@ foods =
             , position = Point2d.fromCoordinates ( -100, 100 )
             , velocity = Vector2d.zero
             , acceleration = Vector2d.zero
+            , radius = foodRadius
             }
       , joules = 3000000000
       , freshJoules = 3000000000
@@ -74,6 +75,7 @@ foods =
             , position = Point2d.fromCoordinates ( 100, 100 )
             , velocity = Vector2d.zero
             , acceleration = Vector2d.zero
+            , radius = foodRadius
             }
       , joules = 3000000000
       , freshJoules = 3000000000
@@ -89,6 +91,7 @@ fires =
             , position = Point2d.fromCoordinates ( 100, -100 )
             , velocity = Vector2d.fromComponents ( 0, 0 )
             , acceleration = Vector2d.zero
+            , radius = fireRadius
             }
       }
     ]
@@ -102,6 +105,7 @@ extinguishers =
             , position = Point2d.fromCoordinates ( -20, -20 )
             , velocity = Vector2d.fromComponents ( 0, 0 )
             , acceleration = Vector2d.zero
+            , radius = extinguisherRadius
             }
       , capacity = 100
       , remaining = 100
@@ -124,6 +128,7 @@ agents =
             , position = Point2d.fromCoordinates ( 200, 150 )
             , velocity = Vector2d.fromComponents ( -1, -10 )
             , acceleration = Vector2d.zero
+            , radius = agentRadius
             }
       , actionGenerators =
             [ moveToFood
@@ -159,6 +164,7 @@ agents =
             , position = Point2d.fromCoordinates ( 100, 250 )
             , velocity = Vector2d.fromComponents ( -10, -20 )
             , acceleration = Vector2d.fromComponents ( -2, -1 )
+            , radius = agentRadius
             }
       , actionGenerators =
             [ moveToFood
@@ -194,6 +200,7 @@ agents =
             , position = Point2d.fromCoordinates ( -120, -120 )
             , velocity = Vector2d.fromComponents ( 0, 0 )
             , acceleration = Vector2d.fromComponents ( 0, 0 )
+            , radius = agentRadius
             }
       , actionGenerators =
             [ stopAtFood
@@ -844,3 +851,23 @@ defaultHysteresis weighting =
 withSuffix : Int -> String -> String
 withSuffix id s =
     s ++ " (#" ++ toString id ++ ")"
+
+
+agentRadius : Float
+agentRadius =
+    10
+
+
+extinguisherRadius : Float
+extinguisherRadius =
+    10
+
+
+fireRadius : Float
+fireRadius =
+    20
+
+
+foodRadius : Float
+foodRadius =
+    10

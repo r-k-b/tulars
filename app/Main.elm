@@ -183,6 +183,7 @@ doPhysics deltaTime x =
             , facing = p.facing
             , velocity = newVelocity
             , acceleration = p.acceleration
+            , radius = p.radius
             }
     in
         { x | physics = updatedPhysics }
@@ -556,6 +557,7 @@ createRetardantProjectiles currentTime agent acc =
                                     |> Vector2d.scaleBy 100
                                     |> Vector2d.rotateBy (currentTime |> angleFuzz 0.8)
                             , acceleration = Vector2d.zero
+                            , radius = retardantRadius
                             }
                         }
                             :: acc
@@ -934,6 +936,11 @@ angleFuzz spread timeFloat =
             timeFloat |> inMilliseconds |> floor
     in
         ((time * 43993 % 4919 |> toFloat) / 4919 - 0.5) * spread
+
+
+retardantRadius : Float
+retardantRadius =
+    5
 
 
 

@@ -156,6 +156,7 @@ type alias PhysicalProperties =
     , facing : Direction2d
     , velocity : Vector2d
     , acceleration : Vector2d
+    , radius : Float
     }
 
 
