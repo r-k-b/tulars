@@ -7,7 +7,8 @@
     "build-elm": "elm-make app/Main.elm --output=./dist/main.js",
     "debug-elm": "elm-make app/Main.elm --output=./dist/main.js --debug",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "watch-elm": "npm run debug-elm; chokidar app/*.elm -c 'yes \"\" | head -100; npm run debug-elm'"
+    "watch-elm": "npm run build-elm; chokidar app/*.elm -c 'yes \"\" | head -100; npm run build-elm'",
+    "watch-debug-elm": "npm run debug-elm; chokidar app/*.elm -c 'yes \"\" | head -100; npm run debug-elm'"
   },
   "repository": {
     "type": "git",

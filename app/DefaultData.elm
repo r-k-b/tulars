@@ -4,7 +4,6 @@ module DefaultData
         , extinguishers
         , fires
         , foods
-        , projectiles
         )
 
 import Dict
@@ -49,7 +48,6 @@ import Types
         , InputFunction(Asymmetric, Exponential, Linear, Normal, Sigmoid)
         , Model
         , Portable(Edible)
-        , Projectiles
         , ReferenceToPortable(EdibleID, ExtinguisherID)
         , Signal(Bored, FeedMe)
         )
@@ -111,13 +109,6 @@ extinguishers =
       , remaining = 100
       }
     ]
-
-
-projectiles : Projectiles
-projectiles =
-    { fireRetardant = []
-    , stones = []
-    }
 
 
 agents : List Agent

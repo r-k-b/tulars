@@ -21,7 +21,9 @@ import Types
             , Wander
             )
         , Agent
+        , Collision
         , CurrentSignal
+        , Fire
         , FireExtinguisher
         , Food
         , Holding(BothHands, EmptyHanded)
@@ -29,7 +31,6 @@ import Types
         , Msg(InitTime, RAFtick, ToggleConditionDetailsVisibility, ToggleConditionsVisibility)
         , PhysicalProperties
         , Portable(Edible, Extinguisher)
-        , Projectiles
         , ReferenceToPortable(EdibleID, ExtinguisherID)
         , Retardant
         , Signal(Bored, Eating, FeedMe, GoAway)
@@ -37,8 +38,8 @@ import Types
 import View exposing (view)
 import AnimationFrame exposing (times)
 import OpenSolid.Direction2d as Direction2d
-import OpenSolid.Point2d as Point2d
-import OpenSolid.Vector2d as Vector2d exposing (Vector2d)
+import OpenSolid.Point2d as Point2d exposing (distanceFrom)
+import OpenSolid.Vector2d as Vector2d exposing (Vector2d, normalize)
 import Time exposing (Time, inMilliseconds, second)
 import UtilityFunctions
     exposing
@@ -68,7 +69,7 @@ main =
 
 init : ( Model, Cmd Msg )
 init =
-    ( Model (0 / 0) DD.agents DD.foods DD.fires DD.extinguishers DD.projectiles
+    ( Model (0 / 0) DD.agents DD.foods DD.fires DD.extinguishers []
     , perform InitTime Time.now
     )
 
@@ -150,15 +151,9 @@ updateHelp msg model =
                 { model | agents = newAgents }
 
 
-moveProjectiles : Time -> Projectiles -> Projectiles
+moveProjectiles : Time -> List (Physical a) -> List (Physical a)
 moveProjectiles dTime projectiles =
-    let
-        retardants =
-            List.map (doPhysics dTime) projectiles.fireRetardant
-    in
-        Projectiles
-            retardants
-            projectiles.stones
+    List.map (doPhysics dTime) projectiles
 
 
 {-| todo: use verlet integration?
@@ -448,8 +443,8 @@ applyFriction velocity =
                 velocity |> Vector2d.scaleBy factor
 
 
-recomputeActions : Model -> Agent -> Agent
-recomputeActions model agent =
+regenerateVariableActions : Model -> Agent -> Agent
+regenerateVariableActions model agent =
     let
         newActions =
             computeVariableActions model agent
@@ -479,32 +474,29 @@ moveWorld newTime model =
         deltaT =
             newTime - model.time
 
-        newAgents =
-            let
-                dMove =
-                    moveAgent newTime deltaT
-                        >> recomputeActions model
-            in
-                List.map dMove model.agents
+        movedAgents =
+            model.agents
+                |> List.map (moveAgent newTime deltaT >> regenerateVariableActions model)
 
-        movedProjectiles =
-            model.projectiles |> moveProjectiles deltaT
-
-        newRetardantProjectiles =
+        newRetardants : List Retardant
+        newRetardants =
             List.foldr
                 (createRetardantProjectiles newTime)
                 []
-                newAgents
+                movedAgents
 
+        retardantsWithDecay : List Retardant
         retardantsWithDecay =
-            movedProjectiles.fireRetardant
-                ++ newRetardantProjectiles
+            model.retardants
+                |> moveProjectiles deltaT
                 |> List.filterMap (decayRetardant newTime)
+                |> (++) newRetardants
 
-        projectiles =
-            { fireRetardant = retardantsWithDecay
-            , stones = movedProjectiles.stones
-            }
+        ( retardantsAfterCollisionWithFire, firesAfterCollisionWithRetardants ) =
+            List.foldr
+                (collideRetardantsAndFires newTime)
+                ( [], model.extinguishers )
+                retardantsWithDecay
 
         foodsAfterDecay =
             model.foods
@@ -514,7 +506,7 @@ moveWorld newTime model =
             List.foldr
                 (foldOverPickedItems newTime)
                 ( [], foodsAfterDecay, model.extinguishers )
-                newAgents
+                movedAgents
 
         ( agentsAfterDroppingFood, includingDroppedFood ) =
             List.foldr
@@ -527,7 +519,8 @@ moveWorld newTime model =
             , foods = includingDroppedFood
             , agents = agentsAfterDroppingFood
             , extinguishers = pickedExtinguishers
-            , projectiles = projectiles
+            , retardants = retardantsAfterCollisionWithFire
+            , fires = firesAfterCollisionWithRetardants
         }
 
 
@@ -705,6 +698,58 @@ pickUpFood agent foodID foods =
                 agent
     in
         ( carry, newFoods )
+
+
+collideRetardantAndFire : Retardant -> Fire -> ( Maybe Retardant, Maybe Fire )
+collideRetardantAndFire retardant fire =
+    let
+        collisionResult : Collision
+        collisionResult =
+            collide retardant fire
+    in
+        if collisionResult.penetration > 0 then
+            ()
+        else
+            ( Just retardant, Just fire )
+
+
+collideRetardantAndFires : Retardant -> List Fire -> ( Maybe Retardant, List Fire )
+collideRetardantAndFires ret fires =
+    List.filterMap (collideRetardantAndFire ret) fires
+
+
+collideRetardantsAndFires :
+    Time
+    -> Retardant
+    -> ( List Retardant, List Fire )
+    -> ( List Retardant, List Fire )
+collideRetardantsAndFires currentTime retardant ( retardantAcc, fires ) =
+    let
+        ( updatedRetardant, updatedFires ) =
+            collideRetardantAndFires retardant fires
+    in
+        ( updatedRetardant :: retardantAcc, updatedFires )
+
+
+collide : Physical a -> Physical b -> Collision
+collide oa ob =
+    let
+        a =
+            oa.physics.position
+
+        b =
+            ob.physics.position
+
+        centersDistance =
+            a |> distanceFrom b
+
+        normal =
+            normalize <| Vector2d.from a b
+
+        penetration =
+            centersDistance - (oa.physics.radius + ob.physics.radius)
+    in
+        Collision normal penetration
 
 
 pickUpExtinguisher : Agent -> Int -> List FireExtinguisher -> ( Agent, List FireExtinguisher )

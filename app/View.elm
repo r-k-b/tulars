@@ -144,7 +144,7 @@ mainMap model =
             , g [ id "extinguishers" ]
                 (List.map renderExtinguisher model.extinguishers)
             , g [ id "retardantProjectiles" ]
-                (List.map renderRetardantCloud model.projectiles.fireRetardant)
+                (List.map renderRetardantCloud model.retardants)
             ]
         )
 

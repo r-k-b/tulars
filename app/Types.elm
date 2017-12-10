@@ -16,6 +16,7 @@ module Types
             , Wander
             )
         , Agent
+        , Collision
         , Consideration
         , ConsiderationInput
             ( Constant
@@ -39,7 +40,6 @@ module Types
         , Msg(InitTime, RAFtick, ToggleConditionDetailsVisibility, ToggleConditionsVisibility)
         , PhysicalProperties
         , Portable(Edible, Extinguisher)
-        , Projectiles
         , ReferenceToPortable(ExtinguisherID, EdibleID)
         , Retardant
         , Signal(Bored, Eating, FeedMe, GoAway)
@@ -58,7 +58,7 @@ type alias Model =
     , foods : List Food
     , fires : List Fire
     , extinguishers : List FireExtinguisher
-    , projectiles : Projectiles
+    , retardants : List Retardant
     }
 
 
@@ -160,6 +160,12 @@ type alias PhysicalProperties =
     }
 
 
+type alias Collision =
+    { normal : Vector2d
+    , penetration : Float -- scale-dependent units
+    }
+
+
 type alias Exponent =
     Float
 
@@ -244,10 +250,4 @@ type alias FireExtinguisher =
     , physics : PhysicalProperties
     , capacity : Float
     , remaining : Float
-    }
-
-
-type alias Projectiles =
-    { fireRetardant : List Retardant
-    , stones : List Never
     }
