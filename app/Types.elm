@@ -218,6 +218,7 @@ type alias Food =
 type alias Fire =
     { id : Int
     , physics : PhysicalProperties
+    , hp : Float
     }
 
 

@@ -51,7 +51,7 @@ import UtilityFunctions
         , isMovementAction
         , onlyArrestMomentum
         )
-import DefaultData as DD
+import DefaultData as DD exposing (retardantRadius)
 import MapAccumulate exposing (mapAccumL)
 import Maybe.Extra
 import Physics exposing (collide)
@@ -723,8 +723,19 @@ collideRetardantAndFire fire mretardant =
                         collide retardant fire
                 in
                     if collisionResult.penetration > 0 then
-                        -- instantly destroy both
-                        ( Nothing, Nothing )
+                        let
+                            updatedHP =
+                                fire.hp - 0.3
+
+                            updatedFire =
+                                if updatedHP < 0 then
+                                    Nothing
+                                else
+                                    Just { fire | hp = updatedHP }
+                        in
+                            ( updatedFire
+                            , Nothing
+                            )
                     else
                         noChange
 
@@ -977,11 +988,6 @@ angleFuzz spread timeFloat =
             timeFloat |> inMilliseconds |> floor
     in
         ((time * 43993 % 4919 |> toFloat) / 4919 - 0.5) * spread
-
-
-retardantRadius : Float
-retardantRadius =
-    5
 
 
 justSomethings : ( List (Maybe a), b ) -> ( List a, b )

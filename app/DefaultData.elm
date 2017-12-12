@@ -4,6 +4,8 @@ module DefaultData
         , extinguishers
         , fires
         , foods
+        , retardantRadius
+        , hpMax
         )
 
 import Dict
@@ -91,6 +93,7 @@ fires =
             , acceleration = Vector2d.zero
             , radius = fireRadius
             }
+      , hp = 100
       }
     ]
 
@@ -854,11 +857,29 @@ extinguisherRadius =
     10
 
 
+retardantRadius : Float
+retardantRadius =
+    3
+
+
 fireRadius : Float
 fireRadius =
-    20
+    6
 
 
 foodRadius : Float
 foodRadius =
     10
+
+
+type alias HPMax =
+    { fire : Float
+    , agent : Float
+    }
+
+
+hpMax : HPMax
+hpMax =
+    { fire = 100
+    , agent = 100
+    }

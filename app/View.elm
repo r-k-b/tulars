@@ -1,5 +1,6 @@
 module View exposing (view)
 
+import DefaultData exposing (hpMax)
 import Dict
 import Html exposing (Html, code, div, h2, h3, h4, h5, li, table, td, text, th, tr, ul)
 import Html.Attributes exposing (class, style)
@@ -839,9 +840,13 @@ renderFire fire =
                 , fill "url(#fireRednessGradient)"
                 ]
                 []
+
+        healthFactor =
+            fire.hp / hpMax.fire
     in
         g [ id <| "fire_" ++ toString fire.id ]
             [ renderEmoji "🔥" fire.physics.position
             , gradient
             , redness
             ]
+            |> Svg.scaleAbout fire.physics.position healthFactor
