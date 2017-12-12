@@ -39,8 +39,8 @@ import Types
 import View exposing (view)
 import AnimationFrame exposing (times)
 import OpenSolid.Direction2d as Direction2d
-import OpenSolid.Point2d as Point2d exposing (distanceFrom)
-import OpenSolid.Vector2d as Vector2d exposing (Vector2d, normalize)
+import OpenSolid.Point2d as Point2d
+import OpenSolid.Vector2d as Vector2d exposing (Vector2d)
 import Time exposing (Time, inMilliseconds, second)
 import UtilityFunctions
     exposing
@@ -498,7 +498,7 @@ moveWorld newTime model =
 
         ( retardantsAfterCollisionWithFire, firesAfterCollisionWithRetardants ) =
             List.foldr
-                (collideRetardantsAndFires newTime)
+                collideRetardantsAndFires
                 ( [], model.fires )
                 retardantsWithDecay
 
@@ -736,11 +736,10 @@ collideRetardantAndFires ret fires =
 
 
 collideRetardantsAndFires :
-    Time
-    -> Retardant
+    Retardant
     -> ( List Retardant, List Fire )
     -> ( List Retardant, List Fire )
-collideRetardantsAndFires currentTime retardant ( retardantAcc, fires ) =
+collideRetardantsAndFires retardant ( retardantAcc, fires ) =
     let
         ( updatedFires, updatedRetardant ) =
             collideRetardantAndFires retardant fires
