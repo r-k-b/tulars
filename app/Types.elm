@@ -38,6 +38,7 @@ module Types
         , InputFunction(Asymmetric, Exponential, Linear, Normal, Sigmoid)
         , Model
         , Msg(InitTime, RAFtick, ToggleConditionDetailsVisibility, ToggleConditionsVisibility)
+        , Physical
         , PhysicalProperties
         , Portable(Edible, Extinguisher)
         , ReferenceToPortable(ExtinguisherID, EdibleID)
@@ -160,8 +161,12 @@ type alias PhysicalProperties =
     }
 
 
+type alias Physical a =
+    { a | physics : PhysicalProperties }
+
+
 type alias Collision =
-    { normal : Vector2d
+    { normal : Maybe Direction2d
     , penetration : Float -- scale-dependent units
     }
 

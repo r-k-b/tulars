@@ -29,6 +29,7 @@ import Types
         , Holding(BothHands, EmptyHanded)
         , Model
         , Msg(InitTime, RAFtick, ToggleConditionDetailsVisibility, ToggleConditionsVisibility)
+        , Physical
         , PhysicalProperties
         , Portable(Edible, Extinguisher)
         , ReferenceToPortable(EdibleID, ExtinguisherID)
@@ -51,6 +52,9 @@ import UtilityFunctions
         , onlyArrestMomentum
         )
 import DefaultData as DD
+import MapAccumulate exposing (mapAccumL)
+import Maybe.Extra
+import Physics exposing (collide)
 
 
 main : Program Never Model Msg
@@ -495,7 +499,7 @@ moveWorld newTime model =
         ( retardantsAfterCollisionWithFire, firesAfterCollisionWithRetardants ) =
             List.foldr
                 (collideRetardantsAndFires newTime)
-                ( [], model.extinguishers )
+                ( [], model.fires )
                 retardantsWithDecay
 
         foodsAfterDecay =
@@ -700,22 +704,35 @@ pickUpFood agent foodID foods =
         ( carry, newFoods )
 
 
-collideRetardantAndFire : Retardant -> Fire -> ( Maybe Retardant, Maybe Fire )
-collideRetardantAndFire retardant fire =
+{-| -- todo: implement hitpoints
+-}
+collideRetardantAndFire : Fire -> Maybe Retardant -> ( Maybe Fire, Maybe Retardant )
+collideRetardantAndFire fire mretardant =
     let
-        collisionResult : Collision
-        collisionResult =
-            collide retardant fire
+        noChange =
+            ( Just fire, mretardant )
     in
-        if collisionResult.penetration > 0 then
-            ()
-        else
-            ( Just retardant, Just fire )
+        case mretardant of
+            Nothing ->
+                noChange
+
+            Just retardant ->
+                let
+                    collisionResult : Collision
+                    collisionResult =
+                        collide retardant fire
+                in
+                    if collisionResult.penetration > 0 then
+                        -- instantly destroy both
+                        ( Nothing, Nothing )
+                    else
+                        noChange
 
 
-collideRetardantAndFires : Retardant -> List Fire -> ( Maybe Retardant, List Fire )
+collideRetardantAndFires : Retardant -> List Fire -> ( List Fire, Maybe Retardant )
 collideRetardantAndFires ret fires =
-    List.filterMap (collideRetardantAndFire ret) fires
+    mapAccumL collideRetardantAndFire (Just ret) fires
+        |> justSomethings
 
 
 collideRetardantsAndFires :
@@ -725,31 +742,15 @@ collideRetardantsAndFires :
     -> ( List Retardant, List Fire )
 collideRetardantsAndFires currentTime retardant ( retardantAcc, fires ) =
     let
-        ( updatedRetardant, updatedFires ) =
+        ( updatedFires, updatedRetardant ) =
             collideRetardantAndFires retardant fires
     in
-        ( updatedRetardant :: retardantAcc, updatedFires )
+        case updatedRetardant of
+            Just ret ->
+                ( ret :: retardantAcc, updatedFires )
 
-
-collide : Physical a -> Physical b -> Collision
-collide oa ob =
-    let
-        a =
-            oa.physics.position
-
-        b =
-            ob.physics.position
-
-        centersDistance =
-            a |> distanceFrom b
-
-        normal =
-            normalize <| Vector2d.from a b
-
-        penetration =
-            centersDistance - (oa.physics.radius + ob.physics.radius)
-    in
-        Collision normal penetration
+            Nothing ->
+                ( retardantAcc, updatedFires )
 
 
 pickUpExtinguisher : Agent -> Int -> List FireExtinguisher -> ( Agent, List FireExtinguisher )
@@ -828,10 +829,6 @@ unhandHeldFood portable =
 
         _ ->
             Just portable
-
-
-type alias Physical a =
-    { a | physics : PhysicalProperties }
 
 
 usePhysics : PhysicalProperties -> Physical a -> Physical a
@@ -986,6 +983,11 @@ angleFuzz spread timeFloat =
 retardantRadius : Float
 retardantRadius =
     5
+
+
+justSomethings : ( List (Maybe a), b ) -> ( List a, b )
+justSomethings =
+    \( list, b ) -> ( list |> Maybe.Extra.values, b )
 
 
 
