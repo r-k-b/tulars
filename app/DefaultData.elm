@@ -36,6 +36,7 @@ import Types
             ( Constant
             , CurrentSpeed
             , DistanceToTargetPoint
+            , FoodWasGivenAway
             , Hunger
             , IAmBeggingForFood
             , IsCarryingExtinguisher
@@ -54,6 +55,7 @@ import Types
         , Signal(Bored, FeedMe)
         )
 import UtilityFunctions exposing (isHolding, portableIsFood)
+import Set
 
 
 foods : List Food
@@ -151,6 +153,7 @@ agents =
       , callingOut = Nothing
       , holding = EmptyHanded
       , topActionLastStartTimes = Dict.empty
+      , foodsGivenAway = Set.empty
       }
     , { name = "Bob"
       , physics =
@@ -187,6 +190,7 @@ agents =
       , callingOut = Nothing
       , holding = EmptyHanded
       , topActionLastStartTimes = Dict.empty
+      , foodsGivenAway = Set.empty
       }
     , { name = "Charlie"
       , physics =
@@ -221,6 +225,7 @@ agents =
       , callingOut = Nothing
       , holding = EmptyHanded
       , topActionLastStartTimes = Dict.empty
+      , foodsGivenAway = Set.empty
       }
     ]
 
@@ -372,6 +377,14 @@ moveToFood =
                   , weighting = 1
                   , offset = 0
                   }
+                , { name = "haven't given this away before"
+                  , function = Linear 1 0
+                  , input = FoodWasGivenAway food.id
+                  , inputMin = 0
+                  , inputMax = 1
+                  , weighting = -2
+                  , offset = 1
+                  }
                 , defaultHysteresis 0.1
                 ]
                 Dict.empty
@@ -407,6 +420,14 @@ stopAtFood =
                   , weighting = 1
                   , offset = 0
                   }
+                , { name = "haven't given this away before"
+                  , function = Linear 1 0
+                  , input = FoodWasGivenAway food.id
+                  , inputMin = 0
+                  , inputMax = 1
+                  , weighting = -2
+                  , offset = 1
+                  }
                 , defaultHysteresis 0.1
                 ]
                 Dict.empty
@@ -441,6 +462,14 @@ pickUpFoodToEat =
                   , inputMax = 1
                   , weighting = 3
                   , offset = 0
+                  }
+                , { name = "haven't given this away before"
+                  , function = Linear 1 0
+                  , input = FoodWasGivenAway food.id
+                  , inputMin = 0
+                  , inputMax = 1
+                  , weighting = -2
+                  , offset = 1
                   }
                 , defaultHysteresis 0.1
                 ]

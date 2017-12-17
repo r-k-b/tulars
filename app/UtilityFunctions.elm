@@ -40,6 +40,7 @@ import Types
             , CurrentSpeed
             , CurrentlyCallingOut
             , DistanceToTargetPoint
+            , FoodWasGivenAway
             , Hunger
             , IAmBeggingForFood
             , IsCarryingExtinguisher
@@ -54,6 +55,7 @@ import Types
         )
 import OpenSolid.Point2d as Point2d
 import OpenSolid.Vector2d as Vector2d
+import Set exposing (member)
 
 
 computeUtility : Agent -> Time -> Action -> Float
@@ -193,6 +195,11 @@ getConsiderationRawValue agent currentTime action consideration =
 
         IAmBeggingForFood ->
             agent.beggingForFood
+                |> true1false0
+
+        FoodWasGivenAway foodID ->
+            agent.foodsGivenAway
+                |> member foodID
                 |> true1false0
 
 

@@ -55,6 +55,8 @@ import DefaultData as DD exposing (retardantRadius)
 import MapAccumulate exposing (mapAccumL)
 import Maybe.Extra
 import Physics exposing (collide)
+import List exposing (map)
+import Set exposing (insert)
 
 
 main : Program Never Model Msg
@@ -107,7 +109,7 @@ updateHelp msg model =
                         Dict.insert actionName (not prior) viz
 
                 newAgents =
-                    List.map
+                    map
                         (\agent ->
                             if agent.name == agentName then
                                 { agent | visibleActions = updateActionVisibility agent.visibleActions }
@@ -130,17 +132,20 @@ updateHelp msg model =
 
                 updateAgentActions : List Action -> List Action
                 updateAgentActions list =
-                    List.map
+                    map
                         (\action ->
                             if action.name == actionName then
-                                { action | visibleConsiderations = updateConsiderationVisibility action.visibleConsiderations }
+                                { action
+                                    | visibleConsiderations =
+                                        updateConsiderationVisibility action.visibleConsiderations
+                                }
                             else
                                 action
                         )
                         list
 
                 newAgents =
-                    List.map
+                    map
                         (\agent ->
                             if agent.name == agentName then
                                 { agent
@@ -157,7 +162,7 @@ updateHelp msg model =
 
 moveProjectiles : Time -> List (Physical a) -> List (Physical a)
 moveProjectiles dTime projectiles =
-    List.map (doPhysics dTime) projectiles
+    map (doPhysics dTime) projectiles
 
 
 {-| todo: use verlet integration?
@@ -452,12 +457,12 @@ regenerateVariableActions model agent =
     let
         newActions =
             computeVariableActions model agent
-                |> List.map preserveProperties
+                |> map preserveProperties
 
         preservableProperties : Dict.Dict String (Dict.Dict String Bool)
         preservableProperties =
             agent.variableActions
-                |> List.map (\action -> ( action.name, action.visibleConsiderations ))
+                |> map (\action -> ( action.name, action.visibleConsiderations ))
                 |> Dict.fromList
 
         preserveProperties : Action -> Action
@@ -480,7 +485,7 @@ moveWorld newTime model =
 
         movedAgents =
             model.agents
-                |> List.map (moveAgent newTime deltaT >> regenerateVariableActions model)
+                |> map (moveAgent newTime deltaT >> regenerateVariableActions model)
 
         newRetardants : List Retardant
         newRetardants =
@@ -813,7 +818,7 @@ dropFood agent extantFoods =
     let
         droppedFoods : List Food
         droppedFoods =
-            List.map (usePhysics agent.physics) <|
+            map (usePhysics agent.physics) <|
                 case agent.holding of
                     EmptyHanded ->
                         []
@@ -824,11 +829,25 @@ dropFood agent extantFoods =
                     BothHands _ ->
                         []
 
+        foodsGivenAway =
+            case droppedFoods of
+                [ food ] ->
+                    agent.foodsGivenAway |> insert food.id
+
+                _ ->
+                    -- this won't be correct if we can drop multiple foods
+                    agent.foodsGivenAway
+
         sansFood : Holding
         sansFood =
             mapHeld unhandHeldFood agent.holding
     in
-        ( { agent | holding = sansFood }, List.append extantFoods droppedFoods )
+        ( { agent
+            | holding = sansFood
+            , foodsGivenAway = foodsGivenAway
+          }
+        , List.append extantFoods droppedFoods
+        )
 
 
 unhandHeldFood : Portable -> Maybe Portable

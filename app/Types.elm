@@ -23,6 +23,7 @@ module Types
             , CurrentlyCallingOut
             , CurrentSpeed
             , DistanceToTargetPoint
+            , FoodWasGivenAway
             , Hunger
             , IAmBeggingForFood
             , IsCarryingExtinguisher
@@ -50,6 +51,7 @@ import Dict exposing (Dict)
 import OpenSolid.Direction2d exposing (Direction2d)
 import OpenSolid.Point2d exposing (Point2d)
 import OpenSolid.Vector2d exposing (Vector2d)
+import Set exposing (Set)
 import Time exposing (Time)
 
 
@@ -84,6 +86,7 @@ type alias Agent =
     , topActionLastStartTimes : Dict String Time
     , callingOut : Maybe CurrentSignal
     , holding : Holding
+    , foodsGivenAway : Set Int
 
     -- , desireToStayStill : Bool
     }
@@ -150,6 +153,7 @@ type ConsiderationInput
     | IAmBeggingForFood
     | IsCarryingFood
     | IsCarryingExtinguisher
+    | FoodWasGivenAway Int
 
 
 type alias PhysicalProperties =

@@ -42,6 +42,7 @@ import Types
             , CurrentSpeed
             , CurrentlyCallingOut
             , DistanceToTargetPoint
+            , FoodWasGivenAway
             , Hunger
             , IAmBeggingForFood
             , IsCarryingExtinguisher
@@ -744,6 +745,9 @@ renderCI currentTime agent action ci =
 
         IAmBeggingForFood ->
             "Am I begging for food? " ++ (toString <| agent.beggingForFood)
+
+        FoodWasGivenAway foodID ->
+            "Did I give this food away already? (id#" ++ (toString foodID) ++ ")"
 
 
 prettyPoint2d : Point2d.Point2d -> String
