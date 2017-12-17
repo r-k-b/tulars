@@ -192,7 +192,7 @@ moveAgent : Time -> Time -> Agent -> Agent
 moveAgent currentTime dT agent =
     let
         dV =
-            Vector2d.scaleBy (dT / 1000) agent.physics.velocity
+            Vector2d.scaleBy ((dT |> max 1000) / 1000) agent.physics.velocity
 
         newPosition =
             Point2d.translateBy dV agent.physics.position
