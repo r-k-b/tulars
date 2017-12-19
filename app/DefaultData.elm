@@ -382,7 +382,7 @@ moveToFood =
                   , input = FoodWasGivenAway food.id
                   , inputMin = 0
                   , inputMax = 1
-                  , weighting = -2
+                  , weighting = -1
                   , offset = 1
                   }
                 , defaultHysteresis 0.1
