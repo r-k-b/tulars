@@ -41,3 +41,14 @@ So we still have the top action, but we can filter the list down to, say, action
 at the same time as the top action, take the top action from that list, then do that thing as well. 
 
 ---
+
+A good place to start in the code might be [`getConsiderationRawValue`](https://github.com/r-k-b/tulars/blob/master/app/UtilityFunctions.elm#L151) - of all the steps, we won't get far unless we can
+convert every consideration into a number. `getConsiderationRawValue` allows us to take the "`input`"
+union type property of a Consideration, examine the relevant state in the model, and return a number.
+
+---
+
+Visual representation of some utility functions: [desmos.com/calculator/ubiswoml1r](https://www.desmos.com/calculator/ubiswoml1r)
+
+---
+(later: [`isMovementAction`](https://github.com/r-k-b/tulars/blob/master/app/UtilityFunctions.elm#L280))
