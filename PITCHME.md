@@ -55,6 +55,7 @@ now".
                                🍖
 ```
 
+Note:
 So, I pass by the food, grab the extinguisher, then go the fire & put it out. Now with that dealt with,
 I'm free to go all the way back to the snacks, if I don't _die of hunger_ before then, or something slightly
 more important pops up.
@@ -68,13 +69,14 @@ more important pops up.
                                🍖
 ```
 
+Note:
 Is there a better way?
 
 ---
 
 ## Utility Theory to the rescue!
 
-
+_"Maximising Expected Utility"_
 
 Note:
 UT doesn't have a stack, or even an historical state; it's evaluated moment-by-moment.
@@ -82,8 +84,18 @@ So as the poor soul from the prior example passes by the snacks, even though sna
 less important than putting out fires, because it's so "cheap" to grab the snacks, they will pocket it
 on the way.
 
+---
+
+## Wait, what?
+
+
 (Quick glossary of terms here: actions, considerations, outcomes, normalisation, weighting)
 
+---
+
+_tba_
+
+Note:
 Something else that UT helps with is doing more than one thing at a time - in the simplest case, we just pick
 the action with the highest weight, and do that. 
 But, we still have the list of normalised actions, right? And we can walk and talk at the same time, yeah?
