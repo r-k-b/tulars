@@ -114,3 +114,18 @@ Visual representation of some utility functions: [desmos.com/calculator/ubiswoml
 
 ---
 (later: [`isMovementAction`](https://github.com/r-k-b/tulars/blob/master/app/UtilityFunctions.elm#L280))
+
+---
+
+Good talk on UT in games: 
+
+@22m29s: 
+
+> Don't simply process 1 action at a time
+> - Should I attack?
+> - Should I reload?
+> - Should I heal?
+> - Should I have a beer?
+> 
+> Compare all potential actions to **each other**
+> - Of all the things I could do, which is the most important at this moment?
