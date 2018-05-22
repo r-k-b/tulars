@@ -2,6 +2,7 @@ _doc status: pre-pre-alpha_
 
 # Why?
 
+Note:
 Friend was developing a game (think FTL × The Sims?), having trouble getting the NPCs to behave sensibly.
 
 They'd taken a kind of Finite State Machine / Pushdown Automata approach.
