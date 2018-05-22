@@ -117,7 +117,7 @@ Visual representation of some utility functions: [desmos.com/calculator/ubiswoml
 
 ---
 
-Good talk on UT in games: 
+[Good talk on UT in games](https://www.gdcvault.com/play/1012410/Improving-AI-Decision-Modeling-Through) 
 
 @22m29s: 
 
