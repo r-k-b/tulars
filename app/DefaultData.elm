@@ -47,6 +47,7 @@ import Types
         , Fire
         , FireExtinguisher
         , Food
+        , Hitpoints(Hitpoints)
         , Holding(BothHands, EmptyHanded)
         , InputFunction(Asymmetric, Exponential, Linear, Normal, Sigmoid)
         , Model
@@ -154,6 +155,7 @@ agents =
       , holding = EmptyHanded
       , topActionLastStartTimes = Dict.empty
       , foodsGivenAway = Set.empty
+      , hp = Hitpoints 100 100
       }
     , { name = "Bob"
       , physics =
@@ -191,6 +193,7 @@ agents =
       , holding = EmptyHanded
       , topActionLastStartTimes = Dict.empty
       , foodsGivenAway = Set.empty
+      , hp = Hitpoints 100 100
       }
     , { name = "Charlie"
       , physics =
@@ -226,6 +229,7 @@ agents =
       , holding = EmptyHanded
       , topActionLastStartTimes = Dict.empty
       , foodsGivenAway = Set.empty
+      , hp = Hitpoints 100 100
       }
     ]
 

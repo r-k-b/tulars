@@ -35,6 +35,7 @@ module Types
         , Fire
         , FireExtinguisher
         , Food
+        , Hitpoints(Hitpoints)
         , Holding(BothHands, EmptyHanded)
         , InputFunction(Asymmetric, Exponential, Linear, Normal, Sigmoid)
         , Model
@@ -87,9 +88,12 @@ type alias Agent =
     , callingOut : Maybe CurrentSignal
     , holding : Holding
     , foodsGivenAway : Set Int
-
-    -- , desireToStayStill : Bool
+    , hp : Hitpoints
     }
+
+
+type Hitpoints
+    = Hitpoints Float Float -- current, max
 
 
 type alias Action =

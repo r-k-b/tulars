@@ -9,7 +9,7 @@
     - [ ] Allow agents to derive utility from...
       - [ ] ...social interaction
       - [ ] ...reducing entropy
-        - [ ] by fighting fires
+        - [x] by fighting fires
         - [ ] by cleaning up trash
       - [x] ...eating
       - [x] ...moving about
@@ -37,7 +37,7 @@
     - [ ] Render agents
       - [x] Render a circle
       - [x] Render a simple, oriented shape
-      - [ ] Render an emoji to indicate the agent's state
+      - [x] Render an emoji to indicate the agent's state
       - [ ] Show a short trail of where they've been
     - [ ] Render objects in the world
       - [x] Fire
