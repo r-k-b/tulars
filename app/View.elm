@@ -358,7 +358,7 @@ agentStats agent =
     let
         stats : List ( String, String )
         stats =
-            [ "hunger" => prettyFloat 3 agent.hunger
+            [ "hunger" => (Round.round 1 agent.hunger ++ "%")
             , "hp" => hpPercentage agent.hp
             , "holding" => carryingAsString agent.holding
             , "current action" => agent.currentAction
