@@ -26,6 +26,7 @@ import Types
         , Fire
         , FireExtinguisher
         , Food
+        , Hitpoints(Hitpoints)
         , Holding(BothHands, EmptyHanded)
         , Model
         , Msg(InitTime, RAFtick, ToggleConditionDetailsVisibility, ToggleConditionsVisibility)
@@ -270,6 +271,14 @@ moveAgent currentTime dT agent =
                 * dT
                 |> clamp 0 1
 
+        hitpointsAfterStarvation =
+            case agent.hp of
+                Hitpoints current max ->
+                    if agent.hunger > 0.5 then
+                        Hitpoints ((current - 0.001 * dT) |> clamp 0 max) max
+                    else
+                        Hitpoints current max
+
         newPhysics =
             let
                 p =
@@ -306,6 +315,7 @@ moveAgent currentTime dT agent =
             , currentOutcome = newOutcome
             , holding = newHolding
             , beggingForFood = beggingForFood
+            , hp = hitpointsAfterStarvation
         }
 
 

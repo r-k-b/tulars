@@ -82,7 +82,7 @@ type alias Agent =
     , visibleActions : Dict String Bool
     , currentAction : String
     , currentOutcome : String
-    , hunger : Float
+    , hunger : Float -- 0 = not hungry at all, 1 = starving
     , beggingForFood : Bool
     , topActionLastStartTimes : Dict String Time
     , callingOut : Maybe CurrentSignal

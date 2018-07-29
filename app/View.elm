@@ -13,6 +13,7 @@ import OpenSolid.Vector2d as Vector2d exposing (scaleBy)
 import OpenSolid.Circle2d as Circle2d
 import OpenSolid.Direction2d as Direction2d
 import OpenSolid.Frame2d as Frame2d
+import Round
 import Svg exposing (Svg, g, stop)
 import Svg.Attributes as Attributes
     exposing
@@ -53,6 +54,7 @@ import Types
         , Fire
         , FireExtinguisher
         , Food
+        , Hitpoints(Hitpoints)
         , Holding(BothHands, EmptyHanded)
         , InputFunction(Asymmetric, Exponential, Linear, Normal, Sigmoid)
         , Model
@@ -357,6 +359,7 @@ agentStats agent =
         stats : List ( String, String )
         stats =
             [ "hunger" => prettyFloat 3 agent.hunger
+            , "hp" => hpPercentage agent.hp
             , "holding" => carryingAsString agent.holding
             , "current action" => agent.currentAction
             ]
@@ -370,6 +373,16 @@ agentStats agent =
             , tr []
                 (stats |> List.map (second >> cell td))
             ]
+
+
+hpPercentage : Hitpoints -> String
+hpPercentage (Hitpoints current max) =
+    let
+        pc : Float
+        pc =
+            current / max * 100
+    in
+        Round.round 1 pc ++ "%"
 
 
 carryingAsString : Holding -> String
