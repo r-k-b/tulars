@@ -493,8 +493,12 @@ moveWorld newTime model =
         deltaT =
             newTime - model.time
 
-        movedAgents =
+        survivingAgents =
             model.agents
+                |> List.filter (.hp >> hpAsFloat >> (<) 0)
+
+        movedAgents =
+            survivingAgents
                 |> map (moveAgent newTime deltaT >> regenerateVariableActions model)
 
         newRetardants : List Retardant
@@ -1022,6 +1026,17 @@ angleFuzz spread timeFloat =
 justSomethings : ( List (Maybe a), b ) -> ( List a, b )
 justSomethings =
     \( list, b ) -> ( list |> Maybe.Extra.values, b )
+
+
+{-| Turns a Hitpoints type into a normalised float, between 0 (dead) and 1 (full hp).
+-}
+hpAsFloat : Hitpoints -> Float
+hpAsFloat hp =
+    case hp of
+        Hitpoints current max ->
+            current
+                / max
+                |> clamp 0 1
 
 
 
