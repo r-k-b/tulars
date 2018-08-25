@@ -2,17 +2,19 @@ module View exposing (view)
 
 import DefaultData exposing (hpMax)
 import Dict
+import Formatting exposing (print)
 import Html exposing (Html, code, div, h2, h3, h4, h5, li, table, td, text, th, tr, ul)
 import Html.Attributes exposing (class, style)
 import Html.Events exposing (onClick)
 import List.Extra as ListE
 import OpenSolid.BoundingBox2d as BoundingBox2d exposing (BoundingBox2d)
-import OpenSolid.Point2d as Point2d exposing (xCoordinate, yCoordinate)
-import OpenSolid.Svg as Svg exposing (DirectionOptions, relativeTo)
-import OpenSolid.Vector2d as Vector2d exposing (scaleBy)
 import OpenSolid.Circle2d as Circle2d
 import OpenSolid.Direction2d as Direction2d
 import OpenSolid.Frame2d as Frame2d
+import OpenSolid.Point2d as Point2d exposing (xCoordinate, yCoordinate)
+import OpenSolid.Svg as Svg exposing (DirectionOptions, relativeTo)
+import OpenSolid.Vector2d as Vector2d exposing (scaleBy)
+import Plot
 import Round
 import Svg exposing (Svg, g, stop)
 import Svg.Attributes as Attributes
@@ -33,37 +35,25 @@ import Svg.Attributes as Attributes
         , y2
         )
 import Time exposing (Time)
+import Tuple exposing (first, second)
 import Types
     exposing
         ( Action
         , Agent
         , Consideration
-        , ConsiderationInput
-            ( Constant
-            , CurrentSpeed
-            , CurrentlyCallingOut
-            , DistanceToTargetPoint
-            , FoodWasGivenAway
-            , Hunger
-            , IAmBeggingForFood
-            , IsCarryingExtinguisher
-            , IsCarryingFood
-            , IsCurrentAction
-            , TimeSinceLastShoutedFeedMe
-            )
+        , ConsiderationInput(..)
         , Fire
         , FireExtinguisher
         , Food
-        , Hitpoints(Hitpoints)
-        , Holding(BothHands, EmptyHanded)
-        , InputFunction(Asymmetric, Exponential, Linear, Normal, Sigmoid)
+        , Hitpoints(..)
+        , Holding(..)
+        , InputFunction(..)
         , Model
-        , Msg(ToggleConditionDetailsVisibility, ToggleConditionsVisibility)
-        , Portable(Edible, Extinguisher)
+        , Msg(..)
+        , Portable(..)
         , Retardant
-        , Signal(Bored, Eating, FeedMe, GoAway)
+        , Signal(..)
         )
-import Formatting exposing (print)
 import UtilityFunctions
     exposing
         ( clampTo
@@ -75,8 +65,6 @@ import UtilityFunctions
         , portableIsExtinguisher
         , portableIsFood
         )
-import Plot
-import Tuple exposing (first, second)
 
 
 view : Model -> Html Msg
@@ -125,12 +113,12 @@ render2dResponsive boundingBox svgMsg =
                 |> List.map toString
                 |> String.join " "
     in
-        Svg.svg
-            [ Attributes.width (toString bbWidth)
-            , Attributes.height (toString bbHeight)
-            , viewBox coords
-            ]
-            [ relativeTo topLeftFrame svgMsg ]
+    Svg.svg
+        [ Attributes.width (toString bbWidth)
+        , Attributes.height (toString bbHeight)
+        , viewBox coords
+        ]
+        [ relativeTo topLeftFrame svgMsg ]
 
 
 mainMap : Model -> Html.Html Msg
@@ -180,7 +168,7 @@ agentsInfo currentTime agents =
 
 (=>) : a -> b -> ( a, b )
 (=>) =
-    (,)
+    \a b -> ( a, b )
 
 
 pageGridContainerStyle : Html.Attribute msg
@@ -253,23 +241,23 @@ agentVelocityArrow agent =
         exaggeratedLength =
             Vector2d.length exaggerated
     in
-        Svg.vector2d
-            { tipLength = exaggeratedLength * 0.1
-            , tipWidth = exaggeratedLength * 0.05
-            , tipAttributes =
-                [ Attributes.fill "orange"
-                , Attributes.stroke "blue"
-                , Attributes.strokeWidth "1"
-                ]
-            , stemAttributes =
-                [ Attributes.stroke "blue"
-                , Attributes.strokeWidth "1"
-                , Attributes.strokeDasharray "1 2"
-                ]
-            , groupAttributes = []
-            }
-            agent.physics.position
-            exaggerated
+    Svg.vector2d
+        { tipLength = exaggeratedLength * 0.1
+        , tipWidth = exaggeratedLength * 0.05
+        , tipAttributes =
+            [ Attributes.fill "orange"
+            , Attributes.stroke "blue"
+            , Attributes.strokeWidth "1"
+            ]
+        , stemAttributes =
+            [ Attributes.stroke "blue"
+            , Attributes.strokeWidth "1"
+            , Attributes.strokeDasharray "1 2"
+            ]
+        , groupAttributes = []
+        }
+        agent.physics.position
+        exaggerated
 
 
 renderAgent : Agent -> Html Msg
@@ -309,18 +297,18 @@ renderAgent agent =
                 BothHands p ->
                     [ renderPortable p bothHands ]
     in
-        g [ id <| "agent " ++ agent.name ]
-            ([ Svg.point2d agentPoint agent.physics.position
-             , Svg.direction2d facingArrow agent.physics.position agent.physics.facing
-             , agentVelocityArrow agent
-             , renderName agent
-                |> Svg.scaleAbout agent.physics.position 0.7
-             , g [] held
-                |> Svg.translateBy (Vector2d.from Point2d.origin agent.physics.position)
-                |> Svg.rotateAround agent.physics.position (Direction2d.angle agent.physics.facing - pi / 2)
-             ]
-                |> append call
-            )
+    g [ id <| "agent " ++ agent.name ]
+        ([ Svg.point2d agentPoint agent.physics.position
+         , Svg.direction2d facingArrow agent.physics.position agent.physics.facing
+         , agentVelocityArrow agent
+         , renderName agent
+            |> Svg.scaleAbout agent.physics.position 0.7
+         , g [] held
+            |> Svg.translateBy (Vector2d.from Point2d.origin agent.physics.position)
+            |> Svg.rotateAround agent.physics.position (Direction2d.angle agent.physics.facing - pi / 2)
+         ]
+            |> append call
+        )
 
 
 renderPortable : Portable -> Point2d.Point2d -> Svg Msg
@@ -336,14 +324,14 @@ renderPortable p pOffset =
 
 append : List a -> List a -> List a
 append =
-    flip List.append
+    \b a -> List.append a b
 
 
 renderAgentInfo : Time -> Agent -> Html Msg
 renderAgentInfo currentTime agent =
     div []
         [ h3
-            [ style [ "margin-bottom" => "0.1em" ] ]
+            [ (\( a, b ) -> style a b) ("margin-bottom" => "0.1em") ]
             [ text agent.name ]
         , agentStats agent
         , div [ style indentWithLine ]
@@ -365,14 +353,14 @@ agentStats agent =
             ]
 
         cell elem =
-            text >> List.singleton >> elem [ style [ "padding-right" => "1em" ] ]
+            text >> List.singleton >> elem [ (\( a, b ) -> style a b) ("padding-right" => "1em") ]
     in
-        table [ style [ "font-family" => "monospace" ] ]
-            [ tr []
-                (stats |> List.map (first >> cell th))
-            , tr []
-                (stats |> List.map (second >> cell td))
-            ]
+    table [ (\( a, b ) -> style a b) ("font-family" => "monospace") ]
+        [ tr []
+            (stats |> List.map (first >> cell th))
+        , tr []
+            (stats |> List.map (second >> cell td))
+        ]
 
 
 hpPercentage : Hitpoints -> String
@@ -382,7 +370,7 @@ hpPercentage (Hitpoints current max) =
         pc =
             current / max * 100
     in
-        Round.round 1 pc ++ "%"
+    Round.round 1 pc ++ "%"
 
 
 carryingAsString : Holding -> String
@@ -423,12 +411,11 @@ renderAction agent currentTime action =
         considerations =
             if isExpanded then
                 [ div
-                    [ style
-                        [ "display" => "flex"
-                        ]
+                    [ (\( a, b ) -> style a b) ("display" => "flex")
                     ]
                     (List.map (renderConsideration agent action currentTime) action.considerations)
                 ]
+
             else
                 []
 
@@ -438,30 +425,29 @@ renderAction agent currentTime action =
                     [ "background-color" => "#00000011"
                     , "padding" => "0.6em"
                     ]
+
             else
                 style [ "padding" => "0.6em" ]
 
         utility =
             computeUtility agent currentTime action
     in
-        div [ containerStyle ]
-            (List.append
-                [ h4
-                    [ onClick <| ToggleConditionsVisibility agent.name action.name
-                    , style
-                        [ "cursor" => "pointer"
-                        , "margin" => "0"
-                        , "opacity" => (utility ^ (1 / 1.5) + 0.3 |> toString)
-                        ]
-                    ]
-                    [ text "("
-                    , prettyFloatHtml 2 utility
-                    , text ") "
-                    , text action.name
-                    ]
+    div [ containerStyle ]
+        (List.append
+            [ h4
+                [ onClick <| ToggleConditionsVisibility agent.name action.name
+                , (\( a, b ) -> style a b) ("cursor" => "pointer")
+                , (\( a, b ) -> style a b) ("margin" => "0")
+                , (\( a, b ) -> style a b) ("opacity" => (utility ^ (1 / 1.5) + 0.3 |> toString))
                 ]
-                considerations
-            )
+                [ text "("
+                , prettyFloatHtml 2 utility
+                , text ") "
+                , text action.name
+                ]
+            ]
+            considerations
+        )
 
 
 renderConsideration : Agent -> Action -> Time -> Consideration -> Html Msg
@@ -500,16 +486,15 @@ renderConsideration agent action currentTime con =
                         ]
                     ]
                 ]
+
             else
                 []
 
         main =
             [ h5
                 [ onClick <| ToggleConditionDetailsVisibility agent.name action.name con.name
-                , style
-                    [ "cursor" => "pointer"
-                    , "margin" => "0.5em 0"
-                    ]
+                , (\( a, b ) -> style a b) ("cursor" => "pointer")
+                , (\( a, b ) -> style a b) ("margin" => "0.5em 0")
                 ]
                 [ text "("
                 , code [] [ text <| prettyFloat 2 considerationValue ]
@@ -519,8 +504,8 @@ renderConsideration agent action currentTime con =
             , renderConsiderationChart agent currentTime action con
             ]
     in
-        div [ style [ "flex-basis" => "20em" ] ]
-            (List.append main details)
+    div [ (\( a, b ) -> style a b) ("flex-basis" => "20em") ]
+        (List.append main details)
 
 
 renderConsiderationChart : Agent -> Time -> Action -> Consideration -> Html Msg
@@ -539,6 +524,7 @@ renderConsiderationChart agent currentTime action con =
         stepwise previous =
             if previous > inputMax then
                 Nothing
+
             else
                 let
                     datapoint =
@@ -547,7 +533,7 @@ renderConsiderationChart agent currentTime action con =
                     newStep =
                         previous + step
                 in
-                    Just ( datapoint, newStep )
+                Just ( datapoint, newStep )
 
         horizontalStep =
             (inputMax - inputMin) / 4
@@ -556,6 +542,7 @@ renderConsiderationChart agent currentTime action con =
         stepwiseHorizontalTicksHelp previous =
             if previous > inputMax then
                 Nothing
+
             else
                 Just ( previous, previous + horizontalStep )
 
@@ -585,7 +572,7 @@ renderConsiderationChart agent currentTime action con =
                 yVal =
                     computeConsideration agent currentTime (Just xVal) action con
             in
-                [ blueCircle ( xVal, yVal ) ]
+            [ blueCircle ( xVal, yVal ) ]
 
         blueCircle : ( Float, Float ) -> Plot.DataPoint msg
         blueCircle ( xVal, yVal ) =
@@ -612,12 +599,12 @@ renderConsiderationChart agent currentTime action con =
                         decentInterval =
                             (roundedMax - roundedMin) / 8
                     in
-                        { position = Basics.min
-                        , axisLine = Just (dataLine summary)
-                        , ticks = List.map Plot.simpleTick (Plot.interval 0 decentInterval summary)
-                        , labels = List.map Plot.simpleLabel (Plot.interval 0 decentInterval summary)
-                        , flipAnchor = False
-                        }
+                    { position = Basics.min
+                    , axisLine = Just (dataLine summary)
+                    , ticks = List.map Plot.simpleTick (Plot.interval 0 decentInterval summary)
+                    , labels = List.map Plot.simpleLabel (Plot.interval 0 decentInterval summary)
+                    , flipAnchor = False
+                    }
 
         horizontalAxis : Plot.Axis
         horizontalAxis =
@@ -641,7 +628,8 @@ renderConsiderationChart agent currentTime action con =
         title =
             Plot.viewLabel
                 [ fill "#afafaf"
-                , style [ "text-anchor" => "end", "font-style" => "italic" ]
+                , (\( a, b ) -> style a b) ("text-anchor" => "end")
+                , (\( a, b ) -> style a b) ("font-style" => "italic")
                 ]
                 (renderUF con.function)
 
@@ -662,7 +650,7 @@ renderConsiderationChart agent currentTime action con =
                 [ customLine, currentValPoint ]
                 inputMin
     in
-        view
+    view
 
 
 renderUF : InputFunction -> String
@@ -685,7 +673,7 @@ renderUF f =
                     , "squareness = " ++ toString squareness
                     ]
             in
-                "Normal (" ++ String.join ", " vals ++ ")"
+            "Normal (" ++ String.join ", " vals ++ ")"
 
         Asymmetric centerA bendA offsetA squarenessA centerB bendB offsetB squarenessB ->
             let
@@ -700,7 +688,7 @@ renderUF f =
                     , "squarenessB=" ++ prettyFloat 1 squarenessB
                     ]
             in
-                "Asymmetric (" ++ String.join ", " vals ++ ")"
+            "Asymmetric (" ++ String.join ", " vals ++ ")"
 
 
 renderCI : Time -> Agent -> Action -> ConsiderationInput -> String
@@ -733,8 +721,8 @@ renderCI currentTime agent action ci =
                             (currentTime - t)
                                 |> prettyFloat 2
             in
-                "Time since last shouted \"Feed Me!\" "
-                    ++ val
+            "Time since last shouted \"Feed Me!\" "
+                ++ val
 
         CurrentlyCallingOut ->
             "Currently calling out "
@@ -760,7 +748,7 @@ renderCI currentTime agent action ci =
             "Am I begging for food? " ++ (toString <| agent.beggingForFood)
 
         FoodWasGivenAway foodID ->
-            "Did I give this food away already? (id#" ++ (toString foodID) ++ ")"
+            "Did I give this food away already? (id#" ++ toString foodID ++ ")"
 
 
 prettyPoint2d : Point2d.Point2d -> String
@@ -776,7 +764,7 @@ prettyFloatHtml dp n =
 
 codeText : String -> Html Msg
 codeText s =
-    code [ style [ "white-space" => "pre-wrap" ] ] [ text s ]
+    code [ (\( a, b ) -> style a b) ("white-space" => "pre-wrap") ] [ text s ]
 
 
 prettyFloat : Int -> Float -> String
@@ -861,9 +849,9 @@ renderFire fire =
         healthFactor =
             fire.hp / hpMax.fire
     in
-        g [ id <| "fire_" ++ toString fire.id ]
-            [ renderEmoji "🔥" fire.physics.position
-            , gradient
-            , redness
-            ]
-            |> Svg.scaleAbout fire.physics.position healthFactor
+    g [ id <| "fire_" ++ toString fire.id ]
+        [ renderEmoji "🔥" fire.physics.position
+        , gradient
+        , redness
+        ]
+        |> Svg.scaleAbout fire.physics.position healthFactor

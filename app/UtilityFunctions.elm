@@ -1,61 +1,36 @@
-module UtilityFunctions
-    exposing
-        ( clampTo
-        , computeConsideration
-        , computeUtility
-        , computeVariableActions
-        , getActions
-        , getConsiderationRawValue
-        , isBeggingRelated
-        , isHolding
-        , isMovementAction
-        , onlyArrestMomentum
-        , portableIsExtinguisher
-        , portableIsFood
-        )
+module UtilityFunctions exposing
+    ( clampTo
+    , computeConsideration
+    , computeUtility
+    , computeVariableActions
+    , getActions
+    , getConsiderationRawValue
+    , isBeggingRelated
+    , isHolding
+    , isMovementAction
+    , onlyArrestMomentum
+    , portableIsExtinguisher
+    , portableIsFood
+    )
 
 import Dict
+import OpenSolid.Point2d as Point2d
+import OpenSolid.Vector2d as Vector2d
+import Set exposing (member)
 import Time exposing (Time)
 import Types
     exposing
         ( Action
-        , ActionGenerator(ActionGenerator)
-        , ActionOutcome
-            ( ArrestMomentum
-            , BeggingForFood
-            , CallOut
-            , DoNothing
-            , DropHeldFood
-            , EatHeldFood
-            , MoveAwayFrom
-            , MoveTo
-            , PickUp
-            , ShootExtinguisher
-            , Wander
-            )
+        , ActionGenerator(..)
+        , ActionOutcome(..)
         , Agent
         , Consideration
-        , ConsiderationInput
-            ( Constant
-            , CurrentSpeed
-            , CurrentlyCallingOut
-            , DistanceToTargetPoint
-            , FoodWasGivenAway
-            , Hunger
-            , IAmBeggingForFood
-            , IsCarryingExtinguisher
-            , IsCarryingFood
-            , IsCurrentAction
-            , TimeSinceLastShoutedFeedMe
-            )
-        , Holding(BothHands, EmptyHanded)
-        , InputFunction(Asymmetric, Exponential, Linear, Normal, Sigmoid)
+        , ConsiderationInput(..)
+        , Holding(..)
+        , InputFunction(..)
         , Model
-        , Portable(Edible, Extinguisher)
+        , Portable(..)
         )
-import OpenSolid.Point2d as Point2d
-import OpenSolid.Vector2d as Vector2d
-import Set exposing (member)
 
 
 computeUtility : Agent -> Time -> Action -> Float
@@ -70,8 +45,8 @@ computeUtility agent currentTime action =
                 |> toFloat
                 |> min 1
     in
-        -- What's the name for this operation?
-        tiny ^ (1 / undoTiny)
+    -- What's the name for this operation?
+    tiny ^ (1 / undoTiny)
 
 
 {-| Provide a "forced" value to override the consideration's
@@ -118,12 +93,12 @@ computeConsideration agent currentTime forced action consideration =
                         b =
                             f centerB bendB offsetB squarenessB mappedInput
                     in
-                        a * b
+                    a * b
 
         normalizedOutput =
             output |> nansToZero |> clamp 0 1
     in
-        normalizedOutput * consideration.weighting + consideration.offset
+    normalizedOutput * consideration.weighting + consideration.offset
 
 
 nansToZero : Float -> Float
@@ -145,7 +120,7 @@ linearTransform bMin bMax aMin aMax x =
         scale =
             (bMax - bMin) / (aMax - aMin)
     in
-        scale * (x + offset)
+    scale * (x + offset)
 
 
 getConsiderationRawValue : Agent -> Time -> Action -> Consideration -> Float
@@ -207,6 +182,7 @@ true1false0 : Bool -> Float
 true1false0 b =
     if b then
         1
+
     else
         0
 
@@ -250,7 +226,7 @@ clampTo con x =
         inputMax =
             max con.inputMin con.inputMax
     in
-        clamp inputMin inputMax x
+    clamp inputMin inputMax x
 
 
 {-| Convenience method for combining the Variable and Constant action lists.

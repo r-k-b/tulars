@@ -1,52 +1,27 @@
-module Types
-    exposing
-        ( Action
-        , ActionGenerator(ActionGenerator)
-        , ActionOutcome
-            ( ArrestMomentum
-            , BeggingForFood
-            , CallOut
-            , DoNothing
-            , DropHeldFood
-            , EatHeldFood
-            , MoveAwayFrom
-            , MoveTo
-            , PickUp
-            , ShootExtinguisher
-            , Wander
-            )
-        , Agent
-        , Collision
-        , Consideration
-        , ConsiderationInput
-            ( Constant
-            , CurrentlyCallingOut
-            , CurrentSpeed
-            , DistanceToTargetPoint
-            , FoodWasGivenAway
-            , Hunger
-            , IAmBeggingForFood
-            , IsCarryingExtinguisher
-            , IsCarryingFood
-            , IsCurrentAction
-            , TimeSinceLastShoutedFeedMe
-            )
-        , CurrentSignal
-        , Fire
-        , FireExtinguisher
-        , Food
-        , Hitpoints(Hitpoints)
-        , Holding(BothHands, EmptyHanded)
-        , InputFunction(Asymmetric, Exponential, Linear, Normal, Sigmoid)
-        , Model
-        , Msg(InitTime, RAFtick, ToggleConditionDetailsVisibility, ToggleConditionsVisibility)
-        , Physical
-        , PhysicalProperties
-        , Portable(Edible, Extinguisher)
-        , ReferenceToPortable(ExtinguisherID, EdibleID)
-        , Retardant
-        , Signal(Bored, Eating, FeedMe, GoAway)
-        )
+module Types exposing
+    ( Action
+    , ActionGenerator(..)
+    , ActionOutcome(..)
+    , Agent
+    , Collision
+    , Consideration
+    , ConsiderationInput(..)
+    , CurrentSignal
+    , Fire
+    , FireExtinguisher
+    , Food
+    , Hitpoints(..)
+    , Holding(..)
+    , InputFunction(..)
+    , Model
+    , Msg(..)
+    , Physical
+    , PhysicalProperties
+    , Portable(..)
+    , ReferenceToPortable(..)
+    , Retardant
+    , Signal(..)
+    )
 
 import Dict exposing (Dict)
 import OpenSolid.Direction2d exposing (Direction2d)

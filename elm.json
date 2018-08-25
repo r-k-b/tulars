@@ -1,0 +1,34 @@
+{
+    "type": "application",
+    "source-directories": [
+        "app"
+    ],
+    "elm-version": "0.19.0",
+    "dependencies": {
+        "direct": {
+            "elm/browser": "1.0.0",
+            "elm/core": "1.0.0",
+            "elm/html": "1.0.0",
+            "elm/svg": "1.0.0",
+            "elm/time": "1.0.0",
+            "elm-community/list-extra": "8.0.0",
+            "elm-community/maybe-extra": "4.0.0",
+            "elm-lang/mouse": "1.0.1",
+            "krisajenkins/formatting": "4.2.0",
+            "myrho/elm-round": "1.0.3",
+            "opensolid/geometry": "2.0.1",
+            "opensolid/svg": "2.0.1",
+            "r-k-b/map-accumulate": "1.0.0",
+            "terezka/elm-plot": "5.1.0"
+        },
+        "indirect": {
+            "elm/json": "1.0.0",
+            "elm/url": "1.0.0",
+            "elm/virtual-dom": "1.0.0"
+        }
+    },
+    "test-dependencies": {
+        "direct": {},
+        "indirect": {}
+    }
+}
