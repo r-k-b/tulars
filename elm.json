@@ -13,7 +13,7 @@
             "elm/time": "1.0.0",
             "elm-community/list-extra": "8.0.0",
             "elm-community/maybe-extra": "4.0.0",
-            "myrho/elm-round": "1.0.3",
+            "myrho/elm-round": "1.0.4",
             "opensolid/geometry": "2.0.1",
             "opensolid/svg": "2.0.1",
             "r-k-b/map-accumulate": "1.0.0",
