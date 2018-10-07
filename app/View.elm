@@ -110,14 +110,13 @@ render2dResponsive boundingBox svgMsg =
 
         topLeftFrame =
             Frame2d.atPoint (Point2d.fromCoordinates ( minX, maxY ))
-                |> Frame2d.reverseY
 
         ( bbWidth, bbHeight ) =
             BoundingBox2d.dimensions boundingBox
 
         coords =
             [ 0
-            , 0
+            , -bbHeight
             , bbWidth
             , bbHeight
             ]
