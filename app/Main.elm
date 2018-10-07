@@ -1015,8 +1015,12 @@ isAfter a b =
 todo: see if the Golden Ratio is useful here ((1 + sqrt(5))/2)
 -}
 angleFuzz : Float -> Posix -> Float
-angleFuzz spread time =
-    ((Time.posixToMillis time * modBy 4919 43993 |> toFloat) / 4919 - 0.5) * spread
+angleFuzz spreadInRadians time =
+    let
+        mult =
+            (modBy 4919 (Time.posixToMillis time * 43993) |> toFloat) / 4919.0 - 0.5
+    in
+        mult * spreadInRadians
 
 
 justSomethings : ( List (Maybe a), b ) -> ( List a, b )
