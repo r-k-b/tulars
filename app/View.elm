@@ -753,11 +753,13 @@ renderEmoji emoji point =
 
 renderName : Agent -> Html Msg
 renderName agent =
-    Svg.text_
+    (Svg.text_
         [ Attributes.textAnchor "middle"
         , Attributes.alignmentBaseline "hanging"
         ]
         [ Svg.text agent.name ]
+    )
+        |> Svg.translateBy (Vector2d.from Point2d.origin agent.physics.position)
 
 
 renderFood : Food -> Svg Msg
