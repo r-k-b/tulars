@@ -164,8 +164,8 @@ pageGridContainerStyle =
     , style "height" "calc(100vh)"
     , style "max-height" "calc(100vh)"
     , style "overflow" "hidden"
-    , style "grid-template-columns" "repeat(3, 1fr)"
-    , style "grid-template-rows" "2fr 1fr"
+    , style "grid-template-columns" "repeat(2, 1fr)"
+    , style "grid-template-rows" "1fr"
     ]
 
 
