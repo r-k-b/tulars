@@ -1,6 +1,7 @@
 module Main exposing (main)
 
-import Browser exposing (onAnimationFrame)
+import Browser
+import Browser.Events exposing (onAnimationFrame)
 import DefaultData as DD exposing (retardantRadius)
 import Dict exposing (Dict)
 import Html
@@ -14,7 +15,7 @@ import Vector2d as Vector2d exposing (Vector2d)
 import Physics exposing (collide)
 import Set exposing (insert)
 import Task exposing (perform)
-import Time exposing (Time, inMilliseconds, second)
+import Time exposing (Posix, every)
 import Types
     exposing
         ( Action
@@ -36,21 +37,13 @@ import Types
         , Retardant
         , Signal(..)
         )
-import UtilityFunctions
-    exposing
-        ( computeUtility
-        , computeVariableActions
-        , getActions
-        , isBeggingRelated
-        , isMovementAction
-        , onlyArrestMomentum
-        )
+import UtilityFunctions exposing (boolString, computeUtility, computeVariableActions, getActions, isBeggingRelated, isMovementAction, onlyArrestMomentum)
 import View exposing (view)
 
 
-main : Program Never Model Msg
+main : Program Int Model Msg
 main =
-    Html.program
+    Browser.document
         { init = init
         , view = view
         , update = update
@@ -62,9 +55,9 @@ main =
 -- MODEL
 
 
-init : ( Model, Cmd Msg )
-init =
-    ( Model (0 / 0) DD.agents DD.foods DD.fires DD.extinguishers []
+init : flags -> ( Model, Cmd Msg )
+init flags =
+    ( Model (Time.millisToPosix 0) DD.agents DD.foods DD.fires DD.extinguishers []
     , perform InitTime Time.now
     )
 
@@ -149,21 +142,21 @@ updateHelp msg model =
                 { model | agents = newAgents }
 
 
-moveProjectiles : Time -> List (Physical a) -> List (Physical a)
+moveProjectiles : Int -> List (Physical a) -> List (Physical a)
 moveProjectiles dTime projectiles =
     map (doPhysics dTime) projectiles
 
 
 {-| todo: use verlet integration?
 -}
-doPhysics : Time -> Physical a -> Physical a
+doPhysics : Int -> Physical a -> Physical a
 doPhysics deltaTime x =
     let
         p =
             x.physics
 
         dV =
-            Vector2d.scaleBy (deltaTime / 1000) p.velocity
+            Vector2d.scaleBy (toFloat deltaTime / 1000) p.velocity
 
         newPosition =
             Point2d.translateBy dV p.position
@@ -182,11 +175,11 @@ doPhysics deltaTime x =
         { x | physics = updatedPhysics }
 
 
-moveAgent : Time -> Time -> Agent -> Agent
+moveAgent : Posix -> Int -> Agent -> Agent
 moveAgent currentTime dT agent =
     let
         dV =
-            Vector2d.scaleBy ((dT |> min 1000) / 1000) agent.physics.velocity
+            Vector2d.scaleBy ((toFloat dT |> min 1000) / 1000) agent.physics.velocity
 
         newPosition =
             Point2d.translateBy dV agent.physics.position
@@ -198,7 +191,7 @@ moveAgent currentTime dT agent =
                 |> Vector2d.sum deltaAcceleration
 
         deltaAcceleration =
-            Vector2d.scaleBy (dT / 1000) agent.physics.acceleration
+            Vector2d.scaleBy (toFloat dT / 1000) agent.physics.acceleration
 
         topMovementActionIsArrestMomentum =
             getActions agent
@@ -239,7 +232,7 @@ moveAgent currentTime dT agent =
                 |> Maybe.map outcomeToString
                 |> withDefault "none"
 
-        newtopActionLastStartTimes : Dict String Time
+        newtopActionLastStartTimes : Dict String Posix
         newtopActionLastStartTimes =
             if newOutcome == agent.currentOutcome then
                 agent.topActionLastStartTimes
@@ -256,14 +249,14 @@ moveAgent currentTime dT agent =
         increasedHunger =
             agent.hunger
                 + 0.000003
-                * dT
+                * toFloat dT
                 |> clamp 0 1
 
         hitpointsAfterStarvation =
             case agent.hp of
                 Hitpoints current max ->
                     if agent.hunger > 0.5 then
-                        Hitpoints ((current - 0.001 * dT) |> clamp 0 max) max
+                        Hitpoints ((current - 0.001 * toFloat dT) |> clamp 0 max) max
                     else
                         Hitpoints current max
 
@@ -319,7 +312,7 @@ extractCallouts action =
 
 {-| If the signal type is unchanged, preserve the original time.
 -}
-updateCurrentSignal : Time -> Maybe CurrentSignal -> Maybe Signal -> Maybe CurrentSignal
+updateCurrentSignal : Posix -> Maybe CurrentSignal -> Maybe Signal -> Maybe CurrentSignal
 updateCurrentSignal time currentSignal maybeNewSignal =
     case maybeNewSignal of
         Nothing ->
@@ -345,7 +338,7 @@ deadzone v =
         Vector2d.zero
 
 
-getMovementVector : Time -> Time -> Agent -> Action -> Maybe Vector2d
+getMovementVector : Posix -> Int -> Agent -> Action -> Maybe Vector2d
 getMovementVector currentTime deltaTime agent action =
     case action.outcome of
         MoveTo _ point ->
@@ -384,7 +377,7 @@ getMovementVector currentTime deltaTime agent action =
                     False ->
                         Just
                             (agent.physics.velocity
-                                |> Vector2d.flip
+                                |> Vector2d.reverse
                                 |> Vector2d.normalize
                                 |> Vector2d.scaleBy weighting
                             )
@@ -392,7 +385,7 @@ getMovementVector currentTime deltaTime agent action =
         Wander ->
             agent.physics.facing
                 |> Direction2d.toVector
-                |> Vector2d.rotateBy (degrees 10 * (deltaTime / 1000))
+                |> Vector2d.rotateBy (degrees 10 * (toFloat deltaTime / 1000))
                 |> Just
 
         DoNothing ->
@@ -475,11 +468,11 @@ regenerateVariableActions model agent =
         { agent | variableActions = newActions }
 
 
-moveWorld : Time -> Model -> Model
+moveWorld : Posix -> Model -> Model
 moveWorld newTime model =
     let
         deltaT =
-            newTime - model.time
+            Time.posixToMillis newTime - Time.posixToMillis model.time
 
         survivingAgents =
             model.agents
@@ -535,7 +528,7 @@ moveWorld newTime model =
         }
 
 
-createRetardantProjectiles : Time -> Agent -> List Retardant -> List Retardant
+createRetardantProjectiles : Posix -> Agent -> List Retardant -> List Retardant
 createRetardantProjectiles currentTime agent acc =
     let
         topAction : Maybe Action
@@ -551,7 +544,7 @@ createRetardantProjectiles currentTime agent acc =
             Just action ->
                 case action.outcome of
                     ShootExtinguisher direction ->
-                        { expiry = currentTime + 1 * second
+                        { expiry = Time.posixToMillis currentTime + 1000 |> Time.millisToPosix
                         , physics =
                             { facing = direction
                             , position = agent.physics.position
@@ -571,7 +564,7 @@ createRetardantProjectiles currentTime agent acc =
 
 
 foldOverPickedItems :
-    Time
+    Posix
     -> Agent
     -> ( List Agent, List Food, List FireExtinguisher )
     -> ( List Agent, List Food, List FireExtinguisher )
@@ -641,7 +634,7 @@ foldOverPickedItems currentTime agent ( agentAcc, foodAcc, extinguisherAcc ) =
         ( updatedAgent :: agentAcc, updatedFoods, updatedExtinguishers )
 
 
-foldOverDroppedFood : Time -> Agent -> ( List Agent, List Food ) -> ( List Agent, List Food )
+foldOverDroppedFood : Posix -> Agent -> ( List Agent, List Food ) -> ( List Agent, List Food )
 foldOverDroppedFood currentTime agent ( agentAcc, foodAcc ) =
     let
         topAction : Maybe Action
@@ -926,11 +919,11 @@ mapHeld f held =
                 |> withDefault EmptyHanded
 
 
-rotFood : Time -> Food -> Maybe Food
+rotFood : Int -> Food -> Maybe Food
 rotFood deltaT food =
     let
         newJoules =
-            food.joules - deltaT * 20000
+            food.joules - (deltaT * 20000 |> toFloat)
     in
         if newJoules <= 0 then
             Nothing
@@ -960,10 +953,10 @@ outcomeToString outcome =
             "Wander"
 
         PickUp (ExtinguisherID id) ->
-            "PickUpExtinguisher(id#" ++ toString id ++ ")"
+            "PickUpExtinguisher(id#" ++ String.fromInt id ++ ")"
 
         PickUp (EdibleID id) ->
-            "PickUpFood(id#" ++ toString id ++ ")"
+            "PickUpFood(id#" ++ String.fromInt id ++ ")"
 
         EatHeldFood ->
             "EatHeldFood"
@@ -972,10 +965,10 @@ outcomeToString outcome =
             "DropHeldFood"
 
         BeggingForFood bool ->
-            "BeggingForFood(" ++ toString bool ++ ")"
+            "BeggingForFood(" ++ boolString bool ++ ")"
 
         ShootExtinguisher direction ->
-            "ShootExtinguisher(" ++ toString direction ++ ")"
+            "ShootExtinguisher(" ++ (direction |> Direction2d.toAngle |> String.fromFloat) ++ ")"
 
 
 signalToString : Signal -> String
@@ -994,21 +987,25 @@ signalToString signal =
             "Bored"
 
 
-decayRetardant : Time -> Retardant -> Maybe Retardant
+decayRetardant : Posix -> Retardant -> Maybe Retardant
 decayRetardant currentTime ret =
-    if currentTime > ret.expiry then
+    if currentTime |> isAfter ret.expiry then
         Nothing
     else
         Just ret
 
 
-angleFuzz : Float -> Time -> Float
-angleFuzz spread timeFloat =
-    let
-        time =
-            timeFloat |> inMilliseconds |> floor
-    in
-        ((time * modBy 4919 43993 |> toFloat) / 4919 - 0.5) * spread
+isAfter : Posix -> Posix -> Bool
+isAfter a b =
+    Time.posixToMillis b > Time.posixToMillis a
+
+
+{-| Create an even pseudorandom angle distribution, without having to get Random involved.
+todo: see if the Golden Ratio is useful here ((1 + sqrt(5))/2)
+-}
+angleFuzz : Float -> Posix -> Float
+angleFuzz spread time =
+    ((Time.posixToMillis time * modBy 4919 43993 |> toFloat) / 4919 - 0.5) * spread
 
 
 justSomethings : ( List (Maybe a), b ) -> ( List a, b )

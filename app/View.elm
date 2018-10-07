@@ -1,10 +1,11 @@
 module View exposing (view)
 
+import Browser exposing (Document)
 import DefaultData exposing (hpMax)
 import Dict
 import LineSegment2d
 import List.Extra
-import Html exposing (Html, code, div, h2, h3, h4, h5, li, table, td, text, th, tr, ul)
+import Html exposing (Attribute, Html, code, div, h2, h3, h4, h5, li, table, td, text, th, tr, ul)
 import Html.Attributes exposing (class, style)
 import Html.Events exposing (onClick)
 import BoundingBox2d as BoundingBox2d exposing (BoundingBox2d)
@@ -53,31 +54,25 @@ import Types
         , Retardant
         , Signal(..)
         )
-import UtilityFunctions
-    exposing
-        ( clampTo
-        , computeConsideration
-        , computeUtility
-        , getActions
-        , getConsiderationRawValue
-        , isHolding
-        , portableIsExtinguisher
-        , portableIsFood
-        )
+import UtilityFunctions exposing (boolString, clampTo, computeConsideration, computeUtility, differenceInMillis, getActions, getConsiderationRawValue, isHolding, portableIsExtinguisher, portableIsFood)
 
 
-view : Model -> Html Msg
+view : Model -> Document Msg
 view model =
-    div [ pageGridContainerStyle ]
-        [ div
-            [ mapGridItemStyle, class "zoom-svg" ]
-            [ mainMap model
-            ]
-        , div
-            [ agentInfoGridItemStyle ]
-            [ agentsInfo model.time model.agents
-            ]
-        ]
+    let
+        body =
+            div pageGridContainerStyle
+                [ div
+                    (List.concat [ mapGridItemStyle, [ class "zoom-svg" ] ])
+                    [ mainMap model
+                    ]
+                , div
+                    agentInfoGridItemStyle
+                    [ agentsInfo model.time model.agents
+                    ]
+                ]
+    in
+        { title = "Tulars", body = [ body ] }
 
 
 bb : BoundingBox2d
@@ -103,7 +98,6 @@ render2dResponsive boundingBox svgMsg =
         ( bbWidth, bbHeight ) =
             BoundingBox2d.dimensions boundingBox
 
-        coords : List Float
         coords =
             [ 0
             , 0
@@ -143,7 +137,7 @@ mainMap model =
 
 borderIndicator : Float -> Svg Msg
 borderIndicator radius =
-    Svg.circle
+    Svg.circle2d
         [ Attributes.fillOpacity "0"
         , Attributes.stroke "grey"
         , Attributes.strokeWidth "1"
@@ -162,42 +156,34 @@ agentsInfo currentTime agents =
         ]
 
 
-tupleOf : a -> b -> ( a, b )
-tupleOf =
-    \a b -> ( a, b )
-
-
-pageGridContainerStyle : Html.Attribute msg
+pageGridContainerStyle : List (Html.Attribute msg)
 pageGridContainerStyle =
-    style
-        [ tupleOf "display" "grid"
-        , tupleOf "width" "calc(100vw)"
-        , tupleOf "max-width" "calc(100vw)"
-        , tupleOf "height" "calc(100vh)"
-        , tupleOf "max-height" "calc(100vh)"
-        , tupleOf "overflow" "hidden"
-        , tupleOf "grid-template-columns" "repeat(3, 1fr)"
-        , tupleOf "grid-template-rows" "2fr 1fr"
-        ]
+    [ style "display" "grid"
+    , style "width" "calc(100vw)"
+    , style "max-width" "calc(100vw)"
+    , style "height" "calc(100vh)"
+    , style "max-height" "calc(100vh)"
+    , style "overflow" "hidden"
+    , style "grid-template-columns" "repeat(3, 1fr)"
+    , style "grid-template-rows" "2fr 1fr"
+    ]
 
 
-mapGridItemStyle : Html.Attribute msg
+mapGridItemStyle : List (Html.Attribute msg)
 mapGridItemStyle =
-    style
-        [ tupleOf "grid-column" "1 / 2"
-        , tupleOf "grid-row" "1 / 2"
-        , tupleOf "overflow" "hidden"
-        , tupleOf "margin" "0.5em"
-        ]
+    [ style "grid-column" "1 / 2"
+    , style "grid-row" "1 / 2"
+    , style "overflow" "hidden"
+    , style "margin" "0.5em"
+    ]
 
 
-agentInfoGridItemStyle : Html.Attribute msg
+agentInfoGridItemStyle : List (Html.Attribute msg)
 agentInfoGridItemStyle =
-    style
-        [ tupleOf "grid-column" "2 / 4"
-        , tupleOf "grid-row" "1 / 3"
-        , tupleOf "overflow" "auto"
-        ]
+    [ style "grid-column" "2 / 4"
+    , style "grid-row" "1 / 3"
+    , style "overflow" "auto"
+    ]
 
 
 inPx : Float -> String
@@ -229,6 +215,7 @@ facingArrow =
 agentVelocityArrow : Agent -> Svg msg
 agentVelocityArrow agent =
     let
+        exaggerated : Vector2d.Vector2d
         exaggerated =
             scaleBy 2 agent.physics.velocity
 
@@ -242,8 +229,9 @@ agentVelocityArrow agent =
             , Attributes.strokeDasharray "1 2"
             ]
             (LineSegment2d.fromEndpoints
-                agent.physics.position
-                exaggerated
+                ( agent.physics.position
+                , agent.physics.position |> Point2d.translateBy exaggerated
+                )
             )
 
 
@@ -285,14 +273,13 @@ renderAgent agent =
                     [ renderPortable p bothHands ]
     in
         g [ id <| "agent " ++ agent.name ]
-            ([ Svg.circle2d [] agent.physics.position
-             , Svg.lineSegment2d facingArrow agent.physics.position agent.physics.facing
+            ([ Svg.circle2d [] (Circle2d.withRadius 3 agent.physics.position)
+             , Svg.lineSegment2d [] (LineSegment2d.fromEndpoints ( agent.physics.position, (agent.physics.position |> Point2d.translateBy (Direction2d.toVector agent.physics.facing)) ))
              , agentVelocityArrow agent
              , renderName agent
                 |> Svg.scaleAbout agent.physics.position 0.7
              , g [] held
                 |> Svg.translateBy (Vector2d.from Point2d.origin agent.physics.position)
-                |> Svg.rotateAround agent.physics.position (Direction2d.angleFrom agent.physics.facing - pi / 2)
              ]
                 |> append call
             )
@@ -321,7 +308,7 @@ renderAgentInfo currentTime agent =
             [ (\( a, b ) -> style a b) ( "margin-bottom", "0.1em" ) ]
             [ text agent.name ]
         , agentStats agent
-        , div [ style indentWithLine ]
+        , div indentWithLine
             (getActions agent
                 |> List.map (renderAction agent currentTime)
             )
@@ -380,11 +367,11 @@ portableAsString p =
             "food @ " ++ prettyFloat 0 (food.joules / food.freshJoules * 100) ++ "%"
 
 
-indentWithLine : List ( String, String )
+indentWithLine : List (Attribute msg)
 indentWithLine =
-    [ ( "margin-left", "0.2em" )
-    , ( "padding-left", "1em" )
-    , ( "border-left", "1px solid grey" )
+    [ style "margin-left" "0.2em"
+    , style "padding-left" "1em"
+    , style "border-left" "1px solid grey"
     ]
 
 
@@ -407,17 +394,16 @@ renderAction agent currentTime action =
 
         containerStyle =
             if isExpanded then
-                style
-                    [ ( "background-color", "#00000011" )
-                    , ( "padding", "0.6em" )
-                    ]
+                [ style "background-color" "#00000011"
+                , style "padding" "0.6em"
+                ]
             else
-                style [ ( "padding", "0.6em" ) ]
+                [ style "padding" "0.6em" ]
 
         utility =
             computeUtility agent currentTime action
     in
-        div [ containerStyle ]
+        div containerStyle
             (List.append
                 [ h4
                     [ onClick <| ToggleConditionsVisibility agent.name action.name
@@ -690,8 +676,7 @@ renderCI currentTime agent action ci =
                             "Never"
 
                         Just t ->
-                            (currentTime - t)
-                                |> prettyFloat 2
+                            differenceInMillis currentTime t |> String.fromInt
             in
                 "Time since last shouted \"Feed Me!\" "
                     ++ val
@@ -739,10 +724,8 @@ codeText s =
     code [ (\( a, b ) -> style a b) ( "white-space", "pre-wrap" ) ] [ text s ]
 
 
-
--- fixme: restore the "pretty" part of the formatting
-
-
+{-| fixme: restore the "pretty" part of the formatting
+-}
 prettyFloat : Int -> Float -> String
 prettyFloat dp n =
     String.fromFloat n
@@ -754,8 +737,7 @@ renderEmoji emoji point =
         [ Attributes.textAnchor "middle"
         , Attributes.alignmentBaseline "middle"
         ]
-        point
-        emoji
+        [ Svg.text emoji ]
 
 
 renderName : Agent -> Html Msg
@@ -764,11 +746,7 @@ renderName agent =
         [ Attributes.textAnchor "middle"
         , Attributes.alignmentBaseline "hanging"
         ]
-        (Point2d.translateBy
-            (Vector2d.fromComponents ( 0, -10 ))
-            agent.physics.position
-        )
-        agent.name
+        [ Svg.text agent.name ]
 
 
 renderFood : Food -> Svg Msg
@@ -831,11 +809,3 @@ renderFire fire =
             , redness
             ]
             |> Svg.scaleAbout fire.physics.position healthFactor
-
-
-boolString : Bool -> String
-boolString b =
-    if b then
-        "true"
-    else
-        "false"

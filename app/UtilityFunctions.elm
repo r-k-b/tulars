@@ -12,6 +12,8 @@ module UtilityFunctions
         , onlyArrestMomentum
         , portableIsExtinguisher
         , portableIsFood
+        , boolString
+        , differenceInMillis
         )
 
 import Dict
@@ -308,3 +310,18 @@ onlyArrestMomentum action =
 
         _ ->
             Nothing
+
+
+boolString : Bool -> String
+boolString b =
+    if b then
+        "true"
+    else
+        "false"
+
+
+{-| Returns a positive int if a is later than b.
+-}
+differenceInMillis : Posix -> Posix -> Int
+differenceInMillis a b =
+    Time.posixToMillis a - Time.posixToMillis b
