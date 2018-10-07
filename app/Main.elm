@@ -57,7 +57,7 @@ main =
 
 init : flags -> ( Model, Cmd Msg )
 init flags =
-    ( Model (Time.millisToPosix 0) DD.agents DD.foods DD.fires DD.extinguishers []
+    ( Model (Time.millisToPosix 0) DD.agents DD.foods DD.fires DD.extinguishers [] False
     , perform InitTime Time.now
     )
 
@@ -74,8 +74,14 @@ update msg model =
 updateHelp : Msg -> Model -> Model
 updateHelp msg model =
     case msg of
+        TogglePaused ->
+            { model | paused = not model.paused }
+
         RAFtick newT ->
-            moveWorld newT model
+            if model.paused then
+                { model | time = newT }
+            else
+                moveWorld newT model
 
         InitTime t ->
             { model | time = t }

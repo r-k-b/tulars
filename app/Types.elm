@@ -39,6 +39,7 @@ type alias Model =
     , fires : List Fire
     , extinguishers : List FireExtinguisher
     , retardants : List Retardant
+    , paused : Bool
     }
 
 
@@ -47,6 +48,7 @@ type Msg
     | InitTime Posix
     | ToggleConditionsVisibility String String
     | ToggleConditionDetailsVisibility String String String
+    | TogglePaused
 
 
 type alias Agent =

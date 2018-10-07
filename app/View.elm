@@ -68,11 +68,24 @@ view model =
                     ]
                 , div
                     agentInfoGridItemStyle
-                    [ agentsInfo model.time model.agents
+                    [ renderTopButtons model
+                    , agentsInfo model.time model.agents
                     ]
                 ]
     in
         { title = "Tulars", body = [ body ] }
+
+
+renderTopButtons : Model -> Html Msg
+renderTopButtons model =
+    Html.button [ Html.Events.onClick TogglePaused ]
+        [ text
+            (if model.paused then
+                "Unpause"
+             else
+                "Pause"
+            )
+        ]
 
 
 bb : BoundingBox2d
