@@ -742,11 +742,13 @@ codeText s =
 
 renderEmoji : String -> Point2d.Point2d -> Html Msg
 renderEmoji emoji point =
-    Svg.text_
+    (Svg.text_
         [ Attributes.textAnchor "middle"
         , Attributes.alignmentBaseline "middle"
         ]
         [ Svg.text emoji ]
+    )
+        |> Svg.translateBy (Vector2d.from Point2d.origin point)
 
 
 renderName : Agent -> Html Msg
