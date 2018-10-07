@@ -361,10 +361,10 @@ portableAsString : Portable -> String
 portableAsString p =
     case p of
         Extinguisher ext ->
-            "extinguisher @ " ++ prettyFloat 0 (ext.remaining / ext.capacity * 100) ++ "%"
+            "extinguisher @ " ++ Round.round 0 (ext.remaining / ext.capacity * 100) ++ "%"
 
         Edible food ->
-            "food @ " ++ prettyFloat 0 (food.joules / food.freshJoules * 100) ++ "%"
+            "food @ " ++ Round.round 0 (food.joules / food.freshJoules * 100) ++ "%"
 
 
 indentWithLine : List (Attribute msg)
@@ -441,19 +441,19 @@ renderConsideration agent action currentTime con =
                         [ codeText <| "Input: " ++ renderCI currentTime agent action con.input
                         ]
                     , li []
-                        [ codeText <| "Output:    " ++ prettyFloat 4 considerationValue
+                        [ codeText <| "Output:    " ++ Round.round 4 considerationValue
                         ]
                     , li []
-                        [ codeText <| "Raw Value: " ++ prettyFloat 4 rawValue
+                        [ codeText <| "Raw Value: " ++ Round.round 4 rawValue
                         ]
                     , li []
-                        [ codeText <| "Min: " ++ (prettyFloat 4 <| con.inputMin) ++ ", Max: " ++ (prettyFloat 2 <| con.inputMax)
+                        [ codeText <| "Min: " ++ (Round.round 4 <| con.inputMin) ++ ", Max: " ++ (Round.round 2 <| con.inputMax)
                         ]
                     , li []
-                        [ codeText <| "Weighting: " ++ (prettyFloat 4 <| con.weighting)
+                        [ codeText <| "Weighting: " ++ (Round.round 4 <| con.weighting)
                         ]
                     , li []
-                        [ codeText <| "Offset:    " ++ (prettyFloat 4 <| con.offset)
+                        [ codeText <| "Offset:    " ++ (Round.round 4 <| con.offset)
                         ]
                     ]
                 ]
@@ -467,7 +467,7 @@ renderConsideration agent action currentTime con =
                 , (\( a, b ) -> style a b) ( "margin", "0.5em 0" )
                 ]
                 [ text "("
-                , code [] [ text <| prettyFloat 2 considerationValue ]
+                , code [] [ text <| Round.round 2 considerationValue ]
                 , text ")  "
                 , text con.name
                 ]
@@ -636,14 +636,14 @@ renderUF f =
         Asymmetric centerA bendA offsetA squarenessA centerB bendB offsetB squarenessB ->
             let
                 vals =
-                    [ "centerA=" ++ prettyFloat 1 centerA
-                    , "bendA=" ++ prettyFloat 1 bendA
-                    , "offsetA=" ++ prettyFloat 1 offsetA
-                    , "squarenessA=" ++ prettyFloat 1 squarenessA
-                    , "centerB=" ++ prettyFloat 1 centerB
-                    , "bendB=" ++ prettyFloat 1 bendB
-                    , "offsetB=" ++ prettyFloat 1 offsetB
-                    , "squarenessB=" ++ prettyFloat 1 squarenessB
+                    [ "centerA=" ++ Round.round 1 centerA
+                    , "bendA=" ++ Round.round 1 bendA
+                    , "offsetA=" ++ Round.round 1 offsetA
+                    , "squarenessA=" ++ Round.round 1 squarenessA
+                    , "centerB=" ++ Round.round 1 centerB
+                    , "bendB=" ++ Round.round 1 bendB
+                    , "offsetB=" ++ Round.round 1 offsetB
+                    , "squarenessB=" ++ Round.round 1 squarenessB
                     ]
             in
                 "Asymmetric (" ++ String.join ", " vals ++ ")"
@@ -659,13 +659,13 @@ renderCI currentTime agent action ci =
             "Distance to point " ++ prettyPoint2d p
 
         Constant p ->
-            "Constant " ++ prettyFloat 2 p
+            "Constant " ++ Round.round 2 p
 
         CurrentSpeed ->
             "Current Speed "
                 ++ (agent.physics.velocity
                         |> Vector2d.length
-                        |> prettyFloat 2
+                        |> Round.round 2
                    )
 
         TimeSinceLastShoutedFeedMe ->
@@ -710,25 +710,18 @@ renderCI currentTime agent action ci =
 
 prettyPoint2d : Point2d.Point2d -> String
 prettyPoint2d p =
-    "(" ++ (prettyFloat 1 <| xCoordinate p) ++ ", " ++ (prettyFloat 1 <| yCoordinate p) ++ ")"
+    "(" ++ (Round.round 1 <| xCoordinate p) ++ ", " ++ (Round.round 1 <| yCoordinate p) ++ ")"
 
 
 prettyFloatHtml : Int -> Float -> Html Msg
 prettyFloatHtml dp n =
-    prettyFloat dp n
+    Round.round dp n
         |> codeText
 
 
 codeText : String -> Html Msg
 codeText s =
     code [ (\( a, b ) -> style a b) ( "white-space", "pre-wrap" ) ] [ text s ]
-
-
-{-| fixme: restore the "pretty" part of the formatting
--}
-prettyFloat : Int -> Float -> String
-prettyFloat dp n =
-    String.fromFloat n
 
 
 renderEmoji : String -> Point2d.Point2d -> Html Msg
