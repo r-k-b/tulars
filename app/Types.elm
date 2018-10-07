@@ -49,6 +49,7 @@ type Msg
     | ToggleConditionsVisibility String String
     | ToggleConditionDetailsVisibility String String String
     | TogglePaused
+    | Reset
 
 
 type alias Agent =

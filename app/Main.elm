@@ -55,9 +55,14 @@ main =
 -- MODEL
 
 
-init : flags -> ( Model, Cmd Msg )
-init flags =
-    ( Model (Time.millisToPosix 0) DD.agents DD.foods DD.fires DD.extinguishers [] False
+initialModelAt : Posix -> Model
+initialModelAt posixTime =
+    Model posixTime DD.agents DD.foods DD.fires DD.extinguishers [] False
+
+
+init : Int -> ( Model, Cmd Msg )
+init posixMillis =
+    ( initialModelAt (Time.millisToPosix posixMillis)
     , perform InitTime Time.now
     )
 
@@ -74,6 +79,9 @@ update msg model =
 updateHelp : Msg -> Model -> Model
 updateHelp msg model =
     case msg of
+        Reset ->
+            initialModelAt model.time
+
         TogglePaused ->
             { model | paused = not model.paused }
 

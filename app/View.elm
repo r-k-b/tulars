@@ -78,13 +78,17 @@ view model =
 
 renderTopButtons : Model -> Html Msg
 renderTopButtons model =
-    Html.button [ Html.Events.onClick TogglePaused ]
-        [ text
-            (if model.paused then
-                "Unpause"
-             else
-                "Pause"
-            )
+    div []
+        [ Html.button [ Html.Events.onClick TogglePaused ]
+            [ text
+                (if model.paused then
+                    "Unpause"
+                 else
+                    "Pause"
+                )
+            ]
+        , Html.button [ Html.Events.onClick Reset ]
+            [ text "Reset" ]
         ]
 
 
