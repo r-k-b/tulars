@@ -1,6 +1,6 @@
 module Main exposing (main)
 
-import AnimationFrame exposing (times)
+import Browser exposing (onAnimationFrame)
 import DefaultData as DD exposing (retardantRadius)
 import Dict exposing (Dict)
 import Html
@@ -8,9 +8,9 @@ import List exposing (map)
 import MapAccumulate exposing (mapAccumL)
 import Maybe exposing (withDefault)
 import Maybe.Extra
-import OpenSolid.Direction2d as Direction2d
-import OpenSolid.Point2d as Point2d
-import OpenSolid.Vector2d as Vector2d exposing (Vector2d)
+import Direction2d as Direction2d
+import Point2d as Point2d
+import Vector2d as Vector2d exposing (Vector2d)
 import Physics exposing (collide)
 import Set exposing (insert)
 import Task exposing (perform)
@@ -95,20 +95,19 @@ updateHelp msg model =
                             Dict.get actionName viz
                                 |> withDefault False
                     in
-                    Dict.insert actionName (not prior) viz
+                        Dict.insert actionName (not prior) viz
 
                 newAgents =
                     map
                         (\agent ->
                             if agent.name == agentName then
                                 { agent | visibleActions = updateActionVisibility agent.visibleActions }
-
                             else
                                 agent
                         )
                         model.agents
             in
-            { model | agents = newAgents }
+                { model | agents = newAgents }
 
         ToggleConditionDetailsVisibility agentName actionName considerationName ->
             let
@@ -118,7 +117,7 @@ updateHelp msg model =
                             Dict.get considerationName viz
                                 |> withDefault False
                     in
-                    Dict.insert considerationName (not prior) viz
+                        Dict.insert considerationName (not prior) viz
 
                 updateAgentActions : List Action -> List Action
                 updateAgentActions list =
@@ -129,7 +128,6 @@ updateHelp msg model =
                                     | visibleConsiderations =
                                         updateConsiderationVisibility action.visibleConsiderations
                                 }
-
                             else
                                 action
                         )
@@ -143,13 +141,12 @@ updateHelp msg model =
                                     | constantActions = updateAgentActions agent.constantActions
                                     , variableActions = updateAgentActions agent.variableActions
                                 }
-
                             else
                                 agent
                         )
                         model.agents
             in
-            { model | agents = newAgents }
+                { model | agents = newAgents }
 
 
 moveProjectiles : Time -> List (Physical a) -> List (Physical a)
@@ -182,7 +179,7 @@ doPhysics deltaTime x =
             , radius = p.radius
             }
     in
-    { x | physics = updatedPhysics }
+        { x | physics = updatedPhysics }
 
 
 moveAgent : Time -> Time -> Agent -> Agent
@@ -246,7 +243,6 @@ moveAgent currentTime dT agent =
         newtopActionLastStartTimes =
             if newOutcome == agent.currentOutcome then
                 agent.topActionLastStartTimes
-
             else
                 agent.topActionLastStartTimes
                     |> Dict.insert newOutcome currentTime
@@ -268,7 +264,6 @@ moveAgent currentTime dT agent =
                 Hitpoints current max ->
                     if agent.hunger > 0.5 then
                         Hitpoints ((current - 0.001 * dT) |> clamp 0 max) max
-
                     else
                         Hitpoints current max
 
@@ -277,12 +272,12 @@ moveAgent currentTime dT agent =
                 p =
                     agent.physics
             in
-            { p
-                | position = newPosition
-                , velocity = newVelocity
-                , acceleration = newAcceleration
-                , facing = newFacing
-            }
+                { p
+                    | position = newPosition
+                    , velocity = newVelocity
+                    , acceleration = newAcceleration
+                    , facing = newFacing
+                }
 
         beggingForFood =
             topAction
@@ -296,21 +291,20 @@ moveAgent currentTime dT agent =
                     |> withDefault False
             then
                 agent |> eat
-
             else
                 ( increasedHunger, agent.holding )
     in
-    { agent
-        | physics = newPhysics
-        , topActionLastStartTimes = newtopActionLastStartTimes
-        , callingOut = newCall
-        , hunger = newHunger
-        , currentAction = topAction |> Maybe.map .name |> withDefault "none"
-        , currentOutcome = newOutcome
-        , holding = newHolding
-        , beggingForFood = beggingForFood
-        , hp = hitpointsAfterStarvation
-    }
+        { agent
+            | physics = newPhysics
+            , topActionLastStartTimes = newtopActionLastStartTimes
+            , callingOut = newCall
+            , hunger = newHunger
+            , currentAction = topAction |> Maybe.map .name |> withDefault "none"
+            , currentOutcome = newOutcome
+            , holding = newHolding
+            , beggingForFood = beggingForFood
+            , hp = hitpointsAfterStarvation
+        }
 
 
 extractCallouts : Action -> Maybe Signal
@@ -339,7 +333,6 @@ updateCurrentSignal time currentSignal maybeNewSignal =
                 Just priorSignal ->
                     if priorSignal.signal == newSignal then
                         Just priorSignal
-
                     else
                         Just { signal = newSignal, started = time }
 
@@ -348,7 +341,6 @@ deadzone : Vector2d -> Vector2d
 deadzone v =
     if Vector2d.length v > 0.005 then
         v
-
     else
         Vector2d.zero
 
@@ -366,7 +358,7 @@ getMovementVector currentTime deltaTime agent action =
                 weighting =
                     computeUtility agent currentTime action
             in
-            Just weighted
+                Just weighted
 
         MoveAwayFrom _ point ->
             let
@@ -378,24 +370,24 @@ getMovementVector currentTime deltaTime agent action =
                 weighting =
                     computeUtility agent currentTime action
             in
-            Just weighted
+                Just weighted
 
         ArrestMomentum ->
             let
                 weighting =
                     computeUtility agent currentTime action
             in
-            case weighting < 0.1 of
-                True ->
-                    Nothing
+                case weighting < 0.1 of
+                    True ->
+                        Nothing
 
-                False ->
-                    Just
-                        (agent.physics.velocity
-                            |> Vector2d.flip
-                            |> Vector2d.normalize
-                            |> Vector2d.scaleBy weighting
-                        )
+                    False ->
+                        Just
+                            (agent.physics.velocity
+                                |> Vector2d.flip
+                                |> Vector2d.normalize
+                                |> Vector2d.scaleBy weighting
+                            )
 
         Wander ->
             agent.physics.facing
@@ -450,12 +442,12 @@ applyFriction velocity =
         factor =
             1 / (e ^ (k * (speed - n)) + t) + u
     in
-    case speed < 0.1 of
-        True ->
-            Vector2d.zero
+        case speed < 0.1 of
+            True ->
+                Vector2d.zero
 
-        False ->
-            velocity |> Vector2d.scaleBy factor
+            False ->
+                velocity |> Vector2d.scaleBy factor
 
 
 regenerateVariableActions : Model -> Agent -> Agent
@@ -478,9 +470,9 @@ regenerateVariableActions model agent =
                     Dict.get action.name preservableProperties
                         |> withDefault Dict.empty
             in
-            { action | visibleConsiderations = oldVCs }
+                { action | visibleConsiderations = oldVCs }
     in
-    { agent | variableActions = newActions }
+        { agent | variableActions = newActions }
 
 
 moveWorld : Time -> Model -> Model
@@ -533,14 +525,14 @@ moveWorld newTime model =
                 ( [], pickedFood )
                 agentsAfterPickingUpFood
     in
-    { model
-        | time = newTime
-        , foods = includingDroppedFood
-        , agents = agentsAfterDroppingFood
-        , extinguishers = pickedExtinguishers
-        , retardants = retardantsAfterCollisionWithFire
-        , fires = firesAfterCollisionWithRetardants
-    }
+        { model
+            | time = newTime
+            , foods = includingDroppedFood
+            , agents = agentsAfterDroppingFood
+            , extinguishers = pickedExtinguishers
+            , retardants = retardantsAfterCollisionWithFire
+            , fires = firesAfterCollisionWithRetardants
+        }
 
 
 createRetardantProjectiles : Time -> Agent -> List Retardant -> List Retardant
@@ -552,30 +544,30 @@ createRetardantProjectiles currentTime agent acc =
                 |> List.sortBy (computeUtility agent currentTime >> (*) -1)
                 |> List.head
     in
-    case topAction of
-        Nothing ->
-            acc
+        case topAction of
+            Nothing ->
+                acc
 
-        Just action ->
-            case action.outcome of
-                ShootExtinguisher direction ->
-                    { expiry = currentTime + 1 * second
-                    , physics =
-                        { facing = direction
-                        , position = agent.physics.position
-                        , velocity =
-                            direction
-                                |> Direction2d.toVector
-                                |> Vector2d.scaleBy 100
-                                |> Vector2d.rotateBy (currentTime |> angleFuzz 0.8)
-                        , acceleration = Vector2d.zero
-                        , radius = retardantRadius
+            Just action ->
+                case action.outcome of
+                    ShootExtinguisher direction ->
+                        { expiry = currentTime + 1 * second
+                        , physics =
+                            { facing = direction
+                            , position = agent.physics.position
+                            , velocity =
+                                direction
+                                    |> Direction2d.toVector
+                                    |> Vector2d.scaleBy 100
+                                    |> Vector2d.rotateBy (currentTime |> angleFuzz 0.8)
+                            , acceleration = Vector2d.zero
+                            , radius = retardantRadius
+                            }
                         }
-                    }
-                        :: acc
+                            :: acc
 
-                _ ->
-                    acc
+                    _ ->
+                        acc
 
 
 foldOverPickedItems :
@@ -596,57 +588,57 @@ foldOverPickedItems currentTime agent ( agentAcc, foodAcc, extinguisherAcc ) =
                 noChange =
                     ( agent, foodAcc, extinguisherAcc )
             in
-            case topAction of
-                Nothing ->
-                    noChange
+                case topAction of
+                    Nothing ->
+                        noChange
 
-                Just action ->
-                    case action.outcome of
-                        PickUp (EdibleID foodID) ->
-                            let
-                                ( a, f ) =
-                                    pickUpFood agent foodID foodAcc
-                            in
-                            ( a, f, extinguisherAcc )
+                    Just action ->
+                        case action.outcome of
+                            PickUp (EdibleID foodID) ->
+                                let
+                                    ( a, f ) =
+                                        pickUpFood agent foodID foodAcc
+                                in
+                                    ( a, f, extinguisherAcc )
 
-                        PickUp (ExtinguisherID fextID) ->
-                            let
-                                ( a, e ) =
-                                    pickUpExtinguisher agent fextID extinguisherAcc
-                            in
-                            ( a, foodAcc, e )
+                            PickUp (ExtinguisherID fextID) ->
+                                let
+                                    ( a, e ) =
+                                        pickUpExtinguisher agent fextID extinguisherAcc
+                                in
+                                    ( a, foodAcc, e )
 
-                        DoNothing ->
-                            noChange
+                            DoNothing ->
+                                noChange
 
-                        MoveTo _ _ ->
-                            noChange
+                            MoveTo _ _ ->
+                                noChange
 
-                        MoveAwayFrom _ _ ->
-                            noChange
+                            MoveAwayFrom _ _ ->
+                                noChange
 
-                        ArrestMomentum ->
-                            noChange
+                            ArrestMomentum ->
+                                noChange
 
-                        CallOut _ _ ->
-                            noChange
+                            CallOut _ _ ->
+                                noChange
 
-                        Wander ->
-                            noChange
+                            Wander ->
+                                noChange
 
-                        EatHeldFood ->
-                            noChange
+                            EatHeldFood ->
+                                noChange
 
-                        DropHeldFood ->
-                            noChange
+                            DropHeldFood ->
+                                noChange
 
-                        BeggingForFood _ ->
-                            noChange
+                            BeggingForFood _ ->
+                                noChange
 
-                        ShootExtinguisher _ ->
-                            noChange
+                            ShootExtinguisher _ ->
+                                noChange
     in
-    ( updatedAgent :: agentAcc, updatedFoods, updatedExtinguishers )
+        ( updatedAgent :: agentAcc, updatedFoods, updatedExtinguishers )
 
 
 foldOverDroppedFood : Time -> Agent -> ( List Agent, List Food ) -> ( List Agent, List Food )
@@ -671,7 +663,7 @@ foldOverDroppedFood currentTime agent ( agentAcc, foodAcc ) =
                         _ ->
                             ( agent, foodAcc )
     in
-    ( updatedAgent :: agentAcc, updatedFoods )
+        ( updatedAgent :: agentAcc, updatedFoods )
 
 
 pickUpFood : Agent -> Int -> List Food -> ( Agent, List Food )
@@ -698,7 +690,6 @@ pickUpFood agent foodID foods =
         pickup food =
             if (food |> targetIsAvailable) && agentIsAvailable then
                 Nothing
-
             else
                 Just food
 
@@ -714,11 +705,10 @@ pickUpFood agent foodID foods =
 
                     Just food ->
                         { agent | holding = BothHands (Edible food) }
-
             else
                 agent
     in
-    ( carry, newFoods )
+        ( carry, newFoods )
 
 
 {-| -- todo: implement hitpoints
@@ -729,34 +719,32 @@ collideRetardantAndFire fire mretardant =
         noChange =
             ( Just fire, mretardant )
     in
-    case mretardant of
-        Nothing ->
-            noChange
-
-        Just retardant ->
-            let
-                collisionResult : Collision
-                collisionResult =
-                    collide retardant fire
-            in
-            if collisionResult.penetration > 0 then
-                let
-                    updatedHP =
-                        fire.hp - 0.3
-
-                    updatedFire =
-                        if updatedHP < 0 then
-                            Nothing
-
-                        else
-                            Just { fire | hp = updatedHP }
-                in
-                ( updatedFire
-                , Nothing
-                )
-
-            else
+        case mretardant of
+            Nothing ->
                 noChange
+
+            Just retardant ->
+                let
+                    collisionResult : Collision
+                    collisionResult =
+                        collide retardant fire
+                in
+                    if collisionResult.penetration > 0 then
+                        let
+                            updatedHP =
+                                fire.hp - 0.3
+
+                            updatedFire =
+                                if updatedHP < 0 then
+                                    Nothing
+                                else
+                                    Just { fire | hp = updatedHP }
+                        in
+                            ( updatedFire
+                            , Nothing
+                            )
+                    else
+                        noChange
 
 
 collideRetardantAndFires : Retardant -> List Fire -> ( List Fire, Maybe Retardant )
@@ -774,12 +762,12 @@ collideRetardantsAndFires retardant ( retardantAcc, fires ) =
         ( updatedFires, updatedRetardant ) =
             collideRetardantAndFires retardant fires
     in
-    case updatedRetardant of
-        Just ret ->
-            ( ret :: retardantAcc, updatedFires )
+        case updatedRetardant of
+            Just ret ->
+                ( ret :: retardantAcc, updatedFires )
 
-        Nothing ->
-            ( retardantAcc, updatedFires )
+            Nothing ->
+                ( retardantAcc, updatedFires )
 
 
 pickUpExtinguisher : Agent -> Int -> List FireExtinguisher -> ( Agent, List FireExtinguisher )
@@ -806,7 +794,6 @@ pickUpExtinguisher agent fextID extinguishers =
         pickup fext =
             if (fext |> targetIsAvailable) && agentIsAvailable then
                 Nothing
-
             else
                 Just fext
 
@@ -822,11 +809,10 @@ pickUpExtinguisher agent fextID extinguishers =
 
                     Just fext ->
                         { agent | holding = BothHands (Extinguisher fext) }
-
             else
                 agent
     in
-    ( carry, newTargets )
+        ( carry, newTargets )
 
 
 dropFood : Agent -> List Food -> ( Agent, List Food )
@@ -858,12 +844,12 @@ dropFood agent extantFoods =
         sansFood =
             mapHeld unhandHeldFood agent.holding
     in
-    ( { agent
-        | holding = sansFood
-        , foodsGivenAway = foodsGivenAway
-      }
-    , List.append extantFoods droppedFoods
-    )
+        ( { agent
+            | holding = sansFood
+            , foodsGivenAway = foodsGivenAway
+          }
+        , List.append extantFoods droppedFoods
+        )
 
 
 unhandHeldFood : Portable -> Maybe Portable
@@ -893,13 +879,12 @@ eat agent =
                 _ ->
                     False
     in
-    if agent |> isHolding someFood then
-        ( agent.hunger - 1 |> clamp 0 1
-        , agent.holding |> mapHeld biteFood
-        )
-
-    else
-        ( agent.hunger, agent.holding )
+        if agent |> isHolding someFood then
+            ( agent.hunger - 1 |> clamp 0 1
+            , agent.holding |> mapHeld biteFood
+            )
+        else
+            ( agent.hunger, agent.holding )
 
 
 biteFood : Portable -> Maybe Portable
@@ -910,11 +895,10 @@ biteFood p =
                 newJoules =
                     food.joules - 1000
             in
-            if newJoules <= 0 then
-                Nothing
-
-            else
-                Just <| Edible { food | joules = newJoules }
+                if newJoules <= 0 then
+                    Nothing
+                else
+                    Just <| Edible { food | joules = newJoules }
 
         _ ->
             Just p
@@ -948,11 +932,10 @@ rotFood deltaT food =
         newJoules =
             food.joules - deltaT * 20000
     in
-    if newJoules <= 0 then
-        Nothing
-
-    else
-        Just { food | joules = newJoules }
+        if newJoules <= 0 then
+            Nothing
+        else
+            Just { food | joules = newJoules }
 
 
 outcomeToString : ActionOutcome -> String
@@ -1015,7 +998,6 @@ decayRetardant : Time -> Retardant -> Maybe Retardant
 decayRetardant currentTime ret =
     if currentTime > ret.expiry then
         Nothing
-
     else
         Just ret
 
@@ -1026,7 +1008,7 @@ angleFuzz spread timeFloat =
         time =
             timeFloat |> inMilliseconds |> floor
     in
-    ((time * modBy 4919 43993 |> toFloat) / 4919 - 0.5) * spread
+        ((time * modBy 4919 43993 |> toFloat) / 4919 - 0.5) * spread
 
 
 justSomethings : ( List (Maybe a), b ) -> ( List a, b )
@@ -1051,4 +1033,4 @@ hpAsFloat hp =
 
 subscriptions : Model -> Sub Msg
 subscriptions _ =
-    Sub.batch [ times RAFtick ]
+    Sub.batch [ onAnimationFrame RAFtick ]

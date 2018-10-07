@@ -1,7 +1,7 @@
 module Physics exposing (collide)
 
-import OpenSolid.Direction2d as D2
-import OpenSolid.Point2d exposing (distanceFrom)
+import Direction2d as D2
+import Point2d exposing (distanceFrom)
 import Types exposing (Collision, Physical)
 
 
@@ -23,4 +23,4 @@ collide oa ob =
         penetration =
             oa.physics.radius + ob.physics.radius - centersDistance
     in
-    Collision normal penetration
+        Collision normal penetration

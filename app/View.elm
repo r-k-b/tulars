@@ -2,19 +2,18 @@ module View exposing (view)
 
 import DefaultData exposing (hpMax)
 import Dict
-import Formatting exposing (print)
+import LineSegment2d
+import List.Extra
 import Html exposing (Html, code, div, h2, h3, h4, h5, li, table, td, text, th, tr, ul)
 import Html.Attributes exposing (class, style)
 import Html.Events exposing (onClick)
-import List.Extra as ListE
-import OpenSolid.BoundingBox2d as BoundingBox2d exposing (BoundingBox2d)
-import OpenSolid.Circle2d as Circle2d
-import OpenSolid.Direction2d as Direction2d
-import OpenSolid.Frame2d as Frame2d
-import OpenSolid.Point2d as Point2d exposing (xCoordinate, yCoordinate)
-import OpenSolid.Svg as Svg exposing (DirectionOptions, relativeTo)
-import OpenSolid.Vector2d as Vector2d exposing (scaleBy)
-import Plot
+import BoundingBox2d as BoundingBox2d exposing (BoundingBox2d)
+import Direction2d as Direction2d
+import Circle2d as Circle2d
+import Frame2d as Frame2d
+import Point2d as Point2d exposing (xCoordinate, yCoordinate)
+import Time exposing (Posix)
+import Vector2d as Vector2d exposing (scaleBy)
 import Round
 import Svg exposing (Svg, g, stop)
 import Svg.Attributes as Attributes
@@ -34,7 +33,7 @@ import Svg.Attributes as Attributes
         , y1
         , y2
         )
-import Time exposing (Time)
+import Geometry.Svg as Svg
 import Tuple exposing (first, second)
 import Types
     exposing
@@ -83,7 +82,7 @@ view model =
 
 bb : BoundingBox2d
 bb =
-    BoundingBox2d.with
+    BoundingBox2d.fromExtrema
         { minX = -300
         , maxX = 300
         , minY = -300
@@ -99,7 +98,7 @@ render2dResponsive boundingBox svgMsg =
 
         topLeftFrame =
             Frame2d.atPoint (Point2d.fromCoordinates ( minX, maxY ))
-                |> Frame2d.flipY
+                |> Frame2d.reverseY
 
         ( bbWidth, bbHeight ) =
             BoundingBox2d.dimensions boundingBox
@@ -119,7 +118,7 @@ render2dResponsive boundingBox svgMsg =
             , Attributes.height (String.fromFloat bbHeight)
             , viewBox coords
             ]
-            [ relativeTo topLeftFrame svgMsg ]
+            [ Svg.relativeTo topLeftFrame svgMsg ]
 
 
 mainMap : Model -> Html.Html Msg
@@ -144,19 +143,15 @@ mainMap model =
 
 borderIndicator : Float -> Svg Msg
 borderIndicator radius =
-    Svg.circle2d
+    Svg.circle
         [ Attributes.fillOpacity "0"
         , Attributes.stroke "grey"
         , Attributes.strokeWidth "1"
         ]
-        (Circle2d.with
-            { centerPoint = Point2d.origin
-            , radius = radius
-            }
-        )
+        (Circle2d.withRadius radius Point2d.origin)
 
 
-agentsInfo : Time -> List Agent -> Html.Html Msg
+agentsInfo : Posix -> List Agent -> Html.Html Msg
 agentsInfo currentTime agents =
     div []
         [ h2 []
@@ -167,41 +162,41 @@ agentsInfo currentTime agents =
         ]
 
 
-(=>) : a -> b -> ( a, b )
-(=>) =
+tupleOf : a -> b -> ( a, b )
+tupleOf =
     \a b -> ( a, b )
 
 
 pageGridContainerStyle : Html.Attribute msg
 pageGridContainerStyle =
     style
-        [ "display" => "grid"
-        , "width" => "calc(100vw)"
-        , "max-width" => "calc(100vw)"
-        , "height" => "calc(100vh)"
-        , "max-height" => "calc(100vh)"
-        , "overflow" => "hidden"
-        , "grid-template-columns" => "repeat(3, 1fr)"
-        , "grid-template-rows" => "2fr 1fr"
+        [ tupleOf "display" "grid"
+        , tupleOf "width" "calc(100vw)"
+        , tupleOf "max-width" "calc(100vw)"
+        , tupleOf "height" "calc(100vh)"
+        , tupleOf "max-height" "calc(100vh)"
+        , tupleOf "overflow" "hidden"
+        , tupleOf "grid-template-columns" "repeat(3, 1fr)"
+        , tupleOf "grid-template-rows" "2fr 1fr"
         ]
 
 
 mapGridItemStyle : Html.Attribute msg
 mapGridItemStyle =
     style
-        [ "grid-column" => "1 / 2"
-        , "grid-row" => "1 / 2"
-        , "overflow" => "hidden"
-        , "margin" => "0.5em"
+        [ tupleOf "grid-column" "1 / 2"
+        , tupleOf "grid-row" "1 / 2"
+        , tupleOf "overflow" "hidden"
+        , tupleOf "margin" "0.5em"
         ]
 
 
 agentInfoGridItemStyle : Html.Attribute msg
 agentInfoGridItemStyle =
     style
-        [ "grid-column" => "2 / 4"
-        , "grid-row" => "1 / 3"
-        , "overflow" => "auto"
+        [ tupleOf "grid-column" "2 / 4"
+        , tupleOf "grid-row" "1 / 3"
+        , tupleOf "overflow" "auto"
         ]
 
 
@@ -210,7 +205,6 @@ inPx number =
     String.fromFloat number ++ "px"
 
 
-agentPoint : Svg.PointOptions msg
 agentPoint =
     { radius = 3
     , attributes =
@@ -220,7 +214,6 @@ agentPoint =
     }
 
 
-facingArrow : DirectionOptions Msg
 facingArrow =
     { length = 20
     , tipLength = 5
@@ -242,23 +235,16 @@ agentVelocityArrow agent =
         exaggeratedLength =
             Vector2d.length exaggerated
     in
-        Svg.vector2d
-            { tipLength = exaggeratedLength * 0.1
-            , tipWidth = exaggeratedLength * 0.05
-            , tipAttributes =
-                [ Attributes.fill "orange"
-                , Attributes.stroke "blue"
-                , Attributes.strokeWidth "1"
-                ]
-            , stemAttributes =
-                [ Attributes.stroke "blue"
-                , Attributes.strokeWidth "1"
-                , Attributes.strokeDasharray "1 2"
-                ]
-            , groupAttributes = []
-            }
-            agent.physics.position
-            exaggerated
+        --    todo: restore the "arrow" representation
+        Svg.lineSegment2d
+            [ Attributes.stroke "blue"
+            , Attributes.strokeWidth "1"
+            , Attributes.strokeDasharray "1 2"
+            ]
+            (LineSegment2d.fromEndpoints
+                agent.physics.position
+                exaggerated
+            )
 
 
 renderAgent : Agent -> Html Msg
@@ -299,14 +285,14 @@ renderAgent agent =
                     [ renderPortable p bothHands ]
     in
         g [ id <| "agent " ++ agent.name ]
-            ([ Svg.point2d agentPoint agent.physics.position
-             , Svg.direction2d facingArrow agent.physics.position agent.physics.facing
+            ([ Svg.circle2d [] agent.physics.position
+             , Svg.lineSegment2d facingArrow agent.physics.position agent.physics.facing
              , agentVelocityArrow agent
              , renderName agent
                 |> Svg.scaleAbout agent.physics.position 0.7
              , g [] held
                 |> Svg.translateBy (Vector2d.from Point2d.origin agent.physics.position)
-                |> Svg.rotateAround agent.physics.position (Direction2d.angle agent.physics.facing - pi / 2)
+                |> Svg.rotateAround agent.physics.position (Direction2d.angleFrom agent.physics.facing - pi / 2)
              ]
                 |> append call
             )
@@ -328,11 +314,11 @@ append =
     \b a -> List.append a b
 
 
-renderAgentInfo : Time -> Agent -> Html Msg
+renderAgentInfo : Posix -> Agent -> Html Msg
 renderAgentInfo currentTime agent =
     div []
         [ h3
-            [ (\( a, b ) -> style a b) ("margin-bottom" => "0.1em") ]
+            [ (\( a, b ) -> style a b) ( "margin-bottom", "0.1em" ) ]
             [ text agent.name ]
         , agentStats agent
         , div [ style indentWithLine ]
@@ -347,16 +333,16 @@ agentStats agent =
     let
         stats : List ( String, String )
         stats =
-            [ "hunger" => (Round.round 1 agent.hunger ++ "%")
-            , "hp" => hpPercentage agent.hp
-            , "holding" => carryingAsString agent.holding
-            , "current action" => agent.currentAction
+            [ ( "hunger", (Round.round 1 agent.hunger ++ "%") )
+            , ( "hp", hpPercentage agent.hp )
+            , ( "holding", carryingAsString agent.holding )
+            , ( "current action", agent.currentAction )
             ]
 
         cell elem =
-            text >> List.singleton >> elem [ (\( a, b ) -> style a b) ("padding-right" => "1em") ]
+            text >> List.singleton >> elem [ (\( a, b ) -> style a b) ( "padding-right", "1em" ) ]
     in
-        table [ (\( a, b ) -> style a b) ("font-family" => "monospace") ]
+        table [ (\( a, b ) -> style a b) ( "font-family", "monospace" ) ]
             [ tr []
                 (stats |> List.map (first >> cell th))
             , tr []
@@ -396,13 +382,13 @@ portableAsString p =
 
 indentWithLine : List ( String, String )
 indentWithLine =
-    [ "margin-left" => "0.2em"
-    , "padding-left" => "1em"
-    , "border-left" => "1px solid grey"
+    [ ( "margin-left", "0.2em" )
+    , ( "padding-left", "1em" )
+    , ( "border-left", "1px solid grey" )
     ]
 
 
-renderAction : Agent -> Time -> Action -> Html Msg
+renderAction : Agent -> Posix -> Action -> Html Msg
 renderAction agent currentTime action =
     let
         isExpanded =
@@ -412,7 +398,7 @@ renderAction agent currentTime action =
         considerations =
             if isExpanded then
                 [ div
-                    [ (\( a, b ) -> style a b) ("display" => "flex")
+                    [ (\( a, b ) -> style a b) ( "display", "flex" )
                     ]
                     (List.map (renderConsideration agent action currentTime) action.considerations)
                 ]
@@ -422,11 +408,11 @@ renderAction agent currentTime action =
         containerStyle =
             if isExpanded then
                 style
-                    [ "background-color" => "#00000011"
-                    , "padding" => "0.6em"
+                    [ ( "background-color", "#00000011" )
+                    , ( "padding", "0.6em" )
                     ]
             else
-                style [ "padding" => "0.6em" ]
+                style [ ( "padding", "0.6em" ) ]
 
         utility =
             computeUtility agent currentTime action
@@ -435,9 +421,9 @@ renderAction agent currentTime action =
             (List.append
                 [ h4
                     [ onClick <| ToggleConditionsVisibility agent.name action.name
-                    , (\( a, b ) -> style a b) ("cursor" => "pointer")
-                    , (\( a, b ) -> style a b) ("margin" => "0")
-                    , (\( a, b ) -> style a b) ("opacity" => (utility ^ (1 / 1.5) + 0.3 |> String.fromFloat))
+                    , (\( a, b ) -> style a b) ( "cursor", "pointer" )
+                    , (\( a, b ) -> style a b) ( "margin", "0" )
+                    , (\( a, b ) -> style a b) ( "opacity", (utility ^ (1 / 1.5) + 0.3 |> String.fromFloat) )
                     ]
                     [ text "("
                     , prettyFloatHtml 2 utility
@@ -449,7 +435,7 @@ renderAction agent currentTime action =
             )
 
 
-renderConsideration : Agent -> Action -> Time -> Consideration -> Html Msg
+renderConsideration : Agent -> Action -> Posix -> Consideration -> Html Msg
 renderConsideration agent action currentTime con =
     let
         considerationValue =
@@ -491,8 +477,8 @@ renderConsideration agent action currentTime con =
         main =
             [ h5
                 [ onClick <| ToggleConditionDetailsVisibility agent.name action.name con.name
-                , (\( a, b ) -> style a b) ("cursor" => "pointer")
-                , (\( a, b ) -> style a b) ("margin" => "0.5em 0")
+                , (\( a, b ) -> style a b) ( "cursor", "pointer" )
+                , (\( a, b ) -> style a b) ( "margin", "0.5em 0" )
                 ]
                 [ text "("
                 , code [] [ text <| prettyFloat 2 considerationValue ]
@@ -502,11 +488,11 @@ renderConsideration agent action currentTime con =
             , renderConsiderationChart agent currentTime action con
             ]
     in
-        div [ (\( a, b ) -> style a b) ("flex-basis" => "20em") ]
+        div [ (\( a, b ) -> style a b) ( "flex-basis", "20em" ) ]
             (List.append main details)
 
 
-renderConsiderationChart : Agent -> Time -> Action -> Consideration -> Html Msg
+renderConsiderationChart : Agent -> Posix -> Action -> Consideration -> Html Msg
 renderConsiderationChart agent currentTime action con =
     let
         inputMin =
@@ -544,109 +530,99 @@ renderConsiderationChart agent currentTime action con =
 
         stepwiseHorizontalTicks : List Float
         stepwiseHorizontalTicks =
-            ListE.unfoldr stepwiseHorizontalTicksHelp inputMin
+            List.Extra.unfoldr stepwiseHorizontalTicksHelp inputMin
 
-        customLineToDataPoints : Float -> List (Plot.DataPoint msg)
-        customLineToDataPoints data =
-            ListE.unfoldr stepwise data
-                |> List.map (\( xVal, yVal ) -> Plot.clear xVal yVal)
-
-        customLine : Plot.Series Float msg
-        customLine =
-            { axis = verticalAxis
-            , interpolation = Plot.Monotone Nothing [ Attributes.stroke "#ff9edf", Attributes.strokeWidth "3" ]
-            , toDataPoints = customLineToDataPoints
-            }
-
-        currentValPointToDataPoints : Float -> List (Plot.DataPoint msg)
-        currentValPointToDataPoints _ =
-            let
-                xVal =
-                    getConsiderationRawValue agent currentTime action con
-                        |> clampTo con
-
-                yVal =
-                    computeConsideration agent currentTime (Just xVal) action con
-            in
-                [ blueCircle ( xVal, yVal ) ]
-
-        blueCircle : ( Float, Float ) -> Plot.DataPoint msg
-        blueCircle ( xVal, yVal ) =
-            Plot.dot (Plot.viewCircle 10 "#ff0000") xVal yVal
-
-        currentValPoint : Plot.Series Float msg
-        currentValPoint =
-            { axis = verticalAxis
-            , interpolation = Plot.None
-            , toDataPoints = currentValPointToDataPoints
-            }
-
-        verticalAxis : Plot.Axis
-        verticalAxis =
-            Plot.customAxis <|
-                \summary ->
-                    let
-                        roundedMax =
-                            summary.dataMax |> ceiling |> toFloat
-
-                        roundedMin =
-                            summary.dataMin |> floor |> toFloat
-
-                        decentInterval =
-                            (roundedMax - roundedMin) / 8
-                    in
-                        { position = Basics.min
-                        , axisLine = Just (dataLine summary)
-                        , ticks = List.map Plot.simpleTick (Plot.interval 0 decentInterval summary)
-                        , labels = List.map Plot.simpleLabel (Plot.interval 0 decentInterval summary)
-                        , flipAnchor = False
-                        }
-
-        horizontalAxis : Plot.Axis
-        horizontalAxis =
-            Plot.customAxis <|
-                \summary ->
-                    { position = Basics.min
-                    , axisLine = Just (dataLine summary)
-                    , ticks = List.map Plot.simpleTick stepwiseHorizontalTicks
-                    , labels = List.map Plot.simpleLabel stepwiseHorizontalTicks
-                    , flipAnchor = False
-                    }
-
-        dataLine : Plot.AxisSummary -> Plot.LineCustomizations
-        dataLine summary =
-            { attributes = [ stroke "grey" ]
-            , start = summary.dataMin |> floor |> toFloat
-            , end = summary.dataMax |> ceiling |> toFloat
-            }
-
-        title : Svg msg
-        title =
-            Plot.viewLabel
-                [ fill "#afafaf"
-                , (\( a, b ) -> style a b) ("text-anchor" => "end")
-                , (\( a, b ) -> style a b) ("font-style" => "italic")
-                ]
-                (renderUF con.function)
-
-        defaultSeriesPlotCustomizations =
-            Plot.defaultSeriesPlotCustomizations
-
-        view : Svg.Svg a
-        view =
-            Plot.viewSeriesCustom
-                { defaultSeriesPlotCustomizations
-                    | horizontalAxis = horizontalAxis
-                    , junk = \summary -> [ Plot.junk title summary.x.dataMax summary.y.max ]
-                    , toDomainLowest = \y -> y
-                    , toRangeLowest = \y -> y
-                    , width = 400
-                    , height = 320
-                }
-                [ customLine, currentValPoint ]
-                inputMin
+        --        customLineToDataPoints : Float -> List (Plot.DataPoint msg)
+        --        customLineToDataPoints data =
+        --            ListE.unfoldr stepwise data
+        --                |> List.map (\( xVal, yVal ) -> Plot.clear xVal yVal)
+        --        customLine : Plot.Series Float msg
+        --        customLine =
+        --            { axis = verticalAxis
+        --            , interpolation = Plot.Monotone Nothing [ Attributes.stroke "#ff9edf", Attributes.strokeWidth "3" ]
+        --            , toDataPoints = customLineToDataPoints
+        --            }
+        --        currentValPointToDataPoints : Float -> List (Plot.DataPoint msg)
+        --        currentValPointToDataPoints _ =
+        --            let
+        --                xVal =
+        --                    getConsiderationRawValue agent currentTime action con
+        --                        |> clampTo con
+        --
+        --                yVal =
+        --                    computeConsideration agent currentTime (Just xVal) action con
+        --            in
+        --                [ blueCircle ( xVal, yVal ) ]
+        --        blueCircle : ( Float, Float ) -> Plot.DataPoint msg
+        --        blueCircle ( xVal, yVal ) =
+        --            Plot.dot (Plot.viewCircle 10 "#ff0000") xVal yVal
+        --        currentValPoint : Plot.Series Float msg
+        --        currentValPoint =
+        --            { axis = verticalAxis
+        --            , interpolation = Plot.None
+        --            , toDataPoints = currentValPointToDataPoints
+        --            }
+        --        verticalAxis : Plot.Axis
+        --        verticalAxis =
+        --            Plot.customAxis <|
+        --                \summary ->
+        --                    let
+        --                        roundedMax =
+        --                            summary.dataMax |> ceiling |> toFloat
+        --
+        --                        roundedMin =
+        --                            summary.dataMin |> floor |> toFloat
+        --
+        --                        decentInterval =
+        --                            (roundedMax - roundedMin) / 8
+        --                    in
+        --                        { position = Basics.min
+        --                        , axisLine = Just (dataLine summary)
+        --                        , ticks = List.map Plot.simpleTick (Plot.interval 0 decentInterval summary)
+        --                        , labels = List.map Plot.simpleLabel (Plot.interval 0 decentInterval summary)
+        --                        , flipAnchor = False
+        --                        }
+        --        horizontalAxis : Plot.Axis
+        --        horizontalAxis =
+        --            Plot.customAxis <|
+        --                \summary ->
+        --                    { position = Basics.min
+        --                    , axisLine = Just (dataLine summary)
+        --                    , ticks = List.map Plot.simpleTick stepwiseHorizontalTicks
+        --                    , labels = List.map Plot.simpleLabel stepwiseHorizontalTicks
+        --                    , flipAnchor = False
+        --                    }
+        --        dataLine : Plot.AxisSummary -> Plot.LineCustomizations
+        --        dataLine summary =
+        --            { attributes = [ stroke "grey" ]
+        --            , start = summary.dataMin |> floor |> toFloat
+        --            , end = summary.dataMax |> ceiling |> toFloat
+        --            }
+        --        title : Svg msg
+        --        title =
+        --            Plot.viewLabel
+        --                [ fill "#afafaf"
+        --                , (\( a, b ) -> style a b) ("text-anchor", "end")
+        --                , (\( a, b ) -> style a b) ("font-style", "italic")
+        --                ]
+        --                (renderUF con.function)
+        --        defaultSeriesPlotCustomizations =
+        --            Plot.defaultSeriesPlotCustomizations
+        --        view : Svg.Svg a
+        --        view =
+        --            Plot.viewSeriesCustom
+        --                { defaultSeriesPlotCustomizations
+        --                    | horizontalAxis = horizontalAxis
+        --                    , junk = \summary -> [ Plot.junk title summary.x.dataMax summary.y.max ]
+        --                    , toDomainLowest = \y -> y
+        --                    , toRangeLowest = \y -> y
+        --                    , width = 400
+        --                    , height = 320
+        --                }
+        --                [ customLine, currentValPoint ]
+        --                inputMin
     in
-        view
+        div [] [ text "fixme" ]
 
 
 renderUF : InputFunction -> String
@@ -687,7 +663,7 @@ renderUF f =
                 "Asymmetric (" ++ String.join ", " vals ++ ")"
 
 
-renderCI : Time -> Agent -> Action -> ConsiderationInput -> String
+renderCI : Posix -> Agent -> Action -> ConsiderationInput -> String
 renderCI currentTime agent action ci =
     case ci of
         Hunger ->
@@ -760,17 +736,21 @@ prettyFloatHtml dp n =
 
 codeText : String -> Html Msg
 codeText s =
-    code [ (\( a, b ) -> style a b) ("white-space" => "pre-wrap") ] [ text s ]
+    code [ (\( a, b ) -> style a b) ( "white-space", "pre-wrap" ) ] [ text s ]
+
+
+
+-- fixme: restore the "pretty" part of the formatting
 
 
 prettyFloat : Int -> Float -> String
 prettyFloat dp n =
-    print (Formatting.roundTo dp |> Formatting.padLeft 6 ' ') n
+    String.fromFloat n
 
 
 renderEmoji : String -> Point2d.Point2d -> Html Msg
 renderEmoji emoji point =
-    Svg.text2d
+    Svg.text_
         [ Attributes.textAnchor "middle"
         , Attributes.alignmentBaseline "middle"
         ]
@@ -780,7 +760,7 @@ renderEmoji emoji point =
 
 renderName : Agent -> Html Msg
 renderName agent =
-    Svg.text2d
+    Svg.text_
         [ Attributes.textAnchor "middle"
         , Attributes.alignmentBaseline "hanging"
         ]

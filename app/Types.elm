@@ -1,38 +1,39 @@
-module Types exposing
-    ( Action
-    , ActionGenerator(..)
-    , ActionOutcome(..)
-    , Agent
-    , Collision
-    , Consideration
-    , ConsiderationInput(..)
-    , CurrentSignal
-    , Fire
-    , FireExtinguisher
-    , Food
-    , Hitpoints(..)
-    , Holding(..)
-    , InputFunction(..)
-    , Model
-    , Msg(..)
-    , Physical
-    , PhysicalProperties
-    , Portable(..)
-    , ReferenceToPortable(..)
-    , Retardant
-    , Signal(..)
-    )
+module Types
+    exposing
+        ( Action
+        , ActionGenerator(..)
+        , ActionOutcome(..)
+        , Agent
+        , Collision
+        , Consideration
+        , ConsiderationInput(..)
+        , CurrentSignal
+        , Fire
+        , FireExtinguisher
+        , Food
+        , Hitpoints(..)
+        , Holding(..)
+        , InputFunction(..)
+        , Model
+        , Msg(..)
+        , Physical
+        , PhysicalProperties
+        , Portable(..)
+        , ReferenceToPortable(..)
+        , Retardant
+        , Signal(..)
+        )
 
 import Dict exposing (Dict)
-import OpenSolid.Direction2d exposing (Direction2d)
-import OpenSolid.Point2d exposing (Point2d)
-import OpenSolid.Vector2d exposing (Vector2d)
+import Direction2d exposing (Direction2d)
+import Point2d exposing (Point2d)
+import Vector2d exposing (Vector2d)
 import Set exposing (Set)
-import Time exposing (Time)
+import Time exposing (Posix)
 
 
 type alias Model =
-    { time : Time
+    { time : Posix
     , agents : List Agent
     , foods : List Food
     , fires : List Fire
@@ -42,8 +43,8 @@ type alias Model =
 
 
 type Msg
-    = RAFtick Time
-    | InitTime Time
+    = RAFtick Posix
+    | InitTime Posix
     | ToggleConditionsVisibility String String
     | ToggleConditionDetailsVisibility String String String
 
@@ -59,7 +60,7 @@ type alias Agent =
     , currentOutcome : String
     , hunger : Float -- 0 = not hungry at all, 1 = starving
     , beggingForFood : Bool
-    , topActionLastStartTimes : Dict String Time
+    , topActionLastStartTimes : Dict String Posix
     , callingOut : Maybe CurrentSignal
     , holding : Holding
     , foodsGivenAway : Set Int
@@ -106,7 +107,7 @@ type Signal
 
 type alias CurrentSignal =
     { signal : Signal
-    , started : Time
+    , started : Posix
     }
 
 
@@ -207,7 +208,7 @@ type alias Fire =
 
 type alias Retardant =
     { physics : PhysicalProperties
-    , expiry : Time
+    , expiry : Posix
     }
 
 

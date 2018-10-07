@@ -1,17 +1,18 @@
-module DefaultData exposing
-    ( agents
-    , extinguishers
-    , fires
-    , foods
-    , hpMax
-    , retardantRadius
-    )
+module DefaultData
+    exposing
+        ( agents
+        , extinguishers
+        , fires
+        , foods
+        , hpMax
+        , retardantRadius
+        )
 
 import Dict
 import Maybe exposing (withDefault)
-import OpenSolid.Direction2d as Direction2d
-import OpenSolid.Point2d as Point2d
-import OpenSolid.Vector2d as Vector2d
+import Direction2d as Direction2d
+import Point2d as Point2d
+import Vector2d as Vector2d
 import Set
 import Types
     exposing
@@ -369,7 +370,7 @@ moveToFood =
                 ]
                 Dict.empty
     in
-    ActionGenerator "stop at food" generator
+        ActionGenerator "stop at food" generator
 
 
 stopAtFood : ActionGenerator
@@ -412,7 +413,7 @@ stopAtFood =
                 ]
                 Dict.empty
     in
-    ActionGenerator "stop at food" generator
+        ActionGenerator "stop at food" generator
 
 
 pickUpFoodToEat : ActionGenerator
@@ -455,7 +456,7 @@ pickUpFoodToEat =
                 ]
                 Dict.empty
     in
-    ActionGenerator "pick up food to eat" generator
+        ActionGenerator "pick up food to eat" generator
 
 
 setBeggingState : ActionGenerator
@@ -465,7 +466,6 @@ setBeggingState =
         generator _ agent =
             if agent.beggingForFood then
                 [ ceaseBegging ]
-
             else
                 [ beginBegging ]
 
@@ -501,7 +501,7 @@ setBeggingState =
                 ]
                 Dict.empty
     in
-    ActionGenerator "set begging state" generator
+        ActionGenerator "set begging state" generator
 
 
 dropFoodForBeggar : ActionGenerator
@@ -514,7 +514,6 @@ dropFoodForBeggar =
                     |> List.filter (\other -> other.name /= agent.name)
                     |> List.filter .beggingForFood
                     |> List.map goalPerItem
-
             else
                 []
 
@@ -550,7 +549,7 @@ dropFoodForBeggar =
                 ]
                 Dict.empty
     in
-    ActionGenerator "pick up food to eat" generator
+        ActionGenerator "pick up food to eat" generator
 
 
 moveToGiveFoodToBeggar : ActionGenerator
@@ -594,7 +593,7 @@ moveToGiveFoodToBeggar =
                 ]
                 Dict.empty
     in
-    ActionGenerator "pick up food to eat" generator
+        ActionGenerator "pick up food to eat" generator
 
 
 eatCarriedFood : ActionGenerator
@@ -639,7 +638,7 @@ eatCarriedFood =
                 Dict.empty
                 |> Just
     in
-    ActionGenerator "eat carried food" generator
+        ActionGenerator "eat carried food" generator
 
 
 avoidFire : ActionGenerator
@@ -673,7 +672,7 @@ avoidFire =
                 ]
                 Dict.empty
     in
-    ActionGenerator "avoid fire" generator
+        ActionGenerator "avoid fire" generator
 
 
 fightFires : ActionGenerator
@@ -686,7 +685,6 @@ fightFires =
                     ++ List.map getWithinFightingRange model.fires
                     ++ List.map pickupNearbyExtinguishers model.extinguishers
                     ++ List.map moveToGetExtinguishers model.extinguishers
-
             else
                 []
 
@@ -697,27 +695,27 @@ fightFires =
                     Direction2d.from agent.physics.position fire.physics.position
                         |> withDefault (Direction2d.fromAngle 0)
             in
-            Action
-                ("use extinguisher on fire" |> withSuffix fire.id)
-                (ShootExtinguisher direction)
-                [ { name = "within range"
-                  , function = Linear 1 0
-                  , input = DistanceToTargetPoint fire.physics.position
-                  , inputMin = 60
-                  , inputMax = 55
-                  , weighting = 3
-                  , offset = 0
-                  }
-                , { name = "carrying an extinguisher"
-                  , function = Linear 1 0
-                  , input = IsCarryingExtinguisher
-                  , inputMin = 0
-                  , inputMax = 1
-                  , weighting = 1
-                  , offset = 0
-                  }
-                ]
-                Dict.empty
+                Action
+                    ("use extinguisher on fire" |> withSuffix fire.id)
+                    (ShootExtinguisher direction)
+                    [ { name = "within range"
+                      , function = Linear 1 0
+                      , input = DistanceToTargetPoint fire.physics.position
+                      , inputMin = 60
+                      , inputMax = 55
+                      , weighting = 3
+                      , offset = 0
+                      }
+                    , { name = "carrying an extinguisher"
+                      , function = Linear 1 0
+                      , input = IsCarryingExtinguisher
+                      , inputMin = 0
+                      , inputMax = 1
+                      , weighting = 1
+                      , offset = 0
+                      }
+                    ]
+                    Dict.empty
 
         getWithinFightingRange : Fire -> Action
         getWithinFightingRange fire =
@@ -783,7 +781,7 @@ fightFires =
                 ]
                 Dict.empty
     in
-    ActionGenerator "fight fires" generator
+        ActionGenerator "fight fires" generator
 
 
 maintainPersonalSpace : ActionGenerator
@@ -811,7 +809,7 @@ maintainPersonalSpace =
                 ]
                 Dict.empty
     in
-    ActionGenerator "avoid fire" generator
+        ActionGenerator "avoid fire" generator
 
 
 hoverNear : String -> ActionGenerator
@@ -839,7 +837,7 @@ hoverNear targetAgentName =
                 ]
                 Dict.empty
     in
-    ActionGenerator "avoid fire" generator
+        ActionGenerator "avoid fire" generator
 
 
 defaultHysteresis : Float -> Consideration
@@ -856,7 +854,7 @@ defaultHysteresis weighting =
 
 withSuffix : Int -> String -> String
 withSuffix id s =
-    s ++ " (#" ++ toString id ++ ")"
+    s ++ " (#" ++ String.fromInt id ++ ")"
 
 
 agentRadius : Float
