@@ -45,7 +45,6 @@ type alias Model =
 
 type Msg
     = RAFtick Posix
-    | InitTime Posix
     | ToggleConditionsVisibility String String
     | ToggleConditionDetailsVisibility String String String
     | TogglePaused

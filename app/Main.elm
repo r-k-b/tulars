@@ -63,7 +63,7 @@ initialModelAt posixTime =
 init : Int -> ( Model, Cmd Msg )
 init posixMillis =
     ( initialModelAt (Time.millisToPosix posixMillis)
-    , perform InitTime Time.now
+    , Cmd.none
     )
 
 
@@ -90,9 +90,6 @@ updateHelp msg model =
                 { model | time = newT }
             else
                 moveWorld newT model
-
-        InitTime t ->
-            { model | time = t }
 
         ToggleConditionsVisibility agentName actionName ->
             let
