@@ -8,13 +8,13 @@ are robust to changing environments and dynamic goals?
 
 # building
 
-(requires git and [Elm])
+(requires git and [Elm] 0.19)
 
 `git clone git@github.com:r-k-b/tulars.git`
 
 `cd tulars`
 
-`elm-make app/Main.elm --output=./dist/main.js`
+`make`
 
 Then, open `dist/index.html` in a browser.
 
