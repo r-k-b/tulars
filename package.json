@@ -27,6 +27,7 @@
     "g": "2.0.1"
   },
   "devDependencies": {
-    "elm-format": "0.8.1"
+    "elm-format": "0.8.1",
+    "uglify-js": "3.4.9"
   }
 }
