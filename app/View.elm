@@ -9,30 +9,14 @@ import Direction2d as Direction2d
 import Frame2d as Frame2d
 import Geometry.Svg as Svg
 import Html exposing (Attribute, Html, code, div, h2, h3, h4, h5, li, table, td, text, th, tr, ul)
-import Html.Attributes exposing (class, style)
+import Html.Attributes exposing (style)
 import Html.Events exposing (onClick)
 import LineSegment2d
 import List.Extra
 import Point2d as Point2d exposing (xCoordinate, yCoordinate)
 import Round
 import Svg exposing (Svg, g, stop)
-import Svg.Attributes as Attributes
-    exposing
-        ( cx
-        , cy
-        , fill
-        , id
-        , offset
-        , r
-        , stopColor
-        , stopOpacity
-        , stroke
-        , viewBox
-        , x1
-        , x2
-        , y1
-        , y2
-        )
+import Svg.Attributes exposing (cx, cy, fill, id, offset, r, stopColor, stopOpacity, stroke, viewBox, x1, x2, y1, y2)
 import Time exposing (Posix)
 import Tuple exposing (first, second)
 import Types
@@ -53,8 +37,12 @@ import Types
         , Retardant
         , Signal(..)
         )
-import UtilityFunctions exposing (boolString, clampTo, computeConsideration, computeUtility, differenceInMillis, getActions, getConsiderationRawValue, isHolding, portableIsExtinguisher, portableIsFood)
+import UtilityFunctions exposing (boolString, clampTo, computeConsideration, computeUtility, differenceInMillis, getActions, getConsiderationRawValue, isHolding, linearTransform, portableIsExtinguisher, portableIsFood)
 import Vector2d as Vector2d exposing (scaleBy)
+
+
+svgClass =
+    Svg.Attributes.class
 
 
 view : Model -> Document Msg
@@ -63,7 +51,7 @@ view model =
         body =
             div pageGridContainerStyle
                 [ div
-                    (List.concat [ mapGridItemStyle, [ class "zoom-svg" ] ])
+                    (List.concat [ mapGridItemStyle, [ svgClass "zoom-svg" ] ])
                     [ mainMap model
                     ]
                 , div
@@ -125,8 +113,8 @@ render2dResponsive boundingBox svgMsg =
                 |> String.join " "
     in
     Svg.svg
-        [ Attributes.width (String.fromFloat bbWidth)
-        , Attributes.height (String.fromFloat bbHeight)
+        [ Svg.Attributes.width (String.fromFloat bbWidth)
+        , Svg.Attributes.height (String.fromFloat bbHeight)
         , viewBox coords
         ]
         [ Svg.relativeTo topLeftFrame svgMsg ]
@@ -155,9 +143,9 @@ mainMap model =
 borderIndicator : Float -> Svg Msg
 borderIndicator radius =
     Svg.circle2d
-        [ Attributes.fillOpacity "0"
-        , Attributes.stroke "grey"
-        , Attributes.strokeWidth "1"
+        [ Svg.Attributes.fillOpacity "0"
+        , Svg.Attributes.stroke "grey"
+        , Svg.Attributes.strokeWidth "1"
         ]
         (Circle2d.withRadius radius Point2d.origin)
 
@@ -211,8 +199,8 @@ inPx number =
 agentPoint =
     { radius = 3
     , attributes =
-        [ Attributes.stroke "blue"
-        , Attributes.fill "orange"
+        [ Svg.Attributes.stroke "blue"
+        , Svg.Attributes.fill "orange"
         ]
     }
 
@@ -223,9 +211,9 @@ facingArrow =
     , tipWidth = 5
     , stemAttributes = []
     , tipAttributes =
-        [ Attributes.fill "orange" ]
+        [ Svg.Attributes.fill "orange" ]
     , groupAttributes =
-        [ Attributes.stroke "blue" ]
+        [ Svg.Attributes.stroke "blue" ]
     }
 
 
@@ -241,9 +229,9 @@ agentVelocityArrow agent =
     in
     --    todo: restore the "arrow" representation
     Svg.lineSegment2d
-        [ Attributes.stroke "blue"
-        , Attributes.strokeWidth "1"
-        , Attributes.strokeDasharray "1 2"
+        [ Svg.Attributes.stroke "blue"
+        , Svg.Attributes.strokeWidth "1"
+        , Svg.Attributes.strokeDasharray "1 2"
         ]
         (LineSegment2d.fromEndpoints
             ( agent.physics.position
@@ -501,6 +489,7 @@ renderConsideration agent action currentTime con =
 renderConsiderationChart : Agent -> Posix -> Action -> Consideration -> Html Msg
 renderConsiderationChart agent currentTime action con =
     let
+        inputMin : Float
         inputMin =
             min con.inputMin con.inputMax
 
@@ -540,97 +529,49 @@ renderConsiderationChart agent currentTime action con =
         stepwiseHorizontalTicks =
             List.Extra.unfoldr stepwiseHorizontalTicksHelp inputMin
 
-        --        customLineToDataPoints : Float -> List (Plot.DataPoint msg)
-        --        customLineToDataPoints data =
-        --            ListE.unfoldr stepwise data
-        --                |> List.map (\( xVal, yVal ) -> Plot.clear xVal yVal)
-        --        customLine : Plot.Series Float msg
-        --        customLine =
-        --            { axis = verticalAxis
-        --            , interpolation = Plot.Monotone Nothing [ Attributes.stroke "#ff9edf", Attributes.strokeWidth "3" ]
-        --            , toDataPoints = customLineToDataPoints
-        --            }
-        --        currentValPointToDataPoints : Float -> List (Plot.DataPoint msg)
-        --        currentValPointToDataPoints _ =
-        --            let
-        --                xVal =
-        --                    getConsiderationRawValue agent currentTime action con
-        --                        |> clampTo con
-        --
-        --                yVal =
-        --                    computeConsideration agent currentTime (Just xVal) action con
-        --            in
-        --                [ blueCircle ( xVal, yVal ) ]
-        --        blueCircle : ( Float, Float ) -> Plot.DataPoint msg
-        --        blueCircle ( xVal, yVal ) =
-        --            Plot.dot (Plot.viewCircle 10 "#ff0000") xVal yVal
-        --        currentValPoint : Plot.Series Float msg
-        --        currentValPoint =
-        --            { axis = verticalAxis
-        --            , interpolation = Plot.None
-        --            , toDataPoints = currentValPointToDataPoints
-        --            }
-        --        verticalAxis : Plot.Axis
-        --        verticalAxis =
-        --            Plot.customAxis <|
-        --                \summary ->
-        --                    let
-        --                        roundedMax =
-        --                            summary.dataMax |> ceiling |> toFloat
-        --
-        --                        roundedMin =
-        --                            summary.dataMin |> floor |> toFloat
-        --
-        --                        decentInterval =
-        --                            (roundedMax - roundedMin) / 8
-        --                    in
-        --                        { position = Basics.min
-        --                        , axisLine = Just (dataLine summary)
-        --                        , ticks = List.map Plot.simpleTick (Plot.interval 0 decentInterval summary)
-        --                        , labels = List.map Plot.simpleLabel (Plot.interval 0 decentInterval summary)
-        --                        , flipAnchor = False
-        --                        }
-        --        horizontalAxis : Plot.Axis
-        --        horizontalAxis =
-        --            Plot.customAxis <|
-        --                \summary ->
-        --                    { position = Basics.min
-        --                    , axisLine = Just (dataLine summary)
-        --                    , ticks = List.map Plot.simpleTick stepwiseHorizontalTicks
-        --                    , labels = List.map Plot.simpleLabel stepwiseHorizontalTicks
-        --                    , flipAnchor = False
-        --                    }
-        --        dataLine : Plot.AxisSummary -> Plot.LineCustomizations
-        --        dataLine summary =
-        --            { attributes = [ stroke "grey" ]
-        --            , start = summary.dataMin |> floor |> toFloat
-        --            , end = summary.dataMax |> ceiling |> toFloat
-        --            }
-        --        title : Svg msg
-        --        title =
-        --            Plot.viewLabel
-        --                [ fill "#afafaf"
-        --                , style "text-anchor" "end"
-        --                , style "font-style" "italic"
-        --                ]
-        --                (renderUF con.function)
-        --        defaultSeriesPlotCustomizations =
-        --            Plot.defaultSeriesPlotCustomizations
-        --        view : Svg.Svg a
-        --        view =
-        --            Plot.viewSeriesCustom
-        --                { defaultSeriesPlotCustomizations
-        --                    | horizontalAxis = horizontalAxis
-        --                    , junk = \summary -> [ Plot.junk title summary.x.dataMax summary.y.max ]
-        --                    , toDomainLowest = \y -> y
-        --                    , toRangeLowest = \y -> y
-        --                    , width = 400
-        --                    , height = 320
-        --                }
-        --                [ customLine, currentValPoint ]
-        --                inputMin
+        chartbb : BoundingBox2d
+        chartbb =
+            BoundingBox2d.fromExtrema
+                { minX = -20
+                , maxX = 120
+                , minY = -20
+                , maxY = 120
+                }
+
+        borders : Svg Msg
+        borders =
+            g [ svgClass "borders" ]
+                [ Svg.line [ x1 "0", x2 "100", y1 "100", y2 "100", stroke "black" ] []
+                , Svg.line [ x1 "0", x2 "0", y1 "0", y2 "100", stroke "black" ] []
+                ]
+
+        xValRaw : Float
+        xValRaw =
+            getConsiderationRawValue agent currentTime action con
+                |> clampTo con
+
+        xValForChart : Float
+        xValForChart =
+            xValRaw
+                |> linearTransform 0 100 con.inputMin con.inputMax
+
+        yVal : Float
+        yVal =
+            computeConsideration agent currentTime (Just xValRaw) action con
+
+        currentValue : Svg Msg
+        currentValue =
+            g [ svgClass "current-value" ]
+                [ Svg.circle [ cx <| String.fromFloat <| xValForChart, cy <| String.fromFloat <| 100 - linearTransform 0 100 0 1 yVal, r "5", fill "red" ] [] ]
     in
-    div [] [ text "fixme" ]
+    render2dResponsive
+        chartbb
+    <|
+        g
+            [ svgClass "consideration-chart" ]
+            [ borders
+            , currentValue
+            ]
 
 
 renderUF : InputFunction -> String
@@ -749,8 +690,8 @@ codeText s =
 renderEmoji : String -> Point2d.Point2d -> Html Msg
 renderEmoji emoji point =
     Svg.text_
-        [ Attributes.textAnchor "middle"
-        , Attributes.alignmentBaseline "middle"
+        [ Svg.Attributes.textAnchor "middle"
+        , Svg.Attributes.alignmentBaseline "middle"
         ]
         [ Svg.text emoji ]
         |> Svg.translateBy (Vector2d.from Point2d.origin point)
@@ -759,8 +700,8 @@ renderEmoji emoji point =
 renderName : Agent -> Html Msg
 renderName agent =
     Svg.text_
-        [ Attributes.textAnchor "middle"
-        , Attributes.alignmentBaseline "hanging"
+        [ Svg.Attributes.textAnchor "middle"
+        , Svg.Attributes.alignmentBaseline "hanging"
         ]
         [ Svg.text agent.name ]
         |> Svg.translateBy (Vector2d.from Point2d.origin agent.physics.position)

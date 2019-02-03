@@ -10,6 +10,7 @@ module UtilityFunctions exposing
     , isBeggingRelated
     , isHolding
     , isMovementAction
+    , linearTransform
     , onlyArrestMomentum
     , portableIsExtinguisher
     , portableIsFood
@@ -113,6 +114,8 @@ nansToZero n =
             n
 
 
+{-| Take x and map it from the `aMin` - `aMax` range into the `bMin` - `bMax` range.
+-}
 linearTransform : Float -> Float -> Float -> Float -> Float -> Float
 linearTransform bMin bMax aMin aMax x =
     let
