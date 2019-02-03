@@ -489,54 +489,22 @@ renderConsideration agent action currentTime con =
 renderConsiderationChart : Agent -> Posix -> Action -> Consideration -> Html Msg
 renderConsiderationChart agent currentTime action con =
     let
-        inputMin : Float
-        inputMin =
-            min con.inputMin con.inputMax
-
-        inputMax =
-            max con.inputMin con.inputMax
-
-        step =
-            (inputMax - inputMin) / 64
-
-        stepwise : Float -> Maybe ( ( Float, Float ), Float )
-        stepwise previous =
-            if previous > inputMax then
-                Nothing
-
-            else
-                let
-                    datapoint =
-                        ( previous, computeConsideration agent currentTime (Just previous) action con )
-
-                    newStep =
-                        previous + step
-                in
-                Just ( datapoint, newStep )
-
-        horizontalStep =
-            (inputMax - inputMin) / 4
-
-        stepwiseHorizontalTicksHelp : Float -> Maybe ( Float, Float )
-        stepwiseHorizontalTicksHelp previous =
-            if previous > inputMax then
-                Nothing
-
-            else
-                Just ( previous, previous + horizontalStep )
-
-        stepwiseHorizontalTicks : List Float
-        stepwiseHorizontalTicks =
-            List.Extra.unfoldr stepwiseHorizontalTicksHelp inputMin
-
-        chartbb : BoundingBox2d
-        chartbb =
+        chartBB : BoundingBox2d
+        chartBB =
             BoundingBox2d.fromExtrema
                 { minX = -20
                 , maxX = 120
                 , minY = -20
                 , maxY = 120
                 }
+
+        chartYMin : Float
+        chartYMin =
+            0.0
+
+        chartYMax : Float
+        chartYMax =
+            con.weighting + con.offset
 
         borders : Svg Msg
         borders =
@@ -559,6 +527,38 @@ renderConsiderationChart agent currentTime action con =
         yVal =
             computeConsideration agent currentTime (Just xValRaw) action con
 
+        sampleCount : Int
+        sampleCount =
+            64
+
+        samplePoints : Svg Msg
+        samplePoints =
+            let
+                list =
+                    List.range 0 sampleCount
+                        |> List.map toFloat
+                        |> List.map
+                            (\nthSample ->
+                                ( linearTransform 0 100 0 (toFloat sampleCount) nthSample
+                                , computeConsideration
+                                    agent
+                                    currentTime
+                                    (Just <| linearTransform con.inputMin con.inputMax 0 (toFloat sampleCount) nthSample)
+                                    action
+                                    con
+                                    |> linearTransform 0 100 chartYMin chartYMax
+                                    |> (\y -> 100 - y)
+                                )
+                            )
+                        |> List.map
+                            (\( x, y ) ->
+                                Svg.circle
+                                    [ cx <| String.fromFloat x, cy <| String.fromFloat y, r "2", fill "grey" ]
+                                    []
+                            )
+            in
+            g [] list
+
         currentValue : Svg Msg
         currentValue =
             g [ svgClass "current-value" ]
@@ -572,11 +572,12 @@ renderConsiderationChart agent currentTime action con =
                 ]
     in
     render2dResponsive
-        chartbb
+        chartBB
     <|
         g
             [ svgClass "consideration-chart" ]
             [ borders
+            , samplePoints
             , currentValue
             ]
 
