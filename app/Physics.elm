@@ -23,4 +23,4 @@ collide oa ob =
         penetration =
             oa.physics.radius + ob.physics.radius - centersDistance
     in
-        Collision normal penetration
+    Collision normal penetration

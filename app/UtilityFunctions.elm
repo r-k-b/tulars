@@ -1,24 +1,22 @@
-module UtilityFunctions
-    exposing
-        ( clampTo
-        , computeConsideration
-        , computeUtility
-        , computeVariableActions
-        , getActions
-        , getConsiderationRawValue
-        , isBeggingRelated
-        , isHolding
-        , isMovementAction
-        , onlyArrestMomentum
-        , portableIsExtinguisher
-        , portableIsFood
-        , boolString
-        , differenceInMillis
-        )
+module UtilityFunctions exposing
+    ( boolString
+    , clampTo
+    , computeConsideration
+    , computeUtility
+    , computeVariableActions
+    , differenceInMillis
+    , getActions
+    , getConsiderationRawValue
+    , isBeggingRelated
+    , isHolding
+    , isMovementAction
+    , onlyArrestMomentum
+    , portableIsExtinguisher
+    , portableIsFood
+    )
 
 import Dict
 import Point2d as Point2d
-import Vector2d as Vector2d
 import Set exposing (member)
 import Time exposing (Posix, posixToMillis)
 import Types
@@ -34,6 +32,7 @@ import Types
         , Model
         , Portable(..)
         )
+import Vector2d as Vector2d
 
 
 computeUtility : Agent -> Posix -> Action -> Float
@@ -48,8 +47,8 @@ computeUtility agent currentTime action =
                 |> toFloat
                 |> min 1
     in
-        -- What's the name for this operation?
-        tiny ^ (1 / undoTiny)
+    -- What's the name for this operation?
+    tiny ^ (1 / undoTiny)
 
 
 {-| Provide a "forced" value to override the consideration's
@@ -96,12 +95,12 @@ computeConsideration agent currentTime forced action consideration =
                         b =
                             f centerB bendB offsetB squarenessB mappedInput
                     in
-                        a * b
+                    a * b
 
         normalizedOutput =
             output |> nansToZero |> clamp 0 1
     in
-        normalizedOutput * consideration.weighting + consideration.offset
+    normalizedOutput * consideration.weighting + consideration.offset
 
 
 nansToZero : Float -> Float
@@ -123,7 +122,7 @@ linearTransform bMin bMax aMin aMax x =
         scale =
             (bMax - bMin) / (aMax - aMin)
     in
-        scale * (x + offset)
+    scale * (x + offset)
 
 
 getConsiderationRawValue : Agent -> Posix -> Action -> Consideration -> Float
@@ -148,7 +147,7 @@ getConsiderationRawValue agent currentTime action consideration =
                     1 / 0
 
                 Just time ->
-                    (posixToMillis currentTime) - (posixToMillis time) |> toFloat
+                    posixToMillis currentTime - posixToMillis time |> toFloat
 
         CurrentlyCallingOut ->
             case agent.callingOut of
@@ -185,6 +184,7 @@ true1false0 : Bool -> Float
 true1false0 b =
     if b then
         1
+
     else
         0
 
@@ -228,7 +228,7 @@ clampTo con x =
         inputMax =
             max con.inputMin con.inputMax
     in
-        clamp inputMin inputMax x
+    clamp inputMin inputMax x
 
 
 {-| Convenience method for combining the Variable and Constant action lists.
@@ -316,6 +316,7 @@ boolString : Bool -> String
 boolString b =
     if b then
         "true"
+
     else
         "false"
 

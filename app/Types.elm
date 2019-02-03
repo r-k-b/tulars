@@ -1,35 +1,34 @@
-module Types
-    exposing
-        ( Action
-        , ActionGenerator(..)
-        , ActionOutcome(..)
-        , Agent
-        , Collision
-        , Consideration
-        , ConsiderationInput(..)
-        , CurrentSignal
-        , Fire
-        , FireExtinguisher
-        , Food
-        , Hitpoints(..)
-        , Holding(..)
-        , InputFunction(..)
-        , Model
-        , Msg(..)
-        , Physical
-        , PhysicalProperties
-        , Portable(..)
-        , ReferenceToPortable(..)
-        , Retardant
-        , Signal(..)
-        )
+module Types exposing
+    ( Action
+    , ActionGenerator(..)
+    , ActionOutcome(..)
+    , Agent
+    , Collision
+    , Consideration
+    , ConsiderationInput(..)
+    , CurrentSignal
+    , Fire
+    , FireExtinguisher
+    , Food
+    , Hitpoints(..)
+    , Holding(..)
+    , InputFunction(..)
+    , Model
+    , Msg(..)
+    , Physical
+    , PhysicalProperties
+    , Portable(..)
+    , ReferenceToPortable(..)
+    , Retardant
+    , Signal(..)
+    )
 
 import Dict exposing (Dict)
 import Direction2d exposing (Direction2d)
 import Point2d exposing (Point2d)
-import Vector2d exposing (Vector2d)
 import Set exposing (Set)
 import Time exposing (Posix)
+import Vector2d exposing (Vector2d)
 
 
 type alias Model =

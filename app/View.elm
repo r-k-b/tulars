@@ -1,20 +1,19 @@
 module View exposing (view)
 
+import BoundingBox2d as BoundingBox2d exposing (BoundingBox2d)
 import Browser exposing (Document)
+import Circle2d as Circle2d
 import DefaultData exposing (hpMax)
 import Dict
-import LineSegment2d
-import List.Extra
+import Direction2d as Direction2d
+import Frame2d as Frame2d
+import Geometry.Svg as Svg
 import Html exposing (Attribute, Html, code, div, h2, h3, h4, h5, li, table, td, text, th, tr, ul)
 import Html.Attributes exposing (class, style)
 import Html.Events exposing (onClick)
-import BoundingBox2d as BoundingBox2d exposing (BoundingBox2d)
-import Direction2d as Direction2d
-import Circle2d as Circle2d
-import Frame2d as Frame2d
+import LineSegment2d
+import List.Extra
 import Point2d as Point2d exposing (xCoordinate, yCoordinate)
-import Time exposing (Posix)
-import Vector2d as Vector2d exposing (scaleBy)
 import Round
 import Svg exposing (Svg, g, stop)
 import Svg.Attributes as Attributes
@@ -34,7 +33,7 @@ import Svg.Attributes as Attributes
         , y1
         , y2
         )
-import Geometry.Svg as Svg
+import Time exposing (Posix)
 import Tuple exposing (first, second)
 import Types
     exposing
@@ -55,6 +54,7 @@ import Types
         , Signal(..)
         )
 import UtilityFunctions exposing (boolString, clampTo, computeConsideration, computeUtility, differenceInMillis, getActions, getConsiderationRawValue, isHolding, portableIsExtinguisher, portableIsFood)
+import Vector2d as Vector2d exposing (scaleBy)
 
 
 view : Model -> Document Msg
@@ -73,7 +73,7 @@ view model =
                     ]
                 ]
     in
-        { title = "Tulars", body = [ body ] }
+    { title = "Tulars", body = [ body ] }
 
 
 renderTopButtons : Model -> Html Msg
@@ -83,6 +83,7 @@ renderTopButtons model =
             [ text
                 (if model.paused then
                     "Unpause"
+
                  else
                     "Pause"
                 )
@@ -123,12 +124,12 @@ render2dResponsive boundingBox svgMsg =
                 |> List.map String.fromFloat
                 |> String.join " "
     in
-        Svg.svg
-            [ Attributes.width (String.fromFloat bbWidth)
-            , Attributes.height (String.fromFloat bbHeight)
-            , viewBox coords
-            ]
-            [ Svg.relativeTo topLeftFrame svgMsg ]
+    Svg.svg
+        [ Attributes.width (String.fromFloat bbWidth)
+        , Attributes.height (String.fromFloat bbHeight)
+        , viewBox coords
+        ]
+        [ Svg.relativeTo topLeftFrame svgMsg ]
 
 
 mainMap : Model -> Html.Html Msg
@@ -238,17 +239,17 @@ agentVelocityArrow agent =
         exaggeratedLength =
             Vector2d.length exaggerated
     in
-        --    todo: restore the "arrow" representation
-        Svg.lineSegment2d
-            [ Attributes.stroke "blue"
-            , Attributes.strokeWidth "1"
-            , Attributes.strokeDasharray "1 2"
-            ]
-            (LineSegment2d.fromEndpoints
-                ( agent.physics.position
-                , agent.physics.position |> Point2d.translateBy exaggerated
-                )
+    --    todo: restore the "arrow" representation
+    Svg.lineSegment2d
+        [ Attributes.stroke "blue"
+        , Attributes.strokeWidth "1"
+        , Attributes.strokeDasharray "1 2"
+        ]
+        (LineSegment2d.fromEndpoints
+            ( agent.physics.position
+            , agent.physics.position |> Point2d.translateBy exaggerated
             )
+        )
 
 
 renderAgent : Agent -> Html Msg
@@ -288,17 +289,17 @@ renderAgent agent =
                 BothHands p ->
                     [ renderPortable p bothHands ]
     in
-        g [ id <| "agent " ++ agent.name ]
-            ([ Svg.circle2d [] (Circle2d.withRadius 3 agent.physics.position)
-             , Svg.lineSegment2d [] (LineSegment2d.fromEndpoints ( agent.physics.position, (agent.physics.position |> Point2d.translateBy (Direction2d.toVector agent.physics.facing)) ))
-             , agentVelocityArrow agent
-             , renderName agent
-                |> Svg.scaleAbout agent.physics.position 0.7
-             , g [] held
-                |> Svg.translateBy (Vector2d.from Point2d.origin agent.physics.position)
-             ]
-                |> append call
-            )
+    g [ id <| "agent " ++ agent.name ]
+        ([ Svg.circle2d [] (Circle2d.withRadius 3 agent.physics.position)
+         , Svg.lineSegment2d [] (LineSegment2d.fromEndpoints ( agent.physics.position, agent.physics.position |> Point2d.translateBy (Direction2d.toVector agent.physics.facing) ))
+         , agentVelocityArrow agent
+         , renderName agent
+            |> Svg.scaleAbout agent.physics.position 0.7
+         , g [] held
+            |> Svg.translateBy (Vector2d.from Point2d.origin agent.physics.position)
+         ]
+            |> append call
+        )
 
 
 renderPortable : Portable -> Point2d.Point2d -> Svg Msg
@@ -336,7 +337,7 @@ agentStats agent =
     let
         stats : List ( String, String )
         stats =
-            [ ( "hunger", (Round.round 1 agent.hunger ++ "%") )
+            [ ( "hunger", Round.round 1 agent.hunger ++ "%" )
             , ( "hp", hpPercentage agent.hp )
             , ( "holding", carryingAsString agent.holding )
             , ( "current action", agent.currentAction )
@@ -345,12 +346,12 @@ agentStats agent =
         cell elem =
             text >> List.singleton >> elem [ (\( a, b ) -> style a b) ( "padding-right", "1em" ) ]
     in
-        table [ (\( a, b ) -> style a b) ( "font-family", "monospace" ) ]
-            [ tr []
-                (stats |> List.map (first >> cell th))
-            , tr []
-                (stats |> List.map (second >> cell td))
-            ]
+    table [ (\( a, b ) -> style a b) ( "font-family", "monospace" ) ]
+        [ tr []
+            (stats |> List.map (first >> cell th))
+        , tr []
+            (stats |> List.map (second >> cell td))
+        ]
 
 
 hpPercentage : Hitpoints -> String
@@ -360,7 +361,7 @@ hpPercentage (Hitpoints current max) =
         pc =
             current / max * 100
     in
-        Round.round 1 pc ++ "%"
+    Round.round 1 pc ++ "%"
 
 
 carryingAsString : Holding -> String
@@ -405,6 +406,7 @@ renderAction agent currentTime action =
                     ]
                     (List.map (renderConsideration agent action currentTime) action.considerations)
                 ]
+
             else
                 []
 
@@ -413,28 +415,29 @@ renderAction agent currentTime action =
                 [ style "background-color" "#00000011"
                 , style "padding" "0.6em"
                 ]
+
             else
                 [ style "padding" "0.6em" ]
 
         utility =
             computeUtility agent currentTime action
     in
-        div containerStyle
-            (List.append
-                [ h4
-                    [ onClick <| ToggleConditionsVisibility agent.name action.name
-                    , (\( a, b ) -> style a b) ( "cursor", "pointer" )
-                    , (\( a, b ) -> style a b) ( "margin", "0" )
-                    , (\( a, b ) -> style a b) ( "opacity", (utility ^ (1 / 1.5) + 0.3 |> String.fromFloat) )
-                    ]
-                    [ text "("
-                    , prettyFloatHtml 2 utility
-                    , text ") "
-                    , text action.name
-                    ]
+    div containerStyle
+        (List.append
+            [ h4
+                [ onClick <| ToggleConditionsVisibility agent.name action.name
+                , (\( a, b ) -> style a b) ( "cursor", "pointer" )
+                , (\( a, b ) -> style a b) ( "margin", "0" )
+                , (\( a, b ) -> style a b) ( "opacity", utility ^ (1 / 1.5) + 0.3 |> String.fromFloat )
                 ]
-                considerations
-            )
+                [ text "("
+                , prettyFloatHtml 2 utility
+                , text ") "
+                , text action.name
+                ]
+            ]
+            considerations
+        )
 
 
 renderConsideration : Agent -> Action -> Posix -> Consideration -> Html Msg
@@ -473,6 +476,7 @@ renderConsideration agent action currentTime con =
                         ]
                     ]
                 ]
+
             else
                 []
 
@@ -490,8 +494,8 @@ renderConsideration agent action currentTime con =
             , renderConsiderationChart agent currentTime action con
             ]
     in
-        div [ (\( a, b ) -> style a b) ( "flex-basis", "20em" ) ]
-            (List.append main details)
+    div [ (\( a, b ) -> style a b) ( "flex-basis", "20em" ) ]
+        (List.append main details)
 
 
 renderConsiderationChart : Agent -> Posix -> Action -> Consideration -> Html Msg
@@ -510,6 +514,7 @@ renderConsiderationChart agent currentTime action con =
         stepwise previous =
             if previous > inputMax then
                 Nothing
+
             else
                 let
                     datapoint =
@@ -518,7 +523,7 @@ renderConsiderationChart agent currentTime action con =
                     newStep =
                         previous + step
                 in
-                    Just ( datapoint, newStep )
+                Just ( datapoint, newStep )
 
         horizontalStep =
             (inputMax - inputMin) / 4
@@ -527,6 +532,7 @@ renderConsiderationChart agent currentTime action con =
         stepwiseHorizontalTicksHelp previous =
             if previous > inputMax then
                 Nothing
+
             else
                 Just ( previous, previous + horizontalStep )
 
@@ -624,7 +630,7 @@ renderConsiderationChart agent currentTime action con =
         --                [ customLine, currentValPoint ]
         --                inputMin
     in
-        div [] [ text "fixme" ]
+    div [] [ text "fixme" ]
 
 
 renderUF : InputFunction -> String
@@ -647,7 +653,7 @@ renderUF f =
                     , "squareness = " ++ String.fromFloat squareness
                     ]
             in
-                "Normal (" ++ String.join ", " vals ++ ")"
+            "Normal (" ++ String.join ", " vals ++ ")"
 
         Asymmetric centerA bendA offsetA squarenessA centerB bendB offsetB squarenessB ->
             let
@@ -662,7 +668,7 @@ renderUF f =
                     , "squarenessB=" ++ Round.round 1 squarenessB
                     ]
             in
-                "Asymmetric (" ++ String.join ", " vals ++ ")"
+            "Asymmetric (" ++ String.join ", " vals ++ ")"
 
 
 renderCI : Posix -> Agent -> Action -> ConsiderationInput -> String
@@ -694,8 +700,8 @@ renderCI currentTime agent action ci =
                         Just t ->
                             differenceInMillis currentTime t |> String.fromInt
             in
-                "Time since last shouted \"Feed Me!\" "
-                    ++ val
+            "Time since last shouted \"Feed Me!\" "
+                ++ val
 
         CurrentlyCallingOut ->
             "Currently calling out "
@@ -742,23 +748,21 @@ codeText s =
 
 renderEmoji : String -> Point2d.Point2d -> Html Msg
 renderEmoji emoji point =
-    (Svg.text_
+    Svg.text_
         [ Attributes.textAnchor "middle"
         , Attributes.alignmentBaseline "middle"
         ]
         [ Svg.text emoji ]
-    )
         |> Svg.translateBy (Vector2d.from Point2d.origin point)
 
 
 renderName : Agent -> Html Msg
 renderName agent =
-    (Svg.text_
+    Svg.text_
         [ Attributes.textAnchor "middle"
         , Attributes.alignmentBaseline "hanging"
         ]
         [ Svg.text agent.name ]
-    )
         |> Svg.translateBy (Vector2d.from Point2d.origin agent.physics.position)
 
 
@@ -816,9 +820,9 @@ renderFire fire =
         healthFactor =
             fire.hp / hpMax.fire
     in
-        g [ id <| "fire_" ++ String.fromInt fire.id ]
-            [ renderEmoji "🔥" fire.physics.position
-            , gradient
-            , redness
-            ]
-            |> Svg.scaleAbout fire.physics.position healthFactor
+    g [ id <| "fire_" ++ String.fromInt fire.id ]
+        [ renderEmoji "🔥" fire.physics.position
+        , gradient
+        , redness
+        ]
+        |> Svg.scaleAbout fire.physics.position healthFactor
