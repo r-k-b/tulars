@@ -562,7 +562,14 @@ renderConsiderationChart agent currentTime action con =
         currentValue : Svg Msg
         currentValue =
             g [ svgClass "current-value" ]
-                [ Svg.circle [ cx <| String.fromFloat <| xValForChart, cy <| String.fromFloat <| 100 - linearTransform 0 100 0 1 yVal, r "5", fill "red" ] [] ]
+                [ Svg.circle
+                    [ cx <| String.fromFloat <| xValForChart
+                    , cy <| String.fromFloat <| 100 - linearTransform 0 100 0 1 yVal
+                    , r "5"
+                    , fill "red"
+                    ]
+                    []
+                ]
     in
     render2dResponsive
         chartbb
