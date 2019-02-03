@@ -322,7 +322,7 @@ renderAgentInfo : Posix -> Agent -> Html Msg
 renderAgentInfo currentTime agent =
     div []
         [ h3
-            [ (\( a, b ) -> style a b) ( "margin-bottom", "0.1em" ) ]
+            [ style "margin-bottom" "0.1em" ]
             [ text agent.name ]
         , agentStats agent
         , div indentWithLine
@@ -344,9 +344,9 @@ agentStats agent =
             ]
 
         cell elem =
-            text >> List.singleton >> elem [ (\( a, b ) -> style a b) ( "padding-right", "1em" ) ]
+            text >> List.singleton >> elem [ style "padding-right" "1em" ]
     in
-    table [ (\( a, b ) -> style a b) ( "font-family", "monospace" ) ]
+    table [ style "font-family" "monospace" ]
         [ tr []
             (stats |> List.map (first >> cell th))
         , tr []
@@ -402,7 +402,7 @@ renderAction agent currentTime action =
         considerations =
             if isExpanded then
                 [ div
-                    [ (\( a, b ) -> style a b) ( "display", "flex" )
+                    [ style "display" "flex"
                     ]
                     (List.map (renderConsideration agent action currentTime) action.considerations)
                 ]
@@ -426,9 +426,9 @@ renderAction agent currentTime action =
         (List.append
             [ h4
                 [ onClick <| ToggleConditionsVisibility agent.name action.name
-                , (\( a, b ) -> style a b) ( "cursor", "pointer" )
-                , (\( a, b ) -> style a b) ( "margin", "0" )
-                , (\( a, b ) -> style a b) ( "opacity", utility ^ (1 / 1.5) + 0.3 |> String.fromFloat )
+                , style "cursor" "pointer"
+                , style "margin" "0"
+                , style "opacity" (utility ^ (1 / 1.5) + 0.3 |> String.fromFloat)
                 ]
                 [ text "("
                 , prettyFloatHtml 2 utility
@@ -483,8 +483,8 @@ renderConsideration agent action currentTime con =
         main =
             [ h5
                 [ onClick <| ToggleConditionDetailsVisibility agent.name action.name con.name
-                , (\( a, b ) -> style a b) ( "cursor", "pointer" )
-                , (\( a, b ) -> style a b) ( "margin", "0.5em 0" )
+                , style "cursor" "pointer"
+                , style "margin" "0.5em 0"
                 ]
                 [ text "("
                 , code [] [ text <| Round.round 2 considerationValue ]
@@ -494,7 +494,7 @@ renderConsideration agent action currentTime con =
             , renderConsiderationChart agent currentTime action con
             ]
     in
-    div [ (\( a, b ) -> style a b) ( "flex-basis", "20em" ) ]
+    div [ style "flex-basis" "20em" ]
         (List.append main details)
 
 
@@ -610,8 +610,8 @@ renderConsiderationChart agent currentTime action con =
         --        title =
         --            Plot.viewLabel
         --                [ fill "#afafaf"
-        --                , (\( a, b ) -> style a b) ("text-anchor", "end")
-        --                , (\( a, b ) -> style a b) ("font-style", "italic")
+        --                , style "text-anchor" "end"
+        --                , style "font-style" "italic"
         --                ]
         --                (renderUF con.function)
         --        defaultSeriesPlotCustomizations =
@@ -743,7 +743,7 @@ prettyFloatHtml dp n =
 
 codeText : String -> Html Msg
 codeText s =
-    code [ (\( a, b ) -> style a b) ( "white-space", "pre-wrap" ) ] [ text s ]
+    code [ style "white-space" "pre-wrap" ] [ text s ]
 
 
 renderEmoji : String -> Point2d.Point2d -> Html Msg
