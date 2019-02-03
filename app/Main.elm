@@ -492,7 +492,8 @@ moveWorld : Posix -> Model -> Model
 moveWorld newTime model =
     let
         deltaT =
-            Time.posixToMillis newTime - Time.posixToMillis model.time
+            (Time.posixToMillis newTime - Time.posixToMillis model.time)
+                |> min 50
 
         survivingAgents =
             model.agents
