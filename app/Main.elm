@@ -1063,5 +1063,9 @@ hpAsFloat hp =
 
 
 subscriptions : Model -> Sub Msg
-subscriptions _ =
-    Sub.batch [ onAnimationFrame RAFtick ]
+subscriptions model =
+    if model.paused then
+        Sub.none
+
+    else
+        Sub.batch [ onAnimationFrame RAFtick ]
