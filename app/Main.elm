@@ -609,17 +609,17 @@ foldOverPickedItems currentTime agent ( agentAcc, foodAcc, extinguisherAcc ) =
                     case action.outcome of
                         PickUp (EdibleID foodID) ->
                             let
-                                ( a, f ) =
+                                modified =
                                     pickUpFood agent foodID foodAcc
                             in
-                            ( a, f, extinguisherAcc )
+                            ( Tuple.first modified, Tuple.second modified, extinguisherAcc )
 
                         PickUp (ExtinguisherID fextID) ->
                             let
-                                ( a, e ) =
+                                modified =
                                     pickUpExtinguisher agent fextID extinguisherAcc
                             in
-                            ( a, foodAcc, e )
+                            ( Tuple.first modified, foodAcc, Tuple.second modified )
 
                         DoNothing ->
                             noChange
