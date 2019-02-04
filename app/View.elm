@@ -15,8 +15,8 @@ import LineSegment2d
 import List.Extra
 import Point2d as Point2d exposing (xCoordinate, yCoordinate)
 import Round
-import Svg exposing (Svg, g, stop)
-import Svg.Attributes exposing (cx, cy, fill, id, offset, r, stopColor, stopOpacity, stroke, viewBox, x1, x2, y1, y2)
+import Svg exposing (Svg, g, stop, text_)
+import Svg.Attributes exposing (cx, cy, dx, fill, fontSize, id, offset, r, stopColor, stopOpacity, stroke, textAnchor, viewBox, x, x1, x2, y, y1, y2)
 import Time exposing (Posix)
 import Tuple exposing (first, second)
 import Types
@@ -66,7 +66,7 @@ view model =
 
 renderTopButtons : Model -> Html Msg
 renderTopButtons model =
-    div []
+    div [ style "position" "sticky", style "top" "0" ]
         [ Html.button [ Html.Events.onClick TogglePaused ]
             [ text
                 (if model.paused then
@@ -388,7 +388,8 @@ renderAction agent currentTime action =
                 |> Maybe.withDefault False
 
         considerations =
-            if isExpanded then
+            -- Don't commit this
+            if not isExpanded then
                 [ div
                     [ style "display" "flex"
                     ]
@@ -454,6 +455,9 @@ renderConsideration agent action currentTime con =
                         [ codeText <| "Raw Value: " ++ Round.round 4 rawValue
                         ]
                     , li []
+                        [ codeText <| "UF: " ++ renderUF con.function
+                        ]
+                    , li []
                         [ codeText <| "Min: " ++ (Round.round 4 <| con.inputMin) ++ ", Max: " ++ (Round.round 2 <| con.inputMax)
                         ]
                     , li []
@@ -498,13 +502,49 @@ renderConsiderationChart agent currentTime action con =
                 , maxY = 120
                 }
 
+        samplePoints =
+            List.range 0 sampleCount
+                |> List.map toFloat
+                |> List.map
+                    (\nthSample ->
+                        ( linearTransform 0 100 0 (toFloat sampleCount) nthSample
+                        , let
+                            forcedValue =
+                                linearTransform (min con.inputMin con.inputMax) (max con.inputMin con.inputMax) 0 (toFloat sampleCount) nthSample
+                          in
+                          computeConsideration
+                            agent
+                            currentTime
+                            (Just forcedValue)
+                            action
+                            con
+                            |> linearTransform 0 100 chartYMin chartYMax
+                            |> (\y -> 100 - y)
+                        )
+                    )
+
+        samplePointsSvg : Svg Msg
+        samplePointsSvg =
+            samplePoints
+                |> List.map
+                    (\( x, y ) ->
+                        Svg.circle
+                            [ cx <| String.fromFloat x, cy <| String.fromFloat y, r "2", fill "grey" ]
+                            []
+                    )
+                |> g []
+
         chartYMin : Float
         chartYMin =
-            0.0
+            min
+                (min 0 (con.weighting + con.offset))
+                (con.weighting + con.offset)
 
         chartYMax : Float
         chartYMax =
-            con.weighting + con.offset
+            max
+                (min 0 (con.weighting + con.offset))
+                (con.weighting + con.offset)
 
         borders : Svg Msg
         borders =
@@ -531,44 +571,25 @@ renderConsiderationChart agent currentTime action con =
         sampleCount =
             64
 
-        samplePoints : Svg Msg
-        samplePoints =
-            let
-                list =
-                    List.range 0 sampleCount
-                        |> List.map toFloat
-                        |> List.map
-                            (\nthSample ->
-                                ( linearTransform 0 100 0 (toFloat sampleCount) nthSample
-                                , computeConsideration
-                                    agent
-                                    currentTime
-                                    (Just <| linearTransform con.inputMin con.inputMax 0 (toFloat sampleCount) nthSample)
-                                    action
-                                    con
-                                    |> linearTransform 0 100 chartYMin chartYMax
-                                    |> (\y -> 100 - y)
-                                )
-                            )
-                        |> List.map
-                            (\( x, y ) ->
-                                Svg.circle
-                                    [ cx <| String.fromFloat x, cy <| String.fromFloat y, r "2", fill "grey" ]
-                                    []
-                            )
-            in
-            g [] list
-
         currentValue : Svg Msg
         currentValue =
             g [ svgClass "current-value" ]
                 [ Svg.circle
                     [ cx <| String.fromFloat <| xValForChart
-                    , cy <| String.fromFloat <| 100 - linearTransform 0 100 0 1 yVal
+                    , cy <| String.fromFloat <| 100 - linearTransform 0 100 chartYMin chartYMax yVal
                     , r "5"
                     , fill "red"
                     ]
                     []
+                ]
+
+        ticks : Svg Msg
+        ticks =
+            g [ svgClass "ticks" ]
+                [ tickHelper -5 100 "end" chartYMin
+                , tickHelper -5 0 "end" chartYMax
+                , tickHelper 0 115 "start" con.inputMin
+                , tickHelper 100 115 "end" con.inputMax
                 ]
     in
     render2dResponsive
@@ -577,11 +598,25 @@ renderConsiderationChart agent currentTime action con =
         g
             [ svgClass "consideration-chart" ]
             [ borders
-            , samplePoints
+            , samplePointsSvg
+            , ticks
             , currentValue
             ]
 
 
+tickHelper : Int -> Int -> String -> Float -> Svg Msg
+tickHelper xVal yVal textAlign val =
+    text_
+        [ xVal |> String.fromInt |> x
+        , yVal |> String.fromInt |> y
+        , textAnchor textAlign
+        , fontSize "0.8em"
+        ]
+        [ val |> String.fromFloat |> text ]
+
+
+{-| Represent a "Utility Function" as a string.
+-}
 renderUF : InputFunction -> String
 renderUF f =
     case f of

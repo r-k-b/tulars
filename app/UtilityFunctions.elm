@@ -54,6 +54,9 @@ computeUtility agent currentTime action =
 
 {-| Provide a "forced" value to override the consideration's
 regular input value. Useful for graphing.
+
+Note that the output will always be between (consideration.offset) and (consideration.weighting + consideration.offset).
+
 -}
 computeConsideration : Agent -> Posix -> Maybe Float -> Action -> Consideration -> Float
 computeConsideration agent currentTime forced action consideration =
