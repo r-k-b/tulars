@@ -19,6 +19,11 @@ are robust to changing environments and dynamic goals?
 Then, open `dist/index.html` in a browser.
 
 
+# testing
+
+Run `npm test`.
+
+
 # misc
 
 [Verlet integration](https://en.wikipedia.org/wiki/Verlet_integration)

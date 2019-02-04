@@ -1,17 +1,16 @@
 module TestPhysics exposing (suite)
 
-import Expect exposing (Expectation, FloatingPointTolerance(Absolute))
-import Fuzz exposing (Fuzzer, int, list, string)
+import Direction2d exposing (positiveX)
+import Expect exposing (Expectation, FloatingPointTolerance(..))
 import Physics exposing (collide)
-import Test exposing (Test, describe, test, todo)
-import OpenSolid.Point2d exposing (fromCoordinates)
-import OpenSolid.Direction2d exposing (fromAngle, positiveX)
-import OpenSolid.Vector2d as V2 exposing (Vector2d, fromComponents, zero)
+import Point2d as Point2d
+import Test exposing (Test, describe, test)
 import Types exposing (Collision, Physical)
+import Vector2d exposing (Vector2d, zero)
 
 
 defaultPhysics =
-    { position = fromCoordinates ( 0, 0 )
+    { position = Point2d.fromCoordinates ( 0, 0 )
     , facing = positiveX
     , velocity = zero
     , acceleration = zero
@@ -27,7 +26,7 @@ circleAt : Float -> Float -> Float -> Physical Empty
 circleAt x y radius =
     { physics =
         { defaultPhysics
-            | position = fromCoordinates ( x, y )
+            | position = Point2d.fromCoordinates ( x, y )
             , radius = radius
         }
     }
