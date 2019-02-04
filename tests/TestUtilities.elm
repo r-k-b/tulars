@@ -44,4 +44,12 @@ suite =
             \_ ->
                 linearTransform 100 0 1 0 0.9
                     |> Expect.within epsilon 90
+        , test "flipped both ranges, outside the lower range" <|
+            \_ ->
+                linearTransform 100 0 1 0 -0.1
+                    |> Expect.within epsilon -10
+        , test "flipped both ranges, outside the upper range" <|
+            \_ ->
+                linearTransform 100 0 1 0 1.1
+                    |> Expect.within epsilon 110
         ]
