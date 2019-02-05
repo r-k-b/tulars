@@ -117,18 +117,18 @@ nansToZero n =
             n
 
 
-{-| Take x and map it from the `aMin` - `aMax` range into the `bMin` - `bMax` range.
+{-| Take x and map it from the `x1` - `x2` range into the `y1` - `y2` range.
 -}
 linearTransform : Float -> Float -> Float -> Float -> Float -> Float
-linearTransform bMin bMax aMin aMax x =
+linearTransform y1 y2 x1 x2 x =
     let
-        offset =
-            bMin - aMin
-
         scale =
-            (bMax - bMin) / (aMax - aMin)
+            (y2 - y1) / (x2 - x1)
+
+        offset =
+            y1 - (scale * x1)
     in
-    scale * (x + offset)
+    scale * x + offset
 
 
 getConsiderationRawValue : Agent -> Posix -> Action -> Consideration -> Float

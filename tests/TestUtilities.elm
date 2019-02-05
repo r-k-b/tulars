@@ -52,4 +52,8 @@ suite =
             \_ ->
                 linearTransform 100 0 1 0 1.1
                     |> Expect.within epsilon 110
+        , test "non-zero-anchored transform" <|
+            \_ ->
+                linearTransform 68 104 20 40 32
+                    |> Expect.within epsilon 89.6
         ]
