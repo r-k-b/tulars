@@ -1031,14 +1031,37 @@ isAfter a b =
     Time.posixToMillis b > Time.posixToMillis a
 
 
+goldenRatio : Float
+goldenRatio =
+    (1 + sqrt 5) / 2
+
+
+hugeInt : Int
+hugeInt =
+    10 ^ 15
+
+
+hugeFloat : Float
+hugeFloat =
+    10 ^ 15
+
+
+hugeFloatGoldenRatio : Float
+hugeFloatGoldenRatio =
+    goldenRatio
+        * hugeFloat
+
+
 {-| Create an even pseudorandom angle distribution, without having to get Random involved.
-todo: see if the Golden Ratio is useful here ((1 + sqrt(5))/2)
 -}
 angleFuzz : Float -> Posix -> Float
 angleFuzz spreadInRadians time =
     let
         mult =
-            (modBy 4919 (Time.posixToMillis time * 43993) |> toFloat) / 4919.0 - 0.5
+            (Time.posixToMillis time * hugeInt)
+                |> modBy (floor hugeFloatGoldenRatio)
+                |> toFloat
+                |> (\x -> x / hugeFloatGoldenRatio - 0.5)
     in
     mult * spreadInRadians
 
