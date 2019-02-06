@@ -493,6 +493,10 @@ renderConsideration agent action currentTime con =
 renderConsiderationChart : Agent -> Posix -> Action -> Consideration -> Html Msg
 renderConsiderationChart agent currentTime action con =
     let
+        sampleCount : Int
+        sampleCount =
+            64
+
         chartBB : BoundingBox2d
         chartBB =
             BoundingBox2d.fromExtrema
@@ -502,25 +506,42 @@ renderConsiderationChart agent currentTime action con =
                 , maxY = 120
                 }
 
+        chartYMin : Float
+        chartYMin =
+            min 0 (con.weighting + con.offset)
+
+        chartYMax : Float
+        chartYMax =
+            max 0 (con.weighting + con.offset)
+
         samplePoints =
             List.range 0 sampleCount
                 |> List.map toFloat
                 |> List.map
                     (\nthSample ->
-                        ( linearTransform 0 100 0 (toFloat sampleCount) nthSample
-                        , let
+                        let
+                            x =
+                                linearTransform 0 100 0 (toFloat sampleCount) nthSample
+
                             forcedValue =
-                                linearTransform (min con.inputMin con.inputMax) (max con.inputMin con.inputMax) 0 (toFloat sampleCount) nthSample
-                          in
-                          computeConsideration
-                            agent
-                            currentTime
-                            (Just forcedValue)
-                            action
-                            con
-                            |> linearTransform 0 100 chartYMin chartYMax
-                            |> (\y -> 100 - y)
-                        )
+                                nthSample
+                                    |> linearTransform
+                                        con.inputMin
+                                        con.inputMax
+                                        0
+                                        (toFloat sampleCount)
+
+                            y =
+                                computeConsideration
+                                    agent
+                                    currentTime
+                                    (Just forcedValue)
+                                    action
+                                    con
+                                    |> linearTransform 0 100 (min 0 (con.weighting + con.offset)) (max 0 (con.weighting + con.offset))
+                                    |> (-) 100
+                        in
+                        ( x, y )
                     )
 
         samplePointsSvg : Svg Msg
@@ -533,18 +554,6 @@ renderConsiderationChart agent currentTime action con =
                             []
                     )
                 |> g []
-
-        chartYMin : Float
-        chartYMin =
-            min
-                (min 0 (con.weighting + con.offset))
-                (con.weighting + con.offset)
-
-        chartYMax : Float
-        chartYMax =
-            max
-                (min 0 (con.weighting + con.offset))
-                (con.weighting + con.offset)
 
         borders : Svg Msg
         borders =
@@ -566,10 +575,6 @@ renderConsiderationChart agent currentTime action con =
         yVal : Float
         yVal =
             computeConsideration agent currentTime (Just xValRaw) action con
-
-        sampleCount : Int
-        sampleCount =
-            64
 
         currentValue : Svg Msg
         currentValue =
