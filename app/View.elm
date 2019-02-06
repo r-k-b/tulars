@@ -509,10 +509,12 @@ renderConsiderationChart agent currentTime action con =
         chartYMin : Float
         chartYMin =
             min 0 (con.weighting + con.offset)
+                |> min con.offset
 
         chartYMax : Float
         chartYMax =
             max 0 (con.weighting + con.offset)
+                |> max con.offset
 
         samplePoints =
             List.range 0 sampleCount
@@ -538,7 +540,7 @@ renderConsiderationChart agent currentTime action con =
                                     (Just forcedValue)
                                     action
                                     con
-                                    |> linearTransform 0 100 (min 0 (con.weighting + con.offset)) (max 0 (con.weighting + con.offset))
+                                    |> linearTransform 0 100 chartYMin chartYMax
                                     |> (-) 100
                         in
                         ( x, y )
