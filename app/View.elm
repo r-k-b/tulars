@@ -388,8 +388,7 @@ renderAction agent currentTime action =
                 |> Maybe.withDefault False
 
         considerations =
-            -- Don't commit this
-            if not isExpanded then
+            if isExpanded then
                 [ div
                     [ style "display" "flex"
                     ]
