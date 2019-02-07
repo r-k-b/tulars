@@ -18,6 +18,7 @@ module Types exposing
     , Physical
     , PhysicalProperties
     , Portable(..)
+    , Range(..)
     , ReferenceToPortable(..)
     , Retardant
     , Signal(..)
@@ -29,6 +30,14 @@ import Point2d exposing (Point2d)
 import Set exposing (Set)
 import Time exposing (Posix)
 import Vector2d exposing (Vector2d)
+
+
+type Hitpoints
+    = Hitpoints Float Float -- current, max
+
+
+type Range
+    = Range { min : Float, max : Float, currentValue : Float }
 
 
 type alias Model =
@@ -59,7 +68,7 @@ type alias Agent =
     , visibleActions : Dict String Bool
     , currentAction : String
     , currentOutcome : String
-    , hunger : Float -- 0 = not hungry at all, 1 = starving
+    , hunger : Range -- 0 = not hungry at all, 1 = starving
     , beggingForFood : Bool
     , topActionLastStartTimes : Dict String Posix
     , callingOut : Maybe CurrentSignal
@@ -67,10 +76,6 @@ type alias Agent =
     , foodsGivenAway : Set Int
     , hp : Hitpoints
     }
-
-
-type Hitpoints
-    = Hitpoints Float Float -- current, max
 
 
 type alias Action =
@@ -195,15 +200,21 @@ type InputFunction
 type alias Food =
     { id : Int
     , physics : PhysicalProperties
-    , joules : Float
-    , freshJoules : Float
+    , joules : Range
     }
+
+
+
+--type Growable
+--    = FertileSoil
+--    | GrowingPlant { growth : ZeroToOne, hp : ZeroToOne }
+--    | GrownPlant
 
 
 type alias Fire =
     { id : Int
     , physics : PhysicalProperties
-    , hp : Float
+    , hp : Hitpoints
     }
 
 

@@ -3,7 +3,6 @@ module DefaultData exposing
     , extinguishers
     , fires
     , foods
-    , hpMax
     , retardantRadius
     )
 
@@ -28,6 +27,7 @@ import Types
         , InputFunction(..)
         , Model
         , Portable(..)
+        , Range(..)
         , ReferenceToPortable(..)
         , Signal(..)
         )
@@ -45,8 +45,7 @@ foods =
             , acceleration = Vector2d.zero
             , radius = foodRadius
             }
-      , joules = 3000000000
-      , freshJoules = 3000000000
+      , joules = Range { min = 0, max = 3 * 10 ^ 9, currentValue = 3 * 10 ^ 9 }
       }
     , { id = 2
       , physics =
@@ -56,8 +55,7 @@ foods =
             , acceleration = Vector2d.zero
             , radius = foodRadius
             }
-      , joules = 3000000000
-      , freshJoules = 3000000000
+      , joules = Range { min = 0, max = 3 * 10 ^ 9, currentValue = 3 * 10 ^ 9 }
       }
     ]
 
@@ -72,7 +70,7 @@ fires =
             , acceleration = Vector2d.zero
             , radius = fireRadius
             }
-      , hp = 100
+      , hp = Hitpoints 100 100
       }
     ]
 
@@ -125,7 +123,7 @@ agents =
             ]
       , currentAction = "none"
       , currentOutcome = "none"
-      , hunger = 0.8
+      , hunger = Range { min = 0, max = 1, currentValue = 0.8 }
       , beggingForFood = False
       , callingOut = Nothing
       , holding = EmptyHanded
@@ -163,7 +161,7 @@ agents =
             ]
       , currentAction = "none"
       , currentOutcome = "none"
-      , hunger = 0.0
+      , hunger = Range { min = 0, max = 1, currentValue = 0 }
       , beggingForFood = False
       , callingOut = Nothing
       , holding = EmptyHanded
@@ -199,7 +197,7 @@ agents =
             ]
       , currentAction = "none"
       , currentOutcome = "none"
-      , hunger = 0.8
+      , hunger = Range { min = 0, max = 1, currentValue = 0.8 }
       , beggingForFood = False
       , callingOut = Nothing
       , holding = EmptyHanded
@@ -882,16 +880,3 @@ fireRadius =
 foodRadius : Float
 foodRadius =
     10
-
-
-type alias HPMax =
-    { fire : Float
-    , agent : Float
-    }
-
-
-hpMax : HPMax
-hpMax =
-    { fire = 100
-    , agent = 100
-    }

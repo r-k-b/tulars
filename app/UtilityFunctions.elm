@@ -7,32 +7,27 @@ module UtilityFunctions exposing
     , differenceInMillis
     , getActions
     , getConsiderationRawValue
+    , hpAsFloat
+    , hpRawValue
     , isBeggingRelated
     , isHolding
     , isMovementAction
     , linearTransform
+    , mapRange
+    , normaliseRange
     , onlyArrestMomentum
     , portableIsExtinguisher
     , portableIsFood
+    , rangeCurrentValue
+    , setHitpoints
+    , updateRange
     )
 
 import Dict
 import Point2d as Point2d
 import Set exposing (member)
 import Time exposing (Posix, posixToMillis)
-import Types
-    exposing
-        ( Action
-        , ActionGenerator(..)
-        , ActionOutcome(..)
-        , Agent
-        , Consideration
-        , ConsiderationInput(..)
-        , Holding(..)
-        , InputFunction(..)
-        , Model
-        , Portable(..)
-        )
+import Types exposing (Action, ActionGenerator(..), ActionOutcome(..), Agent, Consideration, ConsiderationInput(..), Hitpoints(..), Holding(..), InputFunction(..), Model, Portable(..), Range(..))
 import Vector2d as Vector2d
 
 
@@ -135,7 +130,7 @@ getConsiderationRawValue : Agent -> Posix -> Action -> Consideration -> Float
 getConsiderationRawValue agent currentTime action consideration =
     case consideration.input of
         Hunger ->
-            agent.hunger
+            agent.hunger |> rangeCurrentValue
 
         DistanceToTargetPoint point ->
             point |> Point2d.distanceFrom agent.physics.position
@@ -332,3 +327,64 @@ boolString b =
 differenceInMillis : Posix -> Posix -> Int
 differenceInMillis a b =
     Time.posixToMillis a - Time.posixToMillis b
+
+
+rangeCurrentValue : Range -> Float
+rangeCurrentValue range =
+    case range of
+        Range r ->
+            r.currentValue |> clamp r.min r.max
+
+
+normaliseRange : Range -> Float
+normaliseRange range =
+    case range of
+        Range r ->
+            r.currentValue
+                |> linearTransform 0 1 r.min r.max
+
+
+{-| Set the current value of a range, clamped to the min and max.
+-}
+updateRange : Range -> Float -> Range
+updateRange original newVal =
+    case original of
+        Range r ->
+            Range { r | currentValue = newVal }
+
+
+mapRange : (Float -> Float) -> Range -> Range
+mapRange func original =
+    case original of
+        Range r ->
+            r.currentValue
+                |> func
+                |> clamp r.min r.max
+                |> (\newValue -> Range { r | currentValue = newValue })
+
+
+{-| Turns a Hitpoints type into a normalised float, between 0 (dead) and 1 (full hp).
+-}
+hpAsFloat : Hitpoints -> Float
+hpAsFloat hp =
+    case hp of
+        Hitpoints current max ->
+            current
+                / max
+                |> clamp 0 1
+
+
+hpRawValue : Hitpoints -> Float
+hpRawValue hp =
+    case hp of
+        Hitpoints current max ->
+            current
+
+
+setHitpoints : Hitpoints -> Float -> Hitpoints
+setHitpoints oldHP new =
+    case oldHP of
+        Hitpoints _ max ->
+            new
+                |> clamp 0 max
+                |> Hitpoints max

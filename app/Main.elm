@@ -5,7 +5,6 @@ import Browser.Events exposing (onAnimationFrame)
 import DefaultData as DD exposing (retardantRadius)
 import Dict exposing (Dict)
 import Direction2d as Direction2d
-import Html
 import List exposing (map)
 import MapAccumulate exposing (mapAccumL)
 import Maybe exposing (withDefault)
@@ -13,30 +12,9 @@ import Maybe.Extra
 import Physics exposing (collide)
 import Point2d as Point2d
 import Set exposing (insert)
-import Task exposing (perform)
-import Time exposing (Posix, every)
-import Types
-    exposing
-        ( Action
-        , ActionOutcome(..)
-        , Agent
-        , Collision
-        , CurrentSignal
-        , Fire
-        , FireExtinguisher
-        , Food
-        , Hitpoints(..)
-        , Holding(..)
-        , Model
-        , Msg(..)
-        , Physical
-        , PhysicalProperties
-        , Portable(..)
-        , ReferenceToPortable(..)
-        , Retardant
-        , Signal(..)
-        )
-import UtilityFunctions exposing (boolString, computeUtility, computeVariableActions, getActions, isBeggingRelated, isMovementAction, onlyArrestMomentum)
+import Time exposing (Posix)
+import Types exposing (Action, ActionOutcome(..), Agent, Collision, CurrentSignal, Fire, FireExtinguisher, Food, Hitpoints(..), Holding(..), Model, Msg(..), Physical, PhysicalProperties, Portable(..), Range(..), ReferenceToPortable(..), Retardant, Signal(..))
+import UtilityFunctions exposing (boolString, computeUtility, computeVariableActions, getActions, hpAsFloat, hpRawValue, isBeggingRelated, isMovementAction, mapRange, normaliseRange, onlyArrestMomentum, rangeCurrentValue, setHitpoints, updateRange)
 import Vector2d as Vector2d exposing (Vector2d)
 import View exposing (view)
 
@@ -247,8 +225,8 @@ moveAgent currentTime dT agent =
                 |> Maybe.map outcomeToString
                 |> withDefault "none"
 
-        newtopActionLastStartTimes : Dict String Posix
-        newtopActionLastStartTimes =
+        newTopActionLastStartTimes : Dict String Posix
+        newTopActionLastStartTimes =
             if newOutcome == agent.currentOutcome then
                 agent.topActionLastStartTimes
 
@@ -262,16 +240,15 @@ moveAgent currentTime dT agent =
                 |> Maybe.andThen extractCallouts
                 |> updateCurrentSignal currentTime agent.callingOut
 
+        increasedHunger : Range
         increasedHunger =
             agent.hunger
-                + 0.000003
-                * toFloat dT
-                |> clamp 0 1
+                |> mapRange (\hunger -> hunger + 0.000003 * toFloat dT)
 
         hitpointsAfterStarvation =
             case agent.hp of
                 Hitpoints current max ->
-                    if agent.hunger > 0.5 then
+                    if (agent.hunger |> normaliseRange) > 0.5 then
                         Hitpoints ((current - 0.001 * toFloat dT) |> clamp 0 max) max
 
                     else
@@ -307,7 +284,7 @@ moveAgent currentTime dT agent =
     in
     { agent
         | physics = newPhysics
-        , topActionLastStartTimes = newtopActionLastStartTimes
+        , topActionLastStartTimes = newTopActionLastStartTimes
         , callingOut = newCall
         , hunger = newHunger
         , currentAction = topAction |> Maybe.map .name |> withDefault "none"
@@ -748,14 +725,14 @@ collideRetardantAndFire fire mretardant =
             if collisionResult.penetration > 0 then
                 let
                     updatedHP =
-                        fire.hp - 0.3
+                        (fire.hp |> hpRawValue) - 0.3
 
                     updatedFire =
                         if updatedHP < 0 then
                             Nothing
 
                         else
-                            Just { fire | hp = updatedHP }
+                            Just { fire | hp = updatedHP |> setHitpoints fire.hp }
                 in
                 ( updatedFire
                 , Nothing
@@ -887,7 +864,7 @@ usePhysics newPhysics target =
     { target | physics = newPhysics }
 
 
-eat : Agent -> ( Float, Holding )
+eat : Agent -> ( Range, Holding )
 eat agent =
     let
         someFood : Portable -> Bool
@@ -900,7 +877,7 @@ eat agent =
                     False
     in
     if agent |> isHolding someFood then
-        ( agent.hunger - 1 |> clamp 0 1
+        ( 0 |> updateRange agent.hunger
         , agent.holding |> mapHeld biteFood
         )
 
@@ -913,10 +890,12 @@ biteFood p =
     case p of
         Edible food ->
             let
+                newJoules : Range
                 newJoules =
-                    food.joules - 1000
+                    food.joules
+                        |> mapRange (\val -> val - 1000)
             in
-            if newJoules <= 0 then
+            if normaliseRange newJoules <= 0 then
                 Nothing
 
             else
@@ -951,14 +930,15 @@ mapHeld f held =
 rotFood : Int -> Food -> Maybe Food
 rotFood deltaT food =
     let
+        newJoules : Float
         newJoules =
-            food.joules - (deltaT * 20000 |> toFloat)
+            (food.joules |> rangeCurrentValue) - (deltaT * 20000 |> toFloat)
     in
     if newJoules <= 0 then
         Nothing
 
     else
-        Just { food | joules = newJoules }
+        Just { food | joules = newJoules |> updateRange food.joules }
 
 
 outcomeToString : ActionOutcome -> String
@@ -1069,17 +1049,6 @@ angleFuzz spreadInRadians time =
 justSomethings : ( List (Maybe a), b ) -> ( List a, b )
 justSomethings =
     \( list, b ) -> ( list |> Maybe.Extra.values, b )
-
-
-{-| Turns a Hitpoints type into a normalised float, between 0 (dead) and 1 (full hp).
--}
-hpAsFloat : Hitpoints -> Float
-hpAsFloat hp =
-    case hp of
-        Hitpoints current max ->
-            current
-                / max
-                |> clamp 0 1
 
 
 

@@ -3,7 +3,6 @@ module View exposing (view)
 import BoundingBox2d as BoundingBox2d exposing (BoundingBox2d)
 import Browser exposing (Document)
 import Circle2d as Circle2d
-import DefaultData exposing (hpMax)
 import Dict
 import Direction2d as Direction2d
 import Frame2d as Frame2d
@@ -12,11 +11,30 @@ import Html exposing (Attribute, Html, code, div, h2, h3, h4, h5, li, table, td,
 import Html.Attributes exposing (style)
 import Html.Events exposing (onClick)
 import LineSegment2d
-import List.Extra
 import Point2d as Point2d exposing (xCoordinate, yCoordinate)
 import Round
 import Svg exposing (Svg, g, stop, text_)
-import Svg.Attributes exposing (cx, cy, dx, fill, fontSize, id, offset, r, stopColor, stopOpacity, stroke, textAnchor, viewBox, x, x1, x2, y, y1, y2)
+import Svg.Attributes
+    exposing
+        ( cx
+        , cy
+        , fill
+        , fontSize
+        , id
+        , offset
+        , r
+        , stopColor
+        , stopOpacity
+        , stroke
+        , textAnchor
+        , viewBox
+        , x
+        , x1
+        , x2
+        , y
+        , y1
+        , y2
+        )
 import Time exposing (Posix)
 import Tuple exposing (first, second)
 import Types
@@ -37,7 +55,23 @@ import Types
         , Retardant
         , Signal(..)
         )
-import UtilityFunctions exposing (boolString, clampTo, computeConsideration, computeUtility, differenceInMillis, getActions, getConsiderationRawValue, isHolding, linearTransform, portableIsExtinguisher, portableIsFood)
+import UtilityFunctions
+    exposing
+        ( boolString
+        , clampTo
+        , computeConsideration
+        , computeUtility
+        , differenceInMillis
+        , getActions
+        , getConsiderationRawValue
+        , hpAsFloat
+        , isHolding
+        , linearTransform
+        , normaliseRange
+        , portableIsExtinguisher
+        , portableIsFood
+        , rangeCurrentValue
+        )
 import Vector2d as Vector2d exposing (scaleBy)
 
 
@@ -325,7 +359,7 @@ agentStats agent =
     let
         stats : List ( String, String )
         stats =
-            [ ( "hunger", Round.round 1 agent.hunger ++ "%" )
+            [ ( "hunger", (agent.hunger |> rangeCurrentValue |> Round.round 1) ++ "%" )
             , ( "hp", hpPercentage agent.hp )
             , ( "holding", carryingAsString agent.holding )
             , ( "current action", agent.currentAction )
@@ -369,7 +403,7 @@ portableAsString p =
             "extinguisher @ " ++ Round.round 0 (ext.remaining / ext.capacity * 100) ++ "%"
 
         Edible food ->
-            "food @ " ++ Round.round 0 (food.joules / food.freshJoules * 100) ++ "%"
+            "food @ " ++ Round.round 0 (normaliseRange food.joules * 100) ++ "%"
 
 
 indentWithLine : List (Attribute msg)
@@ -808,7 +842,7 @@ renderFire fire =
                 []
 
         healthFactor =
-            fire.hp / hpMax.fire
+            hpAsFloat fire.hp
     in
     g [ id <| "fire_" ++ String.fromInt fire.id ]
         [ renderEmoji "🔥" fire.physics.position
