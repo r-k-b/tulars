@@ -10,6 +10,8 @@ module Types exposing
     , Fire
     , FireExtinguisher
     , Food
+    , Growable
+    , GrowableState(..)
     , Hitpoints(..)
     , Holding(..)
     , InputFunction(..)
@@ -45,6 +47,7 @@ type alias Model =
     , agents : List Agent
     , foods : List Food
     , fires : List Fire
+    , growables : List Growable
     , extinguishers : List FireExtinguisher
     , retardants : List Retardant
     , paused : Bool
@@ -204,11 +207,18 @@ type alias Food =
     }
 
 
+type GrowableState
+    = FertileSoil
+    | GrowingPlant { growth : Range, hp : Range }
+    | GrownPlant { hp : Range }
+    | DeadPlant { hp : Range }
 
---type Growable
---    = FertileSoil
---    | GrowingPlant { growth : ZeroToOne, hp : ZeroToOne }
---    | GrownPlant
+
+type alias Growable =
+    { id : Int
+    , physics : PhysicalProperties
+    , state : GrowableState
+    }
 
 
 type alias Fire =

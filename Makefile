@@ -1,7 +1,7 @@
 # Based on https://github.com/rowanmanning/make/blob/8628a5c2f7542def689bd4718f6bca2b8f7db533/javascript/index.mk
 
 dist/main.js: install
-	@npx elm make app/Main.elm --debug --output=dist/main.js
+	@npx elm make app/Main.elm --output=dist/main.js
 	@$(TASK_DONE)
 
 dist/main.optimized.js dist/main.optimized.min.js: install

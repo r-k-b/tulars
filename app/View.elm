@@ -37,24 +37,7 @@ import Svg.Attributes
         )
 import Time exposing (Posix)
 import Tuple exposing (first, second)
-import Types
-    exposing
-        ( Action
-        , Agent
-        , Consideration
-        , ConsiderationInput(..)
-        , Fire
-        , FireExtinguisher
-        , Food
-        , Hitpoints(..)
-        , Holding(..)
-        , InputFunction(..)
-        , Model
-        , Msg(..)
-        , Portable(..)
-        , Retardant
-        , Signal(..)
-        )
+import Types exposing (Action, Agent, Consideration, ConsiderationInput(..), Fire, FireExtinguisher, Food, Growable, GrowableState(..), Hitpoints(..), Holding(..), InputFunction(..), Model, Msg(..), Portable(..), Retardant, Signal(..))
 import UtilityFunctions
     exposing
         ( boolString
@@ -166,6 +149,8 @@ mainMap model =
                 (List.map renderFood model.foods)
             , g [ id "fires" ]
                 (List.map renderFire model.fires)
+            , g [ id "growables" ]
+                (List.map renderGrowable model.growables)
             , g [ id "extinguishers" ]
                 (List.map renderExtinguisher model.extinguishers)
             , g [ id "retardantProjectiles" ]
@@ -850,3 +835,25 @@ renderFire fire =
         , redness
         ]
         |> Svg.scaleAbout fire.physics.position healthFactor
+
+
+renderGrowable : Growable -> Svg Msg
+renderGrowable growable =
+    let
+        emoji =
+            case growable.state of
+                FertileSoil ->
+                    "🕳"
+
+                GrowingPlant stats ->
+                    "🌱"
+
+                GrownPlant stats ->
+                    "🌾"
+
+                DeadPlant stats ->
+                    "🍂"
+    in
+    g [ id <| "growable_" ++ String.fromInt growable.id ]
+        [ renderEmoji emoji growable.physics.position
+        ]

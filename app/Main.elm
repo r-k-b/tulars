@@ -35,7 +35,15 @@ main =
 
 initialModelAt : Posix -> Model
 initialModelAt posixTime =
-    Model posixTime DD.agents DD.foods DD.fires DD.extinguishers [] False
+    { time = posixTime
+    , agents = DD.agents
+    , foods = DD.foods
+    , fires = DD.fires
+    , growables = DD.growables
+    , extinguishers = DD.extinguishers
+    , retardants = []
+    , paused = False
+    }
 
 
 init : Int -> ( Model, Cmd Msg )

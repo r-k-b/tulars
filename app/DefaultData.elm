@@ -3,6 +3,7 @@ module DefaultData exposing
     , extinguishers
     , fires
     , foods
+    , growables
     , retardantRadius
     )
 
@@ -22,6 +23,8 @@ import Types
         , Fire
         , FireExtinguisher
         , Food
+        , Growable
+        , GrowableState(..)
         , Hitpoints(..)
         , Holding(..)
         , InputFunction(..)
@@ -71,6 +74,21 @@ fires =
             , radius = fireRadius
             }
       , hp = Hitpoints 100 100
+      }
+    ]
+
+
+growables : List Growable
+growables =
+    [ { id = 1
+      , physics =
+            { facing = Direction2d.fromAngle (degrees 0)
+            , position = Point2d.fromCoordinates ( -50, -50 )
+            , velocity = Vector2d.fromComponents ( 0, 0 )
+            , acceleration = Vector2d.zero
+            , radius = fireRadius
+            }
+      , state = FertileSoil
       }
     ]
 
