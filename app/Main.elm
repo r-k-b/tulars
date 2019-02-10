@@ -2,7 +2,7 @@ module Main exposing (main, pickUpFood)
 
 import Browser
 import Browser.Events exposing (onAnimationFrame)
-import DefaultData exposing (retardantRadius)
+import DefaultData exposing (armsReach, retardantRadius)
 import Dict exposing (Dict)
 import Direction2d as Direction2d
 import List exposing (map)
@@ -786,7 +786,7 @@ pickUpFood agent foodID foods =
         targetIsAvailable food =
             food.id
                 == foodID
-                && ((food.physics.position |> Point2d.distanceFrom agent.physics.position) |> (>) 20)
+                && ((food.physics.position |> Point2d.distanceFrom agent.physics.position) |> (>) armsReach)
 
         foodAvailable : Bool
         foodAvailable =
@@ -835,7 +835,7 @@ plantGrowable dT agent growableID growables =
         targetIsAvailable growable =
             growable.id
                 == growableID
-                && (agent.physics.position |> Point2d.distanceFrom growable.physics.position |> (>) 20)
+                && (agent.physics.position |> Point2d.distanceFrom growable.physics.position |> (>) armsReach)
 
         tend : Growable -> Growable
         tend growable =

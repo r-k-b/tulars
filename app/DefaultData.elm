@@ -1,6 +1,7 @@
 module DefaultData exposing
     ( agentRadius
     , agents
+    , armsReach
     , extinguishers
     , fires
     , foodRadius
@@ -404,15 +405,15 @@ moveToFood =
                   , function = Exponential 2
                   , input = DistanceToTargetPoint food.physics.position
                   , inputMin = 3000
-                  , inputMax = 20
-                  , weighting = 0.5
+                  , inputMax = armsReach
+                  , weighting = 1
                   , offset = 0
                   }
                 , { name = "in range of food item"
                   , function = Exponential 0.01
                   , input = DistanceToTargetPoint food.physics.position
-                  , inputMin = 20
-                  , inputMax = 25
+                  , inputMin = armsReach * 0.9
+                  , inputMax = armsReach
                   , weighting = 1
                   , offset = 0
                   }
@@ -454,8 +455,8 @@ stopAtFood =
                 [ { name = "in range of food item"
                   , function = Exponential 0.01
                   , input = DistanceToTargetPoint food.physics.position
-                  , inputMin = 25
-                  , inputMax = 20
+                  , inputMin = armsReach
+                  , inputMax = armsReach * 0.9
                   , weighting = 1
                   , offset = 0
                   }
@@ -497,8 +498,8 @@ pickUpFoodToEat =
                 [ { name = "in pickup range"
                   , function = Exponential 0.01
                   , input = DistanceToTargetPoint food.physics.position
-                  , inputMin = 26
-                  , inputMax = 25
+                  , inputMin = armsReach
+                  , inputMax = armsReach * 0.9
                   , weighting = 2
                   , offset = 0
                   }
@@ -898,8 +899,8 @@ hoverNear targetAgentName =
                 [ { name = "close, but not close enough"
                   , function = Normal 2.6 0.5 10
                   , input = DistanceToTargetPoint otherAgent.physics.position
-                  , inputMin = 30
-                  , inputMax = 70
+                  , inputMin = armsReach
+                  , inputMax = armsReach * 3
                   , weighting = 0.6
                   , offset = 0
                   }
@@ -932,8 +933,8 @@ plantGrowables =
                 [ { name = "distance to fertile soil"
                   , function = Linear 1 0
                   , input = DistanceToTargetPoint growable.physics.position
-                  , inputMin = 10
-                  , inputMax = 20
+                  , inputMin = armsReach * 0.9
+                  , inputMax = armsReach
                   , weighting = 0.2
                   , offset = 0
                   }
@@ -948,8 +949,8 @@ plantGrowables =
                 [ { name = "close enough to plant the seed"
                   , function = Linear 1 0
                   , input = DistanceToTargetPoint growable.physics.position
-                  , inputMin = 20
-                  , inputMax = 19
+                  , inputMin = armsReach
+                  , inputMax = armsReach * 0.9
                   , weighting = 1
                   , offset = 0
                   }
@@ -964,8 +965,8 @@ plantGrowables =
                 [ { name = "in range of fertile growable"
                   , function = Linear 1 0
                   , input = DistanceToTargetPoint growable.physics.position
-                  , inputMin = 15
-                  , inputMax = 5
+                  , inputMin = armsReach
+                  , inputMax = armsReach * 0.9
                   , weighting = 1.1
                   , offset = 0
                   }
@@ -995,6 +996,11 @@ withSuffix id s =
 agentRadius : Float
 agentRadius =
     10
+
+
+armsReach : Float
+armsReach =
+    20
 
 
 extinguisherRadius : Float
