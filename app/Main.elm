@@ -815,7 +815,7 @@ pickUpFood agent foodID foods =
         carry : Agent
         carry =
             if agentIsAvailable && foodAvailable then
-                case foods |> List.head of
+                case foods |> List.filter targetIsAvailable |> List.head of
                     Nothing ->
                         agent
 
