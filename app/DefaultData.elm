@@ -245,6 +245,28 @@ agents =
       , foodsGivenAway = Set.empty
       , hp = Hitpoints 100 100
       }
+    , { name = "Dead Don"
+      , physics =
+            { facing = Direction2d.fromAngle (degrees 70)
+            , position = Point2d.fromCoordinates ( 200, 150 )
+            , velocity = Vector2d.fromComponents ( -1, -10 )
+            , acceleration = Vector2d.zero
+            , radius = agentRadius
+            }
+      , actionGenerators = []
+      , visibleActions = Dict.empty
+      , variableActions = []
+      , constantActions = []
+      , currentAction = "none"
+      , currentOutcome = "none"
+      , hunger = Range { min = 0, max = 1, value = 0 }
+      , beggingForFood = False
+      , callingOut = Nothing
+      , holding = EmptyHanded
+      , topActionLastStartTimes = Dict.empty
+      , foodsGivenAway = Set.empty
+      , hp = Hitpoints 0 100
+      }
     ]
 
 

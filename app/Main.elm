@@ -527,7 +527,7 @@ moveWorld newTime model =
 
         survivingAgents =
             model.agents
-                |> List.filter (.hp >> hpAsFloat >> (<=) 0)
+                |> List.filter (.hp >> hpAsFloat >> (<) 0)
 
         movedAgents =
             survivingAgents
