@@ -800,8 +800,8 @@ plantGrowable agent growableID growables =
             growable.id
                 == growableID
                 && (growable |> isReadyToPlant)
+                && (agent.physics.position |> Point2d.distanceFrom growable.physics.position |> (>) 20)
 
-        --                && (agent.physics.position |> Point2d.distanceFrom growable.physics.position |> (>) 20)
         tend : Growable -> Growable
         tend growable =
             if growable |> targetIsAvailable then

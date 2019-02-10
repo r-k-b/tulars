@@ -907,21 +907,26 @@ plantGrowables =
     let
         generator : Model -> Agent -> List Action
         generator model _ =
-            model.growables
-                |> List.filter isReadyToPlant
-                |> List.map getInSeedPlantingRange
+            let
+                targets : List Growable
+                targets =
+                    model.growables
+                        |> List.filter isReadyToPlant
+            in
+            (targets |> List.map getInSeedPlantingRange)
+                ++ (targets |> List.map plantSeed)
 
         getInSeedPlantingRange : Growable -> Action
         getInSeedPlantingRange growable =
             let
-                name : String
-                name =
+                targetName : String
+                targetName =
                     "growable #" ++ String.fromInt growable.id
             in
             Action
-                ("get in seed planting range of " ++ name)
-                (MoveTo name growable.physics.position)
-                [ { name = ""
+                ("get in seed planting range of " ++ targetName)
+                (MoveTo targetName growable.physics.position)
+                [ { name = "distance to fertile soil"
                   , function = Linear 0 1
                   , input = DistanceToTargetPoint growable.physics.position
                   , inputMin = 10
@@ -931,8 +936,29 @@ plantGrowables =
                   }
                 ]
                 Dict.empty
+
+        plantSeed : Growable -> Action
+        plantSeed growable =
+            let
+                targetName : String
+                targetName =
+                    "growable #" ++ String.fromInt growable.id
+            in
+            Action
+                ("plant seed in " ++ targetName)
+                (PlantSeed growable.id)
+                [ { name = "close enough to plant the seed"
+                  , function = Linear 1 0
+                  , input = DistanceToTargetPoint growable.physics.position
+                  , inputMin = 20
+                  , inputMax = 19
+                  , weighting = 1
+                  , offset = 0
+                  }
+                ]
+                Dict.empty
     in
-    ActionGenerator "avoid fire" generator
+    ActionGenerator "plant things to eat later" generator
 
 
 defaultHysteresis : Float -> Consideration
