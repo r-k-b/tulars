@@ -1005,7 +1005,7 @@ renderProgressBar range =
             [ rect
                 [ pixelWidth / -2 |> String.fromFloat |> x
                 , yOffset |> String.fromFloat |> y
-                , pixelWidth |> String.fromFloat |> width
+                , pixelWidth * normaliseRange range |> String.fromFloat |> width
                 , pixelHeight |> String.fromFloat |> height
                 , fill "blue"
                 ]
