@@ -15,6 +15,7 @@ module Types exposing
     , Hitpoints(..)
     , Holding(..)
     , InputFunction(..)
+    , Layer(..)
     , Model
     , Msg(..)
     , Physical
@@ -209,9 +210,9 @@ type alias Food =
 
 type GrowableState
     = FertileSoil
-    | GrowingPlant { growth : Range, hp : Range }
-    | GrownPlant { hp : Range }
-    | DeadPlant { hp : Range }
+    | GrowingPlant { growth : Range, hp : Hitpoints }
+    | GrownPlant { hp : Hitpoints }
+    | DeadPlant { hp : Hitpoints }
 
 
 type alias Growable =
@@ -263,3 +264,5 @@ type alias FireExtinguisher =
     , capacity : Float
     , remaining : Float
     }
+
+type Layer = Names | StatusBars

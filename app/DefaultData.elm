@@ -83,25 +83,21 @@ growables =
     [ FertileSoil |> basicGrowableAt ( -80, -70 ) 1
     , FertileSoil |> basicGrowableAt ( -80, -50 ) 2
     , FertileSoil |> basicGrowableAt ( -80, -30 ) 3
-    , GrowingPlant { growth = plantGrowth 0, hp = plantHP 1 } |> basicGrowableAt ( -60, -70 ) 4
-    , GrowingPlant { growth = plantGrowth 0.5, hp = plantHP 1 } |> basicGrowableAt ( -60, -50 ) 5
-    , GrowingPlant { growth = plantGrowth 1, hp = plantHP 1 } |> basicGrowableAt ( -60, -30 ) 6
-    , GrownPlant { hp = plantHP 0.1 } |> basicGrowableAt ( -40, -70 ) 7
-    , GrownPlant { hp = plantHP 0.5 } |> basicGrowableAt ( -40, -50 ) 8
-    , GrownPlant { hp = plantHP 1 } |> basicGrowableAt ( -40, -30 ) 9
-    , DeadPlant { hp = plantHP 0.1 } |> basicGrowableAt ( -20, -70 ) 10
-    , DeadPlant { hp = plantHP 0.5 } |> basicGrowableAt ( -20, -50 ) 11
-    , DeadPlant { hp = plantHP 1 } |> basicGrowableAt ( -20, -30 ) 12
+    , GrowingPlant { growth = plantGrowth 0, hp = Hitpoints 1 50 } |> basicGrowableAt ( -60, -70 ) 4
+    , GrowingPlant { growth = plantGrowth 0.5, hp = Hitpoints 30 50 } |> basicGrowableAt ( -60, -50 ) 5
+    , GrowingPlant { growth = plantGrowth 1, hp = Hitpoints 50 50 } |> basicGrowableAt ( -60, -30 ) 6
+    , GrownPlant { hp = Hitpoints 1 50 } |> basicGrowableAt ( -40, -70 ) 7
+    , GrownPlant { hp = Hitpoints 20 50 } |> basicGrowableAt ( -40, -50 ) 8
+    , GrownPlant { hp = Hitpoints 50 50 } |> basicGrowableAt ( -40, -30 ) 9
+    , DeadPlant { hp = Hitpoints 1 50 } |> basicGrowableAt ( -20, -90 ) 10
+    , DeadPlant { hp = Hitpoints 30 50 } |> basicGrowableAt ( -20, -50 ) 11
+    , DeadPlant { hp = Hitpoints 50 50 } |> basicGrowableAt ( -20, -30 ) 12
     ]
 
 
 plantGrowth : Float -> Range
 plantGrowth value =
     Range { min = 0, max = 1, value = value }
-
-
-plantHP =
-    plantGrowth
 
 
 basicGrowableAt : ( Float, Float ) -> Int -> GrowableState -> Growable

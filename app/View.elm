@@ -13,13 +13,14 @@ import Html.Events exposing (onClick)
 import LineSegment2d
 import Point2d as Point2d exposing (xCoordinate, yCoordinate)
 import Round
-import Svg exposing (Svg, g, stop, text_)
+import Svg exposing (Svg, g, rect, stop, text_)
 import Svg.Attributes
     exposing
         ( cx
         , cy
         , fill
         , fontSize
+        , height
         , id
         , offset
         , r
@@ -28,6 +29,7 @@ import Svg.Attributes
         , stroke
         , textAnchor
         , viewBox
+        , width
         , x
         , x1
         , x2
@@ -37,7 +39,27 @@ import Svg.Attributes
         )
 import Time exposing (Posix)
 import Tuple exposing (first, second)
-import Types exposing (Action, Agent, Consideration, ConsiderationInput(..), Fire, FireExtinguisher, Food, Growable, GrowableState(..), Hitpoints(..), Holding(..), InputFunction(..), Model, Msg(..), Portable(..), Retardant, Signal(..))
+import Types
+    exposing
+        ( Action
+        , Agent
+        , Consideration
+        , ConsiderationInput(..)
+        , Fire
+        , FireExtinguisher
+        , Food
+        , Growable
+        , GrowableState(..)
+        , Hitpoints(..)
+        , Holding(..)
+        , InputFunction(..)
+        , Layer(..)
+        , Model
+        , Msg(..)
+        , Portable(..)
+        , Retardant
+        , Signal(..)
+        )
 import UtilityFunctions
     exposing
         ( boolString
@@ -770,9 +792,25 @@ renderName agent =
     Svg.text_
         [ Svg.Attributes.textAnchor "middle"
         , Svg.Attributes.alignmentBaseline "hanging"
+        , layer Names
         ]
         [ Svg.text agent.name ]
         |> Svg.translateBy (Vector2d.from Point2d.origin agent.physics.position)
+
+
+layer : Layer -> Svg.Attribute Msg
+layer l =
+    let
+        suffix : String
+        suffix =
+            case l of
+                Names ->
+                    "names"
+
+                StatusBars ->
+                    "status-bars"
+    in
+    svgClass <| "layer__" ++ suffix
 
 
 renderFood : Food -> Svg Msg
@@ -853,7 +891,73 @@ renderGrowable growable =
 
                 DeadPlant _ ->
                     "🍂"
+
+        hp : Hitpoints
+        hp =
+            case growable.state of
+                FertileSoil ->
+                    Hitpoints 1 1
+
+                GrowingPlant stats ->
+                    stats.hp
+
+                GrownPlant stats ->
+                    stats.hp
+
+                DeadPlant stats ->
+                    stats.hp
     in
     g [ id <| "growable_" ++ String.fromInt growable.id ]
-        [ renderEmoji emoji growable.physics.position
+        [ renderEmoji emoji origin
+        , renderHealthBar hp
         ]
+        |> Svg.translateBy (Vector2d.from origin growable.physics.position)
+
+
+renderHealthBar : Hitpoints -> Svg Msg
+renderHealthBar hp =
+    let
+        pixelWidth : Float
+        pixelWidth =
+            20
+
+        pixelHeight : Float
+        pixelHeight =
+            5
+
+        normalisedHP : Float
+        normalisedHP =
+            hpAsFloat hp
+
+        yOffset : Float
+        yOffset =
+            5
+    in
+    g [ svgClass "healthbar" ]
+        (if normalisedHP == 1 then
+            []
+
+         else
+            [ rect
+                [ pixelWidth / -2 |> String.fromFloat |> x
+                , pixelHeight + yOffset |> String.fromFloat |> y
+                , pixelWidth |> String.fromFloat |> width
+                , pixelHeight |> String.fromFloat |> height
+                , fill "red"
+                ]
+                []
+            , rect
+                [ pixelWidth / -2 |> String.fromFloat |> x
+                , pixelHeight + yOffset |> String.fromFloat |> y
+                , pixelWidth * normalisedHP |> String.fromFloat |> width
+                , pixelHeight |> String.fromFloat |> height
+                , fill "green"
+                ]
+                []
+            ]
+        )
+
+
+origin : Point2d.Point2d
+origin =
+    Point2d.fromCoordinates ( 0, 0 )

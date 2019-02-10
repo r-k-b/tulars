@@ -13,8 +13,45 @@ import Physics exposing (collide)
 import Point2d as Point2d
 import Set exposing (insert)
 import Time exposing (Posix)
-import Types exposing (Action, ActionOutcome(..), Agent, Collision, CurrentSignal, Fire, FireExtinguisher, Food, Hitpoints(..), Holding(..), Model, Msg(..), Physical, PhysicalProperties, Portable(..), Range(..), ReferenceToPortable(..), Retardant, Signal(..))
-import UtilityFunctions exposing (boolString, computeUtility, computeVariableActions, getActions, hpAsFloat, hpRawValue, isBeggingRelated, isMovementAction, mapRange, normaliseRange, onlyArrestMomentum, rangeCurrentValue, setHitpoints, updateRange)
+import Types
+    exposing
+        ( Action
+        , ActionOutcome(..)
+        , Agent
+        , Collision
+        , CurrentSignal
+        , Fire
+        , FireExtinguisher
+        , Food
+        , Hitpoints(..)
+        , Holding(..)
+        , Model
+        , Msg(..)
+        , Physical
+        , PhysicalProperties
+        , Portable(..)
+        , Range(..)
+        , ReferenceToPortable(..)
+        , Retardant
+        , Signal(..)
+        )
+import UtilityFunctions
+    exposing
+        ( boolString
+        , computeUtility
+        , computeVariableActions
+        , getActions
+        , hpAsFloat
+        , hpRawValue
+        , isBeggingRelated
+        , isMovementAction
+        , mapRange
+        , normaliseRange
+        , onlyArrestMomentum
+        , rangeCurrentValue
+        , setHitpoints
+        , updateRange
+        )
 import Vector2d as Vector2d exposing (Vector2d)
 import View exposing (view)
 

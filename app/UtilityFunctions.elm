@@ -27,7 +27,21 @@ import Dict
 import Point2d as Point2d
 import Set exposing (member)
 import Time exposing (Posix, posixToMillis)
-import Types exposing (Action, ActionGenerator(..), ActionOutcome(..), Agent, Consideration, ConsiderationInput(..), Hitpoints(..), Holding(..), InputFunction(..), Model, Portable(..), Range(..))
+import Types
+    exposing
+        ( Action
+        , ActionGenerator(..)
+        , ActionOutcome(..)
+        , Agent
+        , Consideration
+        , ConsiderationInput(..)
+        , Hitpoints(..)
+        , Holding(..)
+        , InputFunction(..)
+        , Model
+        , Portable(..)
+        , Range(..)
+        )
 import Vector2d as Vector2d
 
 
