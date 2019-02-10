@@ -1,4 +1,4 @@
-module Scenes exposing (loadScene, sceneA, sceneB)
+module Scenes exposing (loadScene, sceneA, sceneB, sceneC)
 
 import DefaultData as DD
 import Types exposing (Model, Scene)
@@ -33,6 +33,17 @@ sceneB =
     , foods = []
     , fires = []
     , growables = DD.growables
+    , extinguishers = []
+    , retardants = []
+    }
+
+
+sceneC : Scene
+sceneC =
+    { agents = DD.agents
+    , foods = DD.foods
+    , fires = []
+    , growables = []
     , extinguishers = []
     , retardants = []
     }

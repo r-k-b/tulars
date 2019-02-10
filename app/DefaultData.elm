@@ -1,7 +1,9 @@
 module DefaultData exposing
-    ( agents
+    ( agentRadius
+    , agents
     , extinguishers
     , fires
+    , foodRadius
     , foods
     , growables
     , retardantRadius
@@ -615,7 +617,7 @@ dropFoodForBeggar =
                 ]
                 Dict.empty
     in
-    ActionGenerator "pick up food to eat" generator
+    ActionGenerator "drop food for beggars" generator
 
 
 moveToGiveFoodToBeggar : ActionGenerator
@@ -659,7 +661,7 @@ moveToGiveFoodToBeggar =
                 ]
                 Dict.empty
     in
-    ActionGenerator "pick up food to eat" generator
+    ActionGenerator "move to give food to beggars" generator
 
 
 eatCarriedFood : ActionGenerator

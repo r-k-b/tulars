@@ -1,4 +1,4 @@
-module Main exposing (main)
+module Main exposing (main, pickUpFood)
 
 import Browser
 import Browser.Events exposing (onAnimationFrame)
@@ -11,7 +11,7 @@ import Maybe exposing (withDefault)
 import Maybe.Extra
 import Physics exposing (collide)
 import Point2d as Point2d
-import Scenes exposing (loadScene, sceneA, sceneB)
+import Scenes exposing (loadScene, sceneA, sceneB, sceneC)
 import Set exposing (insert)
 import Time exposing (Posix)
 import Types
@@ -85,7 +85,7 @@ initialModelAt posixTime =
     , retardants = []
     , paused = False
     }
-        |> loadScene sceneB
+        |> loadScene sceneA
 
 
 init : Int -> ( Model, Cmd Msg )
@@ -784,7 +784,9 @@ pickUpFood agent foodID foods =
     let
         targetIsAvailable : Food -> Bool
         targetIsAvailable food =
-            food.id == foodID
+            food.id
+                == foodID
+                && ((food.physics.position |> Point2d.distanceFrom agent.physics.position) |> (>) 20)
 
         foodAvailable : Bool
         foodAvailable =
