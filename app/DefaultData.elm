@@ -830,7 +830,7 @@ fightFires =
                 ("move to get an extinguisher" |> withSuffix extinguisher.id)
                 (MoveTo ("fire extinguisher" |> withSuffix extinguisher.id) extinguisher.physics.position)
                 [ { name = "get close enough to pick it up"
-                  , function = Linear 0 1
+                  , function = Linear 1 0
                   , input = DistanceToTargetPoint extinguisher.physics.position
                   , inputMin = 10
                   , inputMax = 20
@@ -920,19 +920,15 @@ plantGrowables =
             in
             (targets |> List.map getInSeedPlantingRange)
                 ++ (targets |> List.map plantSeed)
+                ++ (targets |> List.map stopMovingWhenPlantingSeeds)
 
         getInSeedPlantingRange : Growable -> Action
         getInSeedPlantingRange growable =
-            let
-                targetName : String
-                targetName =
-                    "growable #" ++ String.fromInt growable.id
-            in
             Action
-                ("get in seed planting range of " ++ targetName)
-                (MoveTo targetName growable.physics.position)
+                ("get in seed planting range of growable" |> withSuffix growable.id)
+                (MoveTo ("growable" |> withSuffix growable.id) growable.physics.position)
                 [ { name = "distance to fertile soil"
-                  , function = Linear 0 1
+                  , function = Linear 1 0
                   , input = DistanceToTargetPoint growable.physics.position
                   , inputMin = 10
                   , inputMax = 20
@@ -944,13 +940,8 @@ plantGrowables =
 
         plantSeed : Growable -> Action
         plantSeed growable =
-            let
-                targetName : String
-                targetName =
-                    "growable #" ++ String.fromInt growable.id
-            in
             Action
-                ("plant seed in " ++ targetName)
+                ("plant seed in growable" |> withSuffix growable.id)
                 (PlantSeed growable.id)
                 [ { name = "close enough to plant the seed"
                   , function = Linear 1 0
@@ -958,6 +949,22 @@ plantGrowables =
                   , inputMin = 20
                   , inputMax = 19
                   , weighting = 1
+                  , offset = 0
+                  }
+                ]
+                Dict.empty
+
+        stopMovingWhenPlantingSeeds : Growable -> Action
+        stopMovingWhenPlantingSeeds growable =
+            Action
+                ("stop when in range of fertile growable" |> withSuffix growable.id)
+                ArrestMomentum
+                [ { name = "in range of fertile growable"
+                  , function = Linear 1 0
+                  , input = DistanceToTargetPoint growable.physics.position
+                  , inputMin = 15
+                  , inputMax = 5
+                  , weighting = 1.1
                   , offset = 0
                   }
                 ]
