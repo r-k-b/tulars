@@ -57,6 +57,7 @@ import Types
         , Model
         , Msg(..)
         , Portable(..)
+        , Range(..)
         , Retardant
         , Signal(..)
         )
@@ -909,10 +910,26 @@ renderGrowable growable =
 
                 DeadPlant stats ->
                     stats.hp
+
+        progress : Range
+        progress =
+            case growable.state of
+                FertileSoil ->
+                    Range { min = 0, max = 1, value = 1 }
+
+                GrowingPlant stats ->
+                    stats.growth
+
+                GrownPlant _ ->
+                    Range { min = 0, max = 1, value = 1 }
+
+                DeadPlant _ ->
+                    Range { min = 0, max = 1, value = 1 }
     in
     g [ id <| "growable_" ++ String.fromInt growable.id ]
         [ renderEmoji emoji origin
         , renderHealthBar hp
+        , renderProgressBar progress
         ]
         |> Svg.translateBy (Vector2d.from origin growable.physics.position)
 
@@ -955,6 +972,42 @@ renderHealthBar hp =
                 , pixelWidth * normalisedHP |> String.fromFloat |> width
                 , pixelHeight |> String.fromFloat |> height
                 , fill "green"
+                ]
+                []
+            ]
+        )
+
+
+renderProgressBar : Range -> Svg Msg
+renderProgressBar range =
+    let
+        pixelWidth : Float
+        pixelWidth =
+            20
+
+        pixelHeight : Float
+        pixelHeight =
+            2
+
+        normalised : Float
+        normalised =
+            normaliseRange range
+
+        yOffset : Float
+        yOffset =
+            10
+    in
+    g [ svgClass "progressbar" ]
+        (if normalised == 1 || normalised == 0 then
+            []
+
+         else
+            [ rect
+                [ pixelWidth / -2 |> String.fromFloat |> x
+                , yOffset |> String.fromFloat |> y
+                , pixelWidth |> String.fromFloat |> width
+                , pixelHeight |> String.fromFloat |> height
+                , fill "blue"
                 ]
                 []
             ]
