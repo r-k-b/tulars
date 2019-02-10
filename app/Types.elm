@@ -72,6 +72,7 @@ type Msg
     | ToggleConditionDetailsVisibility String String String
     | TogglePaused
     | Reset
+    | LoadScene Scene
 
 
 type alias Agent =

@@ -184,6 +184,9 @@ updateHelp msg model =
             in
             { model | agents = newAgents }
 
+        LoadScene scene ->
+            model |> loadScene scene
+
 
 moveProjectiles : Int -> List (Physical a) -> List (Physical a)
 moveProjectiles dTime projectiles =

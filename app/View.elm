@@ -13,6 +13,7 @@ import Html.Events exposing (onClick)
 import LineSegment2d
 import Point2d as Point2d exposing (xCoordinate, yCoordinate)
 import Round
+import Scenes exposing (sceneA, sceneB, sceneC)
 import Svg exposing (Svg, g, rect, stop, text_)
 import Svg.Attributes
     exposing
@@ -106,7 +107,7 @@ view model =
 
 renderTopButtons : Model -> Html Msg
 renderTopButtons model =
-    div [ style "position" "sticky", style "top" "0" ]
+    div [ style "position" "sticky", style "top" "0", style "z-index" "1" ]
         [ Html.button [ Html.Events.onClick TogglePaused ]
             [ text
                 (if model.paused then
@@ -116,8 +117,12 @@ renderTopButtons model =
                     "Pause"
                 )
             ]
-        , Html.button [ Html.Events.onClick Reset ]
-            [ text "Reset" ]
+        , Html.button [ onClick (LoadScene sceneA) ]
+            [ text "Load Scene A" ]
+        , Html.button [ onClick (LoadScene sceneB) ]
+            [ text "Load Scene B" ]
+        , Html.button [ onClick (LoadScene sceneC) ]
+            [ text "Load Scene C" ]
         ]
 
 
