@@ -48,7 +48,7 @@ foods =
             , acceleration = Vector2d.zero
             , radius = foodRadius
             }
-      , joules = Range { min = 0, max = 3 * 10 ^ 9, currentValue = 3 * 10 ^ 9 }
+      , joules = Range { min = 0, max = 3 * 10 ^ 9, value = 3 * 10 ^ 9 }
       }
     , { id = 2
       , physics =
@@ -58,7 +58,7 @@ foods =
             , acceleration = Vector2d.zero
             , radius = foodRadius
             }
-      , joules = Range { min = 0, max = 3 * 10 ^ 9, currentValue = 3 * 10 ^ 9 }
+      , joules = Range { min = 0, max = 3 * 10 ^ 9, value = 3 * 10 ^ 9 }
       }
     ]
 
@@ -80,17 +80,42 @@ fires =
 
 growables : List Growable
 growables =
-    [ { id = 1
-      , physics =
-            { facing = Direction2d.fromAngle (degrees 0)
-            , position = Point2d.fromCoordinates ( -50, -50 )
-            , velocity = Vector2d.fromComponents ( 0, 0 )
-            , acceleration = Vector2d.zero
-            , radius = fireRadius
-            }
-      , state = FertileSoil
-      }
+    [ FertileSoil |> basicGrowableAt ( -80, -70 ) 1
+    , FertileSoil |> basicGrowableAt ( -80, -50 ) 2
+    , FertileSoil |> basicGrowableAt ( -80, -30 ) 3
+    , GrowingPlant { growth = plantGrowth 0, hp = plantHP 1 } |> basicGrowableAt ( -60, -70 ) 4
+    , GrowingPlant { growth = plantGrowth 0.5, hp = plantHP 1 } |> basicGrowableAt ( -60, -50 ) 5
+    , GrowingPlant { growth = plantGrowth 1, hp = plantHP 1 } |> basicGrowableAt ( -60, -30 ) 6
+    , GrownPlant { hp = plantHP 0.1 } |> basicGrowableAt ( -40, -70 ) 7
+    , GrownPlant { hp = plantHP 0.5 } |> basicGrowableAt ( -40, -50 ) 8
+    , GrownPlant { hp = plantHP 1 } |> basicGrowableAt ( -40, -30 ) 9
+    , DeadPlant { hp = plantHP 0.1 } |> basicGrowableAt ( -20, -70 ) 10
+    , DeadPlant { hp = plantHP 0.5 } |> basicGrowableAt ( -20, -50 ) 11
+    , DeadPlant { hp = plantHP 1 } |> basicGrowableAt ( -20, -30 ) 12
     ]
+
+
+plantGrowth : Float -> Range
+plantGrowth value =
+    Range { min = 0, max = 1, value = value }
+
+
+plantHP =
+    plantGrowth
+
+
+basicGrowableAt : ( Float, Float ) -> Int -> GrowableState -> Growable
+basicGrowableAt coords id state =
+    { id = id
+    , physics =
+        { facing = Direction2d.fromAngle (degrees 0)
+        , position = Point2d.fromCoordinates coords
+        , velocity = Vector2d.fromComponents ( 0, 0 )
+        , acceleration = Vector2d.zero
+        , radius = growableRadius
+        }
+    , state = state
+    }
 
 
 extinguishers : List FireExtinguisher
@@ -98,7 +123,7 @@ extinguishers =
     [ { id = 1
       , physics =
             { facing = Direction2d.fromAngle (degrees 0)
-            , position = Point2d.fromCoordinates ( -20, -20 )
+            , position = Point2d.fromCoordinates ( -20, -300 )
             , velocity = Vector2d.fromComponents ( 0, 0 )
             , acceleration = Vector2d.zero
             , radius = extinguisherRadius
@@ -141,7 +166,7 @@ agents =
             ]
       , currentAction = "none"
       , currentOutcome = "none"
-      , hunger = Range { min = 0, max = 1, currentValue = 0.8 }
+      , hunger = Range { min = 0, max = 1, value = 0.8 }
       , beggingForFood = False
       , callingOut = Nothing
       , holding = EmptyHanded
@@ -179,7 +204,7 @@ agents =
             ]
       , currentAction = "none"
       , currentOutcome = "none"
-      , hunger = Range { min = 0, max = 1, currentValue = 0 }
+      , hunger = Range { min = 0, max = 1, value = 0 }
       , beggingForFood = False
       , callingOut = Nothing
       , holding = EmptyHanded
@@ -215,7 +240,7 @@ agents =
             ]
       , currentAction = "none"
       , currentOutcome = "none"
-      , hunger = Range { min = 0, max = 1, currentValue = 0.8 }
+      , hunger = Range { min = 0, max = 1, value = 0.8 }
       , beggingForFood = False
       , callingOut = Nothing
       , holding = EmptyHanded
@@ -270,7 +295,7 @@ stayNearOrigin =
           , input = DistanceToTargetPoint Point2d.origin
           , inputMin = 200
           , inputMax = 300
-          , weighting = 1
+          , weighting = 0.1
           , offset = 0
           }
         , defaultHysteresis 0.1
@@ -760,13 +785,13 @@ fightFires =
                 Dict.empty
 
         pickupNearbyExtinguishers : FireExtinguisher -> Action
-        pickupNearbyExtinguishers fext =
+        pickupNearbyExtinguishers extinguisher =
             Action
-                ("pick up a nearby fire extinguisher" |> withSuffix fext.id)
-                (PickUp <| ExtinguisherID fext.id)
+                ("pick up a nearby fire extinguisher" |> withSuffix extinguisher.id)
+                (PickUp <| ExtinguisherID extinguisher.id)
                 [ { name = "in pickup range"
                   , function = Exponential 0.01
-                  , input = DistanceToTargetPoint fext.physics.position
+                  , input = DistanceToTargetPoint extinguisher.physics.position
                   , inputMin = 26
                   , inputMax = 25
                   , weighting = 2
@@ -776,15 +801,15 @@ fightFires =
                 Dict.empty
 
         moveToGetExtinguishers : FireExtinguisher -> Action
-        moveToGetExtinguishers fext =
+        moveToGetExtinguishers extinguisher =
             Action
-                ("move to get an extinguisher" |> withSuffix fext.id)
-                (MoveTo ("fire extinguisher" |> withSuffix fext.id) fext.physics.position)
+                ("move to get an extinguisher" |> withSuffix extinguisher.id)
+                (MoveTo ("fire extinguisher" |> withSuffix extinguisher.id) extinguisher.physics.position)
                 [ { name = "get close enough to pick it up"
-                  , function = Asymmetric 0.3 10 0.5 0.8 0.97 -1000 0.5 1
-                  , input = DistanceToTargetPoint fext.physics.position
-                  , inputMin = 20
-                  , inputMax = 400
+                  , function = Linear 0 1
+                  , input = DistanceToTargetPoint extinguisher.physics.position
+                  , inputMin = 10
+                  , inputMax = 20
                   , weighting = 1
                   , offset = 0
                   }
@@ -893,6 +918,11 @@ retardantRadius =
 fireRadius : Float
 fireRadius =
     6
+
+
+growableRadius : Float
+growableRadius =
+    5
 
 
 foodRadius : Float

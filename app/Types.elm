@@ -39,7 +39,7 @@ type Hitpoints
 
 
 type Range
-    = Range { min : Float, max : Float, currentValue : Float }
+    = Range { min : Float, max : Float, value : Float }
 
 
 type alias Model =

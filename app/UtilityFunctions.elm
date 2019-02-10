@@ -85,8 +85,8 @@ computeConsideration agent currentTime forced action consideration =
 
                 Asymmetric centerA bendA offsetA squarenessA centerB bendB offsetB squarenessB ->
                     let
-                        f ctr bend offset sqns x =
-                            atan (bend * (x - ctr)) / (sqns * pi) + offset
+                        f ctr bend offset squareness x =
+                            atan (bend * (x - ctr)) / (squareness * pi) + offset
 
                         a =
                             f centerA bendA offsetA squarenessA mappedInput
@@ -333,14 +333,15 @@ rangeCurrentValue : Range -> Float
 rangeCurrentValue range =
     case range of
         Range r ->
-            r.currentValue |> clamp r.min r.max
+            r.value
+                |> clamp r.min r.max
 
 
 normaliseRange : Range -> Float
 normaliseRange range =
     case range of
         Range r ->
-            r.currentValue
+            r.value
                 |> linearTransform 0 1 r.min r.max
 
 
@@ -350,17 +351,17 @@ updateRange : Range -> Float -> Range
 updateRange original newVal =
     case original of
         Range r ->
-            Range { r | currentValue = newVal }
+            Range { r | value = newVal }
 
 
 mapRange : (Float -> Float) -> Range -> Range
 mapRange func original =
     case original of
         Range r ->
-            r.currentValue
+            r.value
                 |> func
                 |> clamp r.min r.max
-                |> (\newValue -> Range { r | currentValue = newValue })
+                |> (\newValue -> Range { r | value = newValue })
 
 
 {-| Turns a Hitpoints type into a normalised float, between 0 (dead) and 1 (full hp).

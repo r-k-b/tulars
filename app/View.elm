@@ -845,13 +845,13 @@ renderGrowable growable =
                 FertileSoil ->
                     "🕳"
 
-                GrowingPlant stats ->
+                GrowingPlant _ ->
                     "🌱"
 
-                GrownPlant stats ->
+                GrownPlant _ ->
                     "🌾"
 
-                DeadPlant stats ->
+                DeadPlant _ ->
                     "🍂"
     in
     g [ id <| "growable_" ++ String.fromInt growable.id ]
