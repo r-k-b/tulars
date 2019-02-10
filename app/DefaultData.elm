@@ -34,7 +34,7 @@ import Types
         , ReferenceToPortable(..)
         , Signal(..)
         )
-import UtilityFunctions exposing (isHolding, portableIsFood)
+import UtilityFunctions exposing (isHolding, isReadyToPlant, portableIsFood)
 import Vector2d as Vector2d
 
 
@@ -225,6 +225,7 @@ agents =
             , hoverNear "Bob"
             , setBeggingState
             , fightFires
+            , plantGrowables
             ]
       , visibleActions = Dict.empty
       , variableActions = []
@@ -871,6 +872,39 @@ hoverNear targetAgentName =
                   , inputMin = 30
                   , inputMax = 70
                   , weighting = 0.6
+                  , offset = 0
+                  }
+                ]
+                Dict.empty
+    in
+    ActionGenerator "avoid fire" generator
+
+
+plantGrowables : ActionGenerator
+plantGrowables =
+    let
+        generator : Model -> Agent -> List Action
+        generator model _ =
+            model.growables
+                |> List.filter isReadyToPlant
+                |> List.map getInSeedPlantingRange
+
+        getInSeedPlantingRange : Growable -> Action
+        getInSeedPlantingRange growable =
+            let
+                name : String
+                name =
+                    "growable #" ++ String.fromInt growable.id
+            in
+            Action
+                ("get in seed planting range of " ++ name)
+                (MoveTo name growable.physics.position)
+                [ { name = ""
+                  , function = Linear 0 1
+                  , input = DistanceToTargetPoint growable.physics.position
+                  , inputMin = 10
+                  , inputMax = 20
+                  , weighting = 0.2
                   , offset = 0
                   }
                 ]

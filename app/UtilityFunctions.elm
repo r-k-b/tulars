@@ -12,6 +12,7 @@ module UtilityFunctions exposing
     , isBeggingRelated
     , isHolding
     , isMovementAction
+    , isReadyToPlant
     , linearTransform
     , mapRange
     , normaliseRange
@@ -35,6 +36,8 @@ import Types
         , Agent
         , Consideration
         , ConsiderationInput(..)
+        , Growable
+        , GrowableState(..)
         , Hitpoints(..)
         , Holding(..)
         , InputFunction(..)
@@ -401,3 +404,19 @@ setHitpoints oldHP new =
     case oldHP of
         Hitpoints _ max ->
             Hitpoints (new |> clamp 0 max) max
+
+
+isReadyToPlant : Growable -> Bool
+isReadyToPlant growable =
+    case growable.state of
+        FertileSoil ->
+            True
+
+        GrowingPlant _ ->
+            False
+
+        GrownPlant _ ->
+            False
+
+        DeadPlant _ ->
+            False
