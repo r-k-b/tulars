@@ -496,48 +496,79 @@ pickUpFoodToEat =
     let
         generator : Model -> Agent -> List Action
         generator model _ =
-            List.map goalPerItem model.foods
+            List.concatMap goalsPerItem model.foods
 
-        goalPerItem : Food -> Action
-        goalPerItem food =
-            Action
+        goalsPerItem : Food -> List Action
+        goalsPerItem food =
+            let
+                inPickupRange : Consideration
+                inPickupRange =
+                    { name = "in pickup range"
+                    , function = Exponential 0.01
+                    , input = DistanceToTargetPoint food.physics.position
+                    , inputMin = armsReach
+                    , inputMax = armsReach * 0.9
+                    , weighting = 2
+                    , offset = 0
+                    }
+
+                hungry : Consideration
+                hungry =
+                    { name = "hungry"
+                    , function = Linear 1 0
+                    , input = Hunger
+                    , inputMin = 0
+                    , inputMax = 1
+                    , weighting = 3
+                    , offset = 0
+                    }
+
+                haventGivenAwayBefore : Consideration
+                haventGivenAwayBefore =
+                    { name = "haven't given this away before"
+                    , function = Linear 1 0
+                    , input = FoodWasGivenAway food.id
+                    , inputMin = 0
+                    , inputMax = 1
+                    , weighting = -2
+                    , offset = 1
+                    }
+
+                handsAreFree : Consideration
+                handsAreFree =
+                    { name = "hands are free"
+                    , function = Linear 1 0
+                    , input = IsCarrying anyPortable
+                    , inputMin = 1
+                    , inputMax = 0
+                    , weighting = 1
+                    , offset = 0
+                    }
+
+                handsAreFull : Consideration
+                handsAreFull =
+                    { handsAreFree | inputMin = 0, inputMax = 1 }
+            in
+            [ Action
                 ("pick up food to eat" |> withSuffix food.id)
                 (PickUp <| EdibleID food.id)
-                [ { name = "in pickup range"
-                  , function = Exponential 0.01
-                  , input = DistanceToTargetPoint food.physics.position
-                  , inputMin = armsReach
-                  , inputMax = armsReach * 0.9
-                  , weighting = 2
-                  , offset = 0
-                  }
-                , { name = "hunger"
-                  , function = Linear 1 0
-                  , input = Hunger
-                  , inputMin = 0
-                  , inputMax = 1
-                  , weighting = 3
-                  , offset = 0
-                  }
-                , { name = "haven't given this away before"
-                  , function = Linear 1 0
-                  , input = FoodWasGivenAway food.id
-                  , inputMin = 0
-                  , inputMax = 1
-                  , weighting = -2
-                  , offset = 1
-                  }
-                , { name = "hands are free"
-                  , function = Linear 1 0
-                  , input = IsCarrying anyPortable
-                  , inputMin = 1
-                  , inputMax = 0
-                  , weighting = 1
-                  , offset = 0
-                  }
+                [ inPickupRange
+                , hungry
+                , haventGivenAwayBefore
+                , handsAreFree
                 , defaultHysteresis 0.1
                 ]
                 Dict.empty
+            , Action
+                ("drop held thing to grab" |> withSuffix food.id)
+                DropHeldThing
+                [ inPickupRange
+                , hungry
+                , haventGivenAwayBefore
+                , handsAreFull
+                ]
+                Dict.empty
+            ]
     in
     ActionGenerator "pick up food to eat" generator
 
