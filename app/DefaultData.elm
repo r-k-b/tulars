@@ -84,8 +84,8 @@ growables =
     , FertileSoil { plantedProgress = unseeded } |> basicGrowableAt ( -80, -50 ) 2
     , FertileSoil { plantedProgress = unseeded } |> basicGrowableAt ( -80, -30 ) 3
     , GrowingPlant { growth = plantGrowth 0, hp = Hitpoints 1 50 } |> basicGrowableAt ( -60, -70 ) 4
-    , GrowingPlant { growth = plantGrowth 0.5, hp = Hitpoints 30 50 } |> basicGrowableAt ( -60, -50 ) 5
-    , GrowingPlant { growth = plantGrowth 1, hp = Hitpoints 50 50 } |> basicGrowableAt ( -60, -30 ) 6
+    , GrowingPlant { growth = plantGrowth 10, hp = Hitpoints 30 50 } |> basicGrowableAt ( -60, -50 ) 5
+    , GrowingPlant { growth = plantGrowth 30, hp = Hitpoints 50 50 } |> basicGrowableAt ( -60, -30 ) 6
     , GrownPlant { hp = Hitpoints 1 50 } |> basicGrowableAt ( -40, -70 ) 7
     , GrownPlant { hp = Hitpoints 20 50 } |> basicGrowableAt ( -40, -50 ) 8
     , GrownPlant { hp = Hitpoints 50 50 } |> basicGrowableAt ( -40, -30 ) 9
@@ -97,7 +97,7 @@ growables =
 
 plantGrowth : Float -> Range
 plantGrowth value =
-    Range { min = 0, max = 1, value = value }
+    Range { min = 0, max = 30, value = value }
 
 
 unseeded : Range

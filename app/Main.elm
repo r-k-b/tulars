@@ -721,7 +721,7 @@ foldOverDroppedFood currentTime agent ( agentAcc, foodAcc ) =
 
 
 foldOverAgentsAndGrowables : Posix -> Int -> Agent -> List Growable -> List Growable
-foldOverAgentsAndGrowables currentTime dT agent growables =
+foldOverAgentsAndGrowables currentTime deltaTMilliseconds agent growables =
     let
         topAction : Maybe Action
         topAction =
@@ -729,20 +729,54 @@ foldOverAgentsAndGrowables currentTime dT agent growables =
                 |> List.sortBy (computeUtility agent currentTime >> (*) -1)
                 |> List.head
 
+        withNaturalGrowth : List Growable
+        withNaturalGrowth =
+            growables
+                |> List.map (growNaturally deltaTMilliseconds)
+
         updatedGrowables =
             case topAction of
                 Nothing ->
-                    growables
+                    withNaturalGrowth
 
                 Just action ->
                     case action.outcome of
                         PlantSeed growableID ->
-                            plantGrowable dT agent growableID growables
+                            plantGrowable deltaTMilliseconds agent growableID withNaturalGrowth
 
                         _ ->
-                            growables
+                            withNaturalGrowth
     in
     updatedGrowables
+
+
+growNaturally : Int -> Growable -> Growable
+growNaturally deltaTMilliseconds growable =
+    case growable.state of
+        FertileSoil stats ->
+            growable
+
+        GrowingPlant stats ->
+            let
+                growthAmount : Float
+                growthAmount =
+                    0.001 * toFloat deltaTMilliseconds
+
+                newGrowth : Range
+                newGrowth =
+                    stats.growth |> mapRange ((+) growthAmount)
+            in
+            if (newGrowth |> normaliseRange) >= 1 then
+                { growable | state = GrownPlant { hp = stats.hp } }
+
+            else
+                { growable | state = GrowingPlant { stats | growth = newGrowth } }
+
+        GrownPlant _ ->
+            growable
+
+        DeadPlant _ ->
+            growable
 
 
 pickUpFood : Agent -> Int -> List Food -> ( Agent, List Food )
@@ -809,9 +843,13 @@ plantGrowable dT agent growableID growables =
                         case growable.state of
                             FertileSoil stats ->
                                 let
+                                    progressAmount : Float
+                                    progressAmount =
+                                        0.01 * toFloat dT
+
                                     newProgress : Range
                                     newProgress =
-                                        stats.plantedProgress |> mapRange ((+) (0.01 * toFloat dT))
+                                        stats.plantedProgress |> mapRange ((+) progressAmount)
                                 in
                                 if (newProgress |> normaliseRange) >= 1 then
                                     GrowingPlant
