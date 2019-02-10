@@ -275,8 +275,8 @@ agentVelocityArrow agent =
         , Svg.Attributes.strokeDasharray "1 2"
         ]
         (LineSegment2d.fromEndpoints
-            ( agent.physics.position
-            , agent.physics.position |> Point2d.translateBy exaggerated
+            ( origin
+            , origin |> Point2d.translateBy exaggerated
             )
         )
 
@@ -292,23 +292,23 @@ renderAgent agent =
                 Just calling ->
                     case calling.signal of
                         FeedMe ->
-                            [ renderEmoji "😮" agent.physics.position
-                                |> Svg.scaleAbout agent.physics.position 2
+                            [ renderEmoji "😮" origin
+                                |> Svg.scaleAbout origin 2
                             ]
 
                         GoAway ->
-                            [ renderEmoji "😣" agent.physics.position ]
+                            [ renderEmoji "😣" origin ]
 
                         Eating ->
-                            [ renderEmoji "🍖" agent.physics.position ]
+                            [ renderEmoji "🍖" origin ]
 
                         Bored ->
-                            [ renderEmoji "😑" agent.physics.position
-                                |> Svg.scaleAbout agent.physics.position 0.7
+                            [ renderEmoji "😑" origin
+                                |> Svg.scaleAbout origin 0.7
                             ]
 
         bothHands =
-            Point2d.fromCoordinates ( 0, 12 )
+            Point2d.fromCoordinates ( 0, 6 )
 
         held =
             case agent.holding of
@@ -319,16 +319,17 @@ renderAgent agent =
                     [ renderPortable p bothHands ]
     in
     g [ id <| "agent " ++ agent.name ]
-        ([ Svg.circle2d [] (Circle2d.withRadius 3 agent.physics.position)
-         , Svg.lineSegment2d [] (LineSegment2d.fromEndpoints ( agent.physics.position, agent.physics.position |> Point2d.translateBy (Direction2d.toVector agent.physics.facing) ))
+        ([ Svg.circle2d [] (Circle2d.withRadius 3 origin)
+         , Svg.lineSegment2d [] (LineSegment2d.fromEndpoints ( origin, origin |> Point2d.translateBy (Direction2d.toVector agent.physics.facing) ))
          , agentVelocityArrow agent
          , renderName agent
-            |> Svg.scaleAbout agent.physics.position 0.7
-         , g [] held
-            |> Svg.translateBy (Vector2d.from Point2d.origin agent.physics.position)
+            |> Svg.scaleAbout origin 0.6
+         , renderHealthBar agent.hp
+         , g [ svgClass "held" ] held
          ]
             |> append call
         )
+        |> Svg.translateBy (Vector2d.from Point2d.origin agent.physics.position)
 
 
 renderPortable : Portable -> Point2d.Point2d -> Svg Msg
@@ -791,11 +792,11 @@ renderName : Agent -> Html Msg
 renderName agent =
     Svg.text_
         [ Svg.Attributes.textAnchor "middle"
-        , Svg.Attributes.alignmentBaseline "hanging"
+        , Svg.Attributes.alignmentBaseline "baseline"
         , layer Names
+        , y "-10"
         ]
         [ Svg.text agent.name ]
-        |> Svg.translateBy (Vector2d.from Point2d.origin agent.physics.position)
 
 
 layer : Layer -> Svg.Attribute Msg
