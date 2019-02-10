@@ -2,7 +2,7 @@ module Main exposing (main, pickUpFood)
 
 import Browser
 import Browser.Events exposing (onAnimationFrame)
-import DefaultData exposing (armsReach, retardantRadius)
+import DefaultData exposing (armsReach, retardantRadius, unseeded)
 import Dict exposing (Dict)
 import Direction2d as Direction2d
 import List exposing (map)
@@ -778,8 +778,27 @@ growNaturally deltaTMilliseconds growable =
         GrownPlant _ ->
             growable
 
-        DeadPlant _ ->
-            growable
+        DeadPlant state ->
+            let
+                decayAmount : Float
+                decayAmount =
+                    -0.0005 * toFloat deltaTMilliseconds
+
+                newHP : Float
+                newHP =
+                    state.hp
+                        |> hpRawValue
+                        |> (\hp -> hp + decayAmount)
+
+                newState : GrowableState
+                newState =
+                    if newHP <= 0 then
+                        FertileSoil { plantedProgress = unseeded }
+
+                    else
+                        DeadPlant { state | hp = newHP |> setHitpoints state.hp }
+            in
+            { growable | state = newState }
 
 
 pickUpFood : Agent -> Int -> List Food -> ( Agent, List Food )

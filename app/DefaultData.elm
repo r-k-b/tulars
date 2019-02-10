@@ -8,7 +8,7 @@ module DefaultData exposing
     , foods
     , growables
     , retardantRadius
-    )
+    , unseeded)
 
 import Dict
 import Direction2d as Direction2d
