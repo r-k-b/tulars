@@ -23,6 +23,8 @@ import Types
         , Fire
         , FireExtinguisher
         , Food
+        , Growable
+        , GrowableState(..)
         , Hitpoints(..)
         , Holding(..)
         , Model
@@ -45,6 +47,7 @@ import UtilityFunctions
         , hpRawValue
         , isBeggingRelated
         , isMovementAction
+        , isReadyToPlant
         , mapRange
         , normaliseRange
         , onlyArrestMomentum
@@ -451,6 +454,9 @@ getMovementVector currentTime deltaTime agent action =
         ShootExtinguisher _ ->
             Nothing
 
+        PlantSeed _ ->
+            Nothing
+
 
 {-| Scales a vector, representing how much speed is lost to friction.
 -}
@@ -519,7 +525,7 @@ moveWorld newTime model =
 
         survivingAgents =
             model.agents
-                |> List.filter (.hp >> hpAsFloat >> (<) 0)
+                |> List.filter (.hp >> hpAsFloat >> (<=) 0)
 
         movedAgents =
             survivingAgents
@@ -560,6 +566,12 @@ moveWorld newTime model =
                 (foldOverDroppedFood newTime)
                 ( [], pickedFood )
                 agentsAfterPickingUpFood
+
+        updatedGrowables =
+            List.foldr
+                (foldOverAgentsAndGrowables newTime)
+                model.growables
+                agentsAfterDroppingFood
     in
     { model
         | time = newTime
@@ -568,6 +580,7 @@ moveWorld newTime model =
         , extinguishers = pickedExtinguishers
         , retardants = retardantsAfterCollisionWithFire
         , fires = firesAfterCollisionWithRetardants
+        , growables = updatedGrowables
     }
 
 
@@ -673,6 +686,9 @@ foldOverPickedItems currentTime agent ( agentAcc, foodAcc, extinguisherAcc ) =
 
                         ShootExtinguisher _ ->
                             noChange
+
+                        PlantSeed _ ->
+                            noChange
     in
     ( updatedAgent :: agentAcc, updatedFoods, updatedExtinguishers )
 
@@ -700,6 +716,31 @@ foldOverDroppedFood currentTime agent ( agentAcc, foodAcc ) =
                             ( agent, foodAcc )
     in
     ( updatedAgent :: agentAcc, updatedFoods )
+
+
+foldOverAgentsAndGrowables : Posix -> Agent -> List Growable -> List Growable
+foldOverAgentsAndGrowables currentTime agent growables =
+    let
+        topAction : Maybe Action
+        topAction =
+            getActions agent
+                |> List.sortBy (computeUtility agent currentTime >> (*) -1)
+                |> List.head
+
+        updatedGrowables =
+            case topAction of
+                Nothing ->
+                    growables
+
+                Just action ->
+                    case action.outcome of
+                        PlantSeed growableID ->
+                            plantGrowable agent growableID growables
+
+                        _ ->
+                            growables
+    in
+    updatedGrowables
 
 
 pickUpFood : Agent -> Int -> List Food -> ( Agent, List Food )
@@ -749,8 +790,33 @@ pickUpFood agent foodID foods =
     ( carry, newFoods )
 
 
-{-| -- todo: implement hitpoints
--}
+plantGrowable : Agent -> Int -> List Growable -> List Growable
+plantGrowable agent growableID growables =
+    let
+        targetIsAvailable : Growable -> Bool
+        targetIsAvailable growable =
+            growable.id
+                == growableID
+                && (growable |> isReadyToPlant)
+
+        --                && (agent.physics.position |> Point2d.distanceFrom growable.physics.position |> (>) 20)
+        tend : Growable -> Growable
+        tend growable =
+            if growable |> targetIsAvailable then
+                { growable
+                    | state =
+                        GrowingPlant
+                            { growth = Range { min = 0, max = 100, value = 0 }
+                            , hp = Hitpoints 50 50
+                            }
+                }
+
+            else
+                growable
+    in
+    List.map tend growables
+
+
 collideRetardantAndFire : Fire -> Maybe Retardant -> ( Maybe Fire, Maybe Retardant )
 collideRetardantAndFire fire mretardant =
     let
@@ -1024,6 +1090,9 @@ outcomeToString outcome =
 
         ShootExtinguisher direction ->
             "ShootExtinguisher(" ++ (direction |> Direction2d.toAngle |> String.fromFloat) ++ ")"
+
+        PlantSeed growableID ->
+            "PlantSeed(" ++ (growableID |> String.fromInt) ++ ")"
 
 
 signalToString : Signal -> String

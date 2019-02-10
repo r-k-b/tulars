@@ -106,6 +106,7 @@ type ActionOutcome
     | DropHeldFood
     | BeggingForFood Bool
     | ShootExtinguisher Direction2d
+    | PlantSeed Int
 
 
 type Signal
@@ -265,4 +266,7 @@ type alias FireExtinguisher =
     , remaining : Float
     }
 
-type Layer = Names | StatusBars
+
+type Layer
+    = Names
+    | StatusBars

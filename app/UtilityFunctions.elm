@@ -309,6 +309,9 @@ isMovementAction action =
         ShootExtinguisher _ ->
             False
 
+        PlantSeed _ ->
+            False
+
 
 isBeggingRelated : Action -> Maybe Bool
 isBeggingRelated action =
