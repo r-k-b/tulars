@@ -154,8 +154,7 @@ type ConsiderationInput
     | CurrentlyCallingOut
     | IsCurrentAction
     | IAmBeggingForFood
-    | IsCarryingFood
-    | IsCarryingExtinguisher
+    | IsCarrying ( String, Portable -> Bool )
     | FoodWasGivenAway Int
 
 

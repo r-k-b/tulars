@@ -755,11 +755,8 @@ renderCI currentTime agent action ci =
         IsCurrentAction ->
             "Is action the current one? " ++ (action.name == agent.currentAction |> boolString)
 
-        IsCarryingExtinguisher ->
-            "Am I carrying a fire extinguisher? " ++ (isHolding portableIsExtinguisher agent.holding |> boolString)
-
-        IsCarryingFood ->
-            "Am I carrying some food? " ++ (isHolding portableIsFood agent.holding |> boolString)
+        IsCarrying ( desc, func ) ->
+            "Am I carrying " ++ desc ++ "? " ++ (isHolding ( desc, func ) agent.holding |> boolString)
 
         IAmBeggingForFood ->
             "Am I begging for food? " ++ (agent.beggingForFood |> boolString)

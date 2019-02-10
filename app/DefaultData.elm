@@ -8,7 +8,8 @@ module DefaultData exposing
     , foods
     , growables
     , retardantRadius
-    , unseeded)
+    , unseeded
+    )
 
 import Dict
 import Direction2d as Direction2d
@@ -37,7 +38,14 @@ import Types
         , ReferenceToPortable(..)
         , Signal(..)
         )
-import UtilityFunctions exposing (isHolding, isReadyToPlant, portableIsFood)
+import UtilityFunctions
+    exposing
+        ( anyPortable
+        , isHolding
+        , isReadyToPlant
+        , portableIsExtinguisher
+        , portableIsFood
+        )
 import Vector2d as Vector2d
 
 
@@ -419,7 +427,7 @@ moveToFood =
                   }
                 , { name = "not already carrying food"
                   , function = Linear 1 0
-                  , input = IsCarryingFood
+                  , input = IsCarrying portableIsFood
                   , inputMin = 1
                   , inputMax = 0
                   , weighting = 1
@@ -519,6 +527,14 @@ pickUpFoodToEat =
                   , weighting = -2
                   , offset = 1
                   }
+                , { name = "hands are free"
+                  , function = Linear 1 0
+                  , input = IsCarrying anyPortable
+                  , inputMin = 1
+                  , inputMax = 0
+                  , weighting = 1
+                  , offset = 0
+                  }
                 , defaultHysteresis 0.1
                 ]
                 Dict.empty
@@ -593,7 +609,7 @@ dropFoodForBeggar =
                 DropHeldFood
                 [ { name = "I am carrying some food"
                   , function = Linear 1 0
-                  , input = IsCarryingFood
+                  , input = IsCarrying portableIsFood
                   , inputMin = 0
                   , inputMax = 1
                   , weighting = 1
@@ -637,7 +653,7 @@ moveToGiveFoodToBeggar =
                 (MoveTo ("giveFoodTo(" ++ agent.name ++ ")") agent.physics.position)
                 [ { name = "I am carrying some food"
                   , function = Linear 1 0
-                  , input = IsCarryingFood
+                  , input = IsCarrying portableIsFood
                   , inputMin = 0
                   , inputMax = 1
                   , weighting = 1
@@ -688,7 +704,7 @@ eatCarriedFood =
                 EatHeldFood
                 [ { name = "currently carrying food"
                   , function = Linear 1 0
-                  , input = IsCarryingFood
+                  , input = IsCarrying portableIsFood
                   , inputMin = 0
                   , inputMax = 1
                   , weighting = 1
@@ -732,7 +748,7 @@ avoidFire =
                   }
                 , { name = "unless I've got an extinguisher"
                   , function = Linear 1 0
-                  , input = IsCarryingExtinguisher
+                  , input = IsCarrying portableIsExtinguisher
                   , inputMin = 1
                   , inputMax = 0
                   , weighting = 0.9
@@ -778,7 +794,7 @@ fightFires =
                   }
                 , { name = "carrying an extinguisher"
                   , function = Linear 1 0
-                  , input = IsCarryingExtinguisher
+                  , input = IsCarrying portableIsExtinguisher
                   , inputMin = 0
                   , inputMax = 1
                   , weighting = 1
@@ -802,7 +818,7 @@ fightFires =
                   }
                 , { name = "carrying an extinguisher"
                   , function = Linear 1 0
-                  , input = IsCarryingExtinguisher
+                  , input = IsCarrying portableIsExtinguisher
                   , inputMin = 0
                   , inputMax = 1
                   , weighting = 1
@@ -842,7 +858,7 @@ fightFires =
                   }
                 , { name = "not already carrying an extinguisher"
                   , function = Linear 1 0
-                  , input = IsCarryingExtinguisher
+                  , input = IsCarrying portableIsExtinguisher
                   , inputMin = 1
                   , inputMax = 0
                   , weighting = 1
@@ -914,12 +930,14 @@ plantGrowables : ActionGenerator
 plantGrowables =
     let
         generator : Model -> Agent -> List Action
-        generator model _ =
+        generator model agent =
             let
                 targets : List Growable
                 targets =
                     model.growables
                         |> List.filter isReadyToPlant
+                        |> List.sortBy (.physics >> .position >> Point2d.distanceFrom agent.physics.position)
+                        |> List.take 1
             in
             (targets |> List.map getInSeedPlantingRange)
                 ++ (targets |> List.map plantSeed)
@@ -928,7 +946,7 @@ plantGrowables =
         getInSeedPlantingRange : Growable -> Action
         getInSeedPlantingRange growable =
             Action
-                ("get in seed planting range of growable" |> withSuffix growable.id)
+                ("get in seed planting range of closest growable" |> withSuffix growable.id)
                 (MoveTo ("growable" |> withSuffix growable.id) growable.physics.position)
                 [ { name = "distance to fertile soil"
                   , function = Linear 1 0
@@ -967,7 +985,7 @@ plantGrowables =
                   , input = DistanceToTargetPoint growable.physics.position
                   , inputMin = armsReach
                   , inputMax = armsReach * 0.9
-                  , weighting = 1.1
+                  , weighting = 0.4
                   , offset = 0
                   }
                 ]

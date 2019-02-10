@@ -22,7 +22,7 @@ module UtilityFunctions exposing
     , rangeCurrentValue
     , setHitpoints
     , updateRange
-    )
+    , anyPortable)
 
 import Dict
 import Point2d as Point2d
@@ -180,12 +180,8 @@ getConsiderationRawValue agent currentTime action consideration =
                 == action.name
                 |> true1false0
 
-        IsCarryingExtinguisher ->
-            isHolding portableIsExtinguisher agent.holding
-                |> true1false0
-
-        IsCarryingFood ->
-            isHolding portableIsFood agent.holding
+        IsCarrying somePortable ->
+            isHolding somePortable agent.holding
                 |> true1false0
 
         IAmBeggingForFood ->
@@ -207,34 +203,47 @@ true1false0 b =
         0
 
 
-portableIsExtinguisher : Portable -> Bool
-portableIsExtinguisher p =
-    case p of
-        Extinguisher _ ->
-            True
+portableIsExtinguisher : ( String, Portable -> Bool )
+portableIsExtinguisher =
+    ( "a fire extinguisher"
+    , \p ->
+        case p of
+            Extinguisher _ ->
+                True
 
-        _ ->
-            False
-
-
-portableIsFood : Portable -> Bool
-portableIsFood p =
-    case p of
-        Edible _ ->
-            True
-
-        _ ->
-            False
+            _ ->
+                False
+    )
 
 
-isHolding : (Portable -> Bool) -> Holding -> Bool
-isHolding f held =
+portableIsFood : ( String, Portable -> Bool )
+portableIsFood =
+    ( "food"
+    , \p ->
+        case p of
+            Edible _ ->
+                True
+
+            _ ->
+                False
+    )
+
+
+anyPortable : ( String, Portable -> Bool )
+anyPortable =
+    ( "anything"
+    , \_ -> True
+    )
+
+
+isHolding : ( a, Portable -> Bool ) -> Holding -> Bool
+isHolding ( _, func ) held =
     case held of
         EmptyHanded ->
             False
 
         BothHands p ->
-            f p
+            func p
 
 
 clampTo : Consideration -> Float -> Float
