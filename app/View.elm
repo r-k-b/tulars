@@ -857,8 +857,8 @@ renderFire fire =
 
         redness =
             Svg.circle
-                [ cx (fire.physics.position |> xCoordinate |> inPx)
-                , cy (fire.physics.position |> yCoordinate |> inPx)
+                [ cx "0"
+                , cy "0"
                 , r "50px"
                 , fill "url(#fireRednessGradient)"
                 ]
@@ -868,11 +868,13 @@ renderFire fire =
             hpAsFloat fire.hp
     in
     g [ id <| "fire_" ++ String.fromInt fire.id ]
-        [ renderEmoji "🔥" fire.physics.position
+        [ renderEmoji "🔥" origin
         , gradient
         , redness
+            |> Svg.scaleAbout origin healthFactor
+        , renderHealthBar fire.hp
         ]
-        |> Svg.scaleAbout fire.physics.position healthFactor
+        |> Svg.translateBy (Vector2d.from origin fire.physics.position)
 
 
 renderGrowable : Growable -> Svg Msg

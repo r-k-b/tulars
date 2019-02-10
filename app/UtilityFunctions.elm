@@ -400,6 +400,4 @@ setHitpoints : Hitpoints -> Float -> Hitpoints
 setHitpoints oldHP new =
     case oldHP of
         Hitpoints _ max ->
-            new
-                |> clamp 0 max
-                |> Hitpoints max
+            Hitpoints (new |> clamp 0 max) max
