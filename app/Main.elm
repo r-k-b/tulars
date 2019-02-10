@@ -2,7 +2,7 @@ module Main exposing (main)
 
 import Browser
 import Browser.Events exposing (onAnimationFrame)
-import DefaultData as DD exposing (retardantRadius)
+import DefaultData exposing (retardantRadius)
 import Dict exposing (Dict)
 import Direction2d as Direction2d
 import List exposing (map)
@@ -11,6 +11,7 @@ import Maybe exposing (withDefault)
 import Maybe.Extra
 import Physics exposing (collide)
 import Point2d as Point2d
+import Scenes exposing (loadScene, sceneA, sceneB)
 import Set exposing (insert)
 import Time exposing (Posix)
 import Types
@@ -76,14 +77,15 @@ main =
 initialModelAt : Posix -> Model
 initialModelAt posixTime =
     { time = posixTime
-    , agents = DD.agents
-    , foods = DD.foods
-    , fires = DD.fires
-    , growables = DD.growables
-    , extinguishers = DD.extinguishers
+    , agents = []
+    , foods = []
+    , fires = []
+    , growables = []
+    , extinguishers = []
     , retardants = []
     , paused = False
     }
+        |> loadScene sceneB
 
 
 init : Int -> ( Model, Cmd Msg )

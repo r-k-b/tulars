@@ -24,6 +24,7 @@ module Types exposing
     , Range(..)
     , ReferenceToPortable(..)
     , Retardant
+    , Scene
     , Signal(..)
     )
 
@@ -52,6 +53,16 @@ type alias Model =
     , extinguishers : List FireExtinguisher
     , retardants : List Retardant
     , paused : Bool
+    }
+
+
+type alias Scene =
+    { agents : List Agent
+    , foods : List Food
+    , fires : List Fire
+    , growables : List Growable
+    , extinguishers : List FireExtinguisher
+    , retardants : List Retardant
     }
 
 
