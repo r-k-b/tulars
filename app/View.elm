@@ -884,7 +884,7 @@ renderGrowable growable =
     let
         emoji =
             case growable.state of
-                FertileSoil ->
+                FertileSoil _ ->
                     "🕳"
 
                 GrowingPlant _ ->
@@ -899,7 +899,7 @@ renderGrowable growable =
         hp : Hitpoints
         hp =
             case growable.state of
-                FertileSoil ->
+                FertileSoil _ ->
                     Hitpoints 1 1
 
                 GrowingPlant stats ->
@@ -914,8 +914,8 @@ renderGrowable growable =
         progress : Range
         progress =
             case growable.state of
-                FertileSoil ->
-                    Range { min = 0, max = 1, value = 1 }
+                FertileSoil stats ->
+                    stats.plantedProgress
 
                 GrowingPlant stats ->
                     stats.growth

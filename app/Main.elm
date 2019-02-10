@@ -571,7 +571,7 @@ moveWorld newTime model =
 
         updatedGrowables =
             List.foldr
-                (foldOverAgentsAndGrowables newTime)
+                (foldOverAgentsAndGrowables newTime deltaT)
                 model.growables
                 agentsAfterDroppingFood
     in
@@ -720,8 +720,8 @@ foldOverDroppedFood currentTime agent ( agentAcc, foodAcc ) =
     ( updatedAgent :: agentAcc, updatedFoods )
 
 
-foldOverAgentsAndGrowables : Posix -> Agent -> List Growable -> List Growable
-foldOverAgentsAndGrowables currentTime agent growables =
+foldOverAgentsAndGrowables : Posix -> Int -> Agent -> List Growable -> List Growable
+foldOverAgentsAndGrowables currentTime dT agent growables =
     let
         topAction : Maybe Action
         topAction =
@@ -737,7 +737,7 @@ foldOverAgentsAndGrowables currentTime agent growables =
                 Just action ->
                     case action.outcome of
                         PlantSeed growableID ->
-                            plantGrowable agent growableID growables
+                            plantGrowable dT agent growableID growables
 
                         _ ->
                             growables
@@ -792,14 +792,13 @@ pickUpFood agent foodID foods =
     ( carry, newFoods )
 
 
-plantGrowable : Agent -> Int -> List Growable -> List Growable
-plantGrowable agent growableID growables =
+plantGrowable : Int -> Agent -> Int -> List Growable -> List Growable
+plantGrowable dT agent growableID growables =
     let
         targetIsAvailable : Growable -> Bool
         targetIsAvailable growable =
             growable.id
                 == growableID
-                && (growable |> isReadyToPlant)
                 && (agent.physics.position |> Point2d.distanceFrom growable.physics.position |> (>) 20)
 
         tend : Growable -> Growable
@@ -807,10 +806,30 @@ plantGrowable agent growableID growables =
             if growable |> targetIsAvailable then
                 { growable
                     | state =
-                        GrowingPlant
-                            { growth = Range { min = 0, max = 100, value = 0 }
-                            , hp = Hitpoints 50 50
-                            }
+                        case growable.state of
+                            FertileSoil stats ->
+                                let
+                                    newProgress : Range
+                                    newProgress =
+                                        stats.plantedProgress |> mapRange ((+) (0.01 * toFloat dT))
+                                in
+                                if (newProgress |> normaliseRange) >= 1 then
+                                    GrowingPlant
+                                        { growth = Range { min = 0, max = 100, value = 0 }
+                                        , hp = Hitpoints 50 50
+                                        }
+
+                                else
+                                    FertileSoil { plantedProgress = newProgress }
+
+                            GrowingPlant _ ->
+                                growable.state
+
+                            GrownPlant _ ->
+                                growable.state
+
+                            DeadPlant _ ->
+                                growable.state
                 }
 
             else

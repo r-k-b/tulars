@@ -80,9 +80,9 @@ fires =
 
 growables : List Growable
 growables =
-    [ FertileSoil |> basicGrowableAt ( -80, -70 ) 1
-    , FertileSoil |> basicGrowableAt ( -80, -50 ) 2
-    , FertileSoil |> basicGrowableAt ( -80, -30 ) 3
+    [ FertileSoil { plantedProgress = unseeded } |> basicGrowableAt ( -80, -70 ) 1
+    , FertileSoil { plantedProgress = unseeded } |> basicGrowableAt ( -80, -50 ) 2
+    , FertileSoil { plantedProgress = unseeded } |> basicGrowableAt ( -80, -30 ) 3
     , GrowingPlant { growth = plantGrowth 0, hp = Hitpoints 1 50 } |> basicGrowableAt ( -60, -70 ) 4
     , GrowingPlant { growth = plantGrowth 0.5, hp = Hitpoints 30 50 } |> basicGrowableAt ( -60, -50 ) 5
     , GrowingPlant { growth = plantGrowth 1, hp = Hitpoints 50 50 } |> basicGrowableAt ( -60, -30 ) 6
@@ -98,6 +98,11 @@ growables =
 plantGrowth : Float -> Range
 plantGrowth value =
     Range { min = 0, max = 1, value = value }
+
+
+unseeded : Range
+unseeded =
+    Range { min = 0, max = 30, value = 0 }
 
 
 basicGrowableAt : ( Float, Float ) -> Int -> GrowableState -> Growable

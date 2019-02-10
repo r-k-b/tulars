@@ -221,7 +221,7 @@ type alias Food =
 
 
 type GrowableState
-    = FertileSoil
+    = FertileSoil { plantedProgress : Range }
     | GrowingPlant { growth : Range, hp : Hitpoints }
     | GrownPlant { hp : Hitpoints }
     | DeadPlant { hp : Hitpoints }

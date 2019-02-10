@@ -412,7 +412,7 @@ setHitpoints oldHP new =
 isReadyToPlant : Growable -> Bool
 isReadyToPlant growable =
     case growable.state of
-        FertileSoil ->
+        FertileSoil _ ->
             True
 
         GrowingPlant _ ->
