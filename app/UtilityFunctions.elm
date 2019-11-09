@@ -1,5 +1,6 @@
 module UtilityFunctions exposing
-    ( boolString
+    ( anyPortable
+    , boolString
     , clampTo
     , computeConsideration
     , computeUtility
@@ -22,7 +23,7 @@ module UtilityFunctions exposing
     , rangeCurrentValue
     , setHitpoints
     , updateRange
-    , anyPortable)
+    )
 
 import Dict
 import Point2d as Point2d
@@ -310,6 +311,9 @@ isMovementAction action =
             False
 
         DropHeldFood ->
+            False
+
+        DropHeldThing ->
             False
 
         BeggingForFood _ ->

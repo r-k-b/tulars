@@ -116,6 +116,7 @@ type ActionOutcome
     | PickUp ReferenceToPortable
     | EatHeldFood
     | DropHeldFood
+    | DropHeldThing
     | BeggingForFood Bool
     | ShootExtinguisher Direction2d
     | PlantSeed Int

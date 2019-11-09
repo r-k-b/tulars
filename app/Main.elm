@@ -453,6 +453,9 @@ getMovementVector currentTime deltaTime agent action =
         DropHeldFood ->
             Nothing
 
+        DropHeldThing ->
+            Nothing
+
         BeggingForFood _ ->
             Nothing
 
@@ -684,6 +687,9 @@ foldOverPickedItems currentTime agent ( agentAcc, foodAcc, extinguisherAcc ) =
                             noChange
 
                         DropHeldFood ->
+                            noChange
+
+                        DropHeldThing ->
                             noChange
 
                         BeggingForFood _ ->
@@ -1167,6 +1173,9 @@ outcomeToString outcome =
 
         DropHeldFood ->
             "DropHeldFood"
+
+        DropHeldThing ->
+            "DropHeldThing"
 
         BeggingForFood bool ->
             "BeggingForFood(" ++ boolString bool ++ ")"
