@@ -11,7 +11,7 @@ import Maybe exposing (withDefault)
 import Maybe.Extra
 import Physics exposing (collide)
 import Point2d as Point2d
-import Scenes exposing (loadScene, sceneA, sceneB, sceneC)
+import Scenes exposing (loadScene, sceneA, sceneB, sceneC, sceneD)
 import Set exposing (insert)
 import Time exposing (Posix)
 import Types
@@ -85,7 +85,7 @@ initialModelAt posixTime =
     , retardants = []
     , paused = False
     }
-        |> loadScene sceneA
+        |> loadScene sceneD
 
 
 init : Int -> ( Model, Cmd Msg )
