@@ -1,0 +1,12 @@
+version: 1
+update_configs:
+  - package_manager: "javascript"
+    directory: "/"
+    update_schedule: "live"
+    default_reviewers:
+      - "r-k-b"
+  - package_manager: "elm"
+    directory: "/"
+    update_schedule: "daily"
+    default_reviewers:
+      - "r-k-b"
