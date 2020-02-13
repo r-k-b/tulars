@@ -6,8 +6,10 @@
   "scripts": {
     "build": "elm make app/Main.elm --output=dist/main.js",
     "debug": "./debug.sh",
+    "deploy": "npm run build-all && firebase deploy",
     "optimize": "./optimize.sh",
-    "postinstall": "npm run build && npm run optimize && npm run debug",
+    "build-all": "npm run build && npm run optimize && npm run debug && git rev-parse HEAD > dist/version.txt",
+    "postinstall": "npm run build-all",
     "test": "elm-test",
     "watch": "make; chokidar app/*.elm -d 1000 -c 'yes \"\" | head -100; make'"
   },
