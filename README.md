@@ -14,9 +14,13 @@ are robust to changing environments and dynamic goals?
 
 `cd tulars`
 
-`make`
+`npm install`
 
-Then, open `dist/index.html` in a browser.
+Then, open one of these in a browser:
+
+- `dist/index.html`
+- `dist/debug.html`
+- `dist/optimized.html`
 
 
 # testing

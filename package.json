@@ -4,9 +4,12 @@
   "description": "Experimentation with simple Utility Function-based agents.",
   "main": "index.js",
   "scripts": {
-    "build-elm": "make",
+    "build": "elm make app/Main.elm --output=dist/main.js",
+    "debug": "./debug.sh",
+    "optimize": "./optimize.sh",
+    "postinstall": "npm run build && npm run optimize && npm run debug",
     "test": "elm-test",
-    "watch-elm": "make; chokidar app/*.elm -d 1000 -c 'yes \"\" | head -100; make'"
+    "watch": "make; chokidar app/*.elm -d 1000 -c 'yes \"\" | head -100; make'"
   },
   "repository": {
     "type": "git",
