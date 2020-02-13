@@ -1,4 +1,4 @@
-module Scenes exposing (loadScene, sceneA, sceneB, sceneC)
+module Scenes exposing (loadScene, sceneA, sceneB, sceneC, sceneD)
 
 import DefaultData as DD
 import Types exposing (Model, Scene)
@@ -18,7 +18,7 @@ loadScene scene oldModel =
 
 sceneA : Scene
 sceneA =
-    { agents = DD.agents
+    { agents = DD.humans
     , foods = DD.foods
     , fires = DD.fires
     , growables = DD.growables
@@ -29,7 +29,7 @@ sceneA =
 
 sceneB : Scene
 sceneB =
-    { agents = DD.agents
+    { agents = DD.humans
     , foods = []
     , fires = []
     , growables = DD.growables
@@ -40,10 +40,21 @@ sceneB =
 
 sceneC : Scene
 sceneC =
-    { agents = DD.agents
+    { agents = DD.humans
     , foods = DD.foods
     , fires = []
     , growables = []
+    , extinguishers = []
+    , retardants = []
+    }
+
+
+sceneD : Scene
+sceneD =
+    { agents = DD.rabbits ++ DD.wolves
+    , foods = []
+    , fires = []
+    , growables = DD.growables
     , extinguishers = []
     , retardants = []
     }

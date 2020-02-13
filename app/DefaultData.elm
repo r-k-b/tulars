@@ -1,14 +1,16 @@
 module DefaultData exposing
     ( agentRadius
-    , agents
     , armsReach
     , extinguishers
     , fires
     , foodRadius
     , foods
     , growables
+    , humans
+    , rabbits
     , retardantRadius
     , unseeded
+    , wolves
     )
 
 import Dict
@@ -146,8 +148,8 @@ extinguishers =
     ]
 
 
-agents : List Agent
-agents =
+humans : List Agent
+humans =
     [ { name = "Alf"
       , physics =
             { facing = Direction2d.fromAngle (degrees 70)
@@ -284,6 +286,103 @@ agents =
       , hp = Hitpoints 0 100
       }
     ]
+
+
+rabbits : List Agent
+rabbits =
+    -- TODO: add a distinguishing property like human / rabbit / wolf
+    [ (standardRabbitAt <| Point2d.fromCoordinates ( 200, 150 )) <| "Rabbit 1"
+    , (standardRabbitAt <| Point2d.fromCoordinates ( 200, 160 )) <| "Rabbit 2"
+    , (standardRabbitAt <| Point2d.fromCoordinates ( 200, 170 )) <| "Rabbit 3"
+    , (standardRabbitAt <| Point2d.fromCoordinates ( 200, 180 )) <| "Rabbit 4"
+    , (standardRabbitAt <| Point2d.fromCoordinates ( 200, 190 )) <| "Rabbit 5"
+    , (standardRabbitAt <| Point2d.fromCoordinates ( 200, 200 )) <| "Rabbit 6"
+    , (standardRabbitAt <| Point2d.fromCoordinates ( 200, 210 )) <| "Rabbit 7"
+    , (standardRabbitAt <| Point2d.fromCoordinates ( 200, 220 )) <| "Rabbit 8"
+    , (standardRabbitAt <| Point2d.fromCoordinates ( 200, 230 )) <| "Rabbit 9"
+    , (standardRabbitAt <| Point2d.fromCoordinates ( 200, 240 )) <| "Rabbit 10"
+    , (standardRabbitAt <| Point2d.fromCoordinates ( 200, 250 )) <| "Rabbit 11"
+    , (standardRabbitAt <| Point2d.fromCoordinates ( 200, 260 )) <| "Rabbit 12"
+    , (standardRabbitAt <| Point2d.fromCoordinates ( 200, 270 )) <| "Rabbit 13"
+    , (standardRabbitAt <| Point2d.fromCoordinates ( 200, 280 )) <| "Rabbit 14"
+    , (standardRabbitAt <| Point2d.fromCoordinates ( 200, 290 )) <| "Rabbit 15"
+    , (standardRabbitAt <| Point2d.fromCoordinates ( 200, 300 )) <| "Rabbit 16"
+    ]
+
+
+standardRabbitAt : Point2d.Point2d -> String -> Agent
+standardRabbitAt position name =
+    -- TODO: add a distinguishing property like human / rabbit / wolf
+    { name = name
+    , physics =
+        { facing = Direction2d.fromAngle (degrees 70)
+        , position = position
+        , velocity = Vector2d.fromComponents ( 0, 0 )
+        , acceleration = Vector2d.zero
+        , radius = agentRadius
+        }
+    , actionGenerators = []
+    , visibleActions = Dict.empty
+    , variableActions = []
+    , constantActions = []
+    , currentAction = "none"
+    , currentOutcome = "none"
+    , hunger = Range { min = 0, max = 1, value = 0 }
+    , beggingForFood = False
+    , callingOut = Nothing
+    , holding = EmptyHanded
+    , topActionLastStartTimes = Dict.empty
+    , foodsGivenAway = Set.empty
+    , hp = Hitpoints 20 20
+    }
+
+
+wolves : List Agent
+wolves =
+    [ (standardWolfAt <| Point2d.fromCoordinates ( -200, 150 )) <| "Wolf 1"
+    , (standardWolfAt <| Point2d.fromCoordinates ( -200, 160 )) <| "Wolf 2"
+    , (standardWolfAt <| Point2d.fromCoordinates ( -200, 170 )) <| "Wolf 3"
+    , (standardWolfAt <| Point2d.fromCoordinates ( -200, 180 )) <| "Wolf 4"
+    , (standardWolfAt <| Point2d.fromCoordinates ( -200, 190 )) <| "Wolf 5"
+    , (standardWolfAt <| Point2d.fromCoordinates ( -200, 200 )) <| "Wolf 6"
+    , (standardWolfAt <| Point2d.fromCoordinates ( -200, 210 )) <| "Wolf 7"
+    , (standardWolfAt <| Point2d.fromCoordinates ( -200, 220 )) <| "Wolf 8"
+    , (standardWolfAt <| Point2d.fromCoordinates ( -200, 230 )) <| "Wolf 9"
+    , (standardWolfAt <| Point2d.fromCoordinates ( -200, 240 )) <| "Wolf 10"
+    , (standardWolfAt <| Point2d.fromCoordinates ( -200, 250 )) <| "Wolf 11"
+    , (standardWolfAt <| Point2d.fromCoordinates ( -200, 260 )) <| "Wolf 12"
+    , (standardWolfAt <| Point2d.fromCoordinates ( -200, 270 )) <| "Wolf 13"
+    , (standardWolfAt <| Point2d.fromCoordinates ( -200, 280 )) <| "Wolf 14"
+    , (standardWolfAt <| Point2d.fromCoordinates ( -200, 290 )) <| "Wolf 15"
+    , (standardWolfAt <| Point2d.fromCoordinates ( -200, 300 )) <| "Wolf 16"
+    ]
+
+
+standardWolfAt : Point2d.Point2d -> String -> Agent
+standardWolfAt position name =
+    -- TODO: add a distinguishing property like human / rabbit / wolf
+    { name = name
+    , physics =
+        { facing = Direction2d.fromAngle (degrees 70)
+        , position = position
+        , velocity = Vector2d.fromComponents ( 0, 0 )
+        , acceleration = Vector2d.zero
+        , radius = agentRadius
+        }
+    , actionGenerators = []
+    , visibleActions = Dict.empty
+    , variableActions = []
+    , constantActions = []
+    , currentAction = "none"
+    , currentOutcome = "none"
+    , hunger = Range { min = 0, max = 1, value = 0 }
+    , beggingForFood = False
+    , callingOut = Nothing
+    , holding = EmptyHanded
+    , topActionLastStartTimes = Dict.empty
+    , foodsGivenAway = Set.empty
+    , hp = Hitpoints 20 20
+    }
 
 
 justChill : Action
