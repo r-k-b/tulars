@@ -32,6 +32,10 @@ button {
     border-color: var(--color-bg--mostly);
 }
 
+text {
+    fill: var(--color-fg);
+}
+
 html, body, #main {
     padding: 0;
     margin: 0;

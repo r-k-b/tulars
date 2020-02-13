@@ -191,7 +191,7 @@ borderIndicator : Float -> Svg Msg
 borderIndicator radius =
     Svg.circle2d
         [ Svg.Attributes.fillOpacity "0"
-        , Svg.Attributes.stroke "grey"
+        , Svg.Attributes.stroke "var(--color-bg--almost)"
         , Svg.Attributes.strokeWidth "1"
         ]
         (Circle2d.withRadius radius Point2d.origin)
@@ -325,7 +325,7 @@ renderAgent agent =
                     [ renderPortable p bothHands ]
     in
     g [ id <| "agent " ++ agent.name ]
-        ([ Svg.circle2d [] (Circle2d.withRadius 3 origin)
+        ([ Svg.circle2d [ Svg.Attributes.fill "var(--color-fg)" ] (Circle2d.withRadius 3 origin)
          , Svg.lineSegment2d [] (LineSegment2d.fromEndpoints ( origin, origin |> Point2d.translateBy (Direction2d.toVector agent.physics.facing) ))
          , agentVelocityArrow agent
          , renderName agent
@@ -448,7 +448,7 @@ renderAction agent currentTime action =
 
         containerStyle =
             if isExpanded then
-                [ style "background-color" "#00000011"
+                [ style "background-color" "var(--color-bg--almost)"
                 , style "padding" "0.6em"
                 ]
 
@@ -599,7 +599,7 @@ renderConsiderationChart agent currentTime action con =
                 |> List.map
                     (\( x, y ) ->
                         Svg.circle
-                            [ cx <| String.fromFloat x, cy <| String.fromFloat y, r "2", fill "grey" ]
+                            [ cx <| String.fromFloat x, cy <| String.fromFloat y, r "2", fill "var(--color-fg)" ]
                             []
                     )
                 |> g []
@@ -607,8 +607,8 @@ renderConsiderationChart agent currentTime action con =
         borders : Svg Msg
         borders =
             g [ svgClass "borders" ]
-                [ Svg.line [ x1 "0", x2 "100", y1 "100", y2 "100", stroke "black" ] []
-                , Svg.line [ x1 "0", x2 "0", y1 "0", y2 "100", stroke "black" ] []
+                [ Svg.line [ x1 "0", x2 "100", y1 "100", y2 "100", stroke "var(--color-fg)" ] []
+                , Svg.line [ x1 "0", x2 "0", y1 "0", y2 "100", stroke "var(--color-fg)" ] []
                 ]
 
         xValRaw : Float
