@@ -28,6 +28,6 @@
   },
   "devDependencies": {
     "elm-format": "0.8.2",
-    "uglify-js": "3.4.9"
+    "uglify-js": "3.7.7"
   }
 }
