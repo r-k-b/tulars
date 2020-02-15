@@ -7,7 +7,7 @@
     "build": "elm make app/Main.elm --output=dist/main.js",
     "debug": "./debug.sh",
     "deploy": "npm run build-all && firebase deploy",
-    "optimize": "./optimize.sh",
+    "optimize": "chmod +x ./optimize.sh && ./optimize.sh",
     "build-all": "npm run build && npm run optimize && npm run debug && git rev-parse HEAD > dist/version.txt",
     "postinstall": "npm run build-all",
     "test": "elm-test",
