@@ -1,5 +1,7 @@
 # tulars
 
+![.github/workflows/make.yml](https://github.com/r-k-b/tulars/workflows/.github/workflows/make.yml/badge.svg)
+
 Experimentation with simple Utility Function-based agents. [(Demo)](https://tulars-5f1d1.firebaseapp.com) 
 
 E.g., how do we specify rich, sequential and/or parallel behaviours that 
