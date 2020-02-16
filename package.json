@@ -9,6 +9,7 @@
     "deploy": "npm run build-all && firebase deploy",
     "optimize": "./optimize.sh",
     "build-all": "npm run build && npm run optimize && npm run debug && git rev-parse HEAD > dist/version.txt",
+    "live": "npx elm-live app/Main.elm --start-page=\"dist/index.html\" -- --output=\"dist/main.js\"",
     "postinstall": "npm run build-all",
     "test": "elm-test",
     "watch": "make; chokidar app/*.elm -d 1000 -c 'yes \"\" | head -100; make'"
@@ -33,6 +34,7 @@
   },
   "devDependencies": {
     "elm-format": "0.8.2",
+    "elm-live": "^4.0.2",
     "uglify-js": "3.7.7"
   }
 }

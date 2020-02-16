@@ -8,12 +8,14 @@ import Direction2d as Direction2d
 import Frame2d as Frame2d
 import Geometry.Svg as Svg
 import Html exposing (Attribute, Html, code, div, h2, h3, h4, h5, li, table, td, text, th, tr, ul)
-import Html.Attributes exposing (style)
+import Html.Attributes as HA exposing (style)
 import Html.Events exposing (onClick)
 import LineSegment2d
+import Menu exposing (Menu(..))
 import Point2d as Point2d exposing (xCoordinate, yCoordinate)
 import Round
 import Scenes exposing (sceneA, sceneB, sceneC)
+import SelectList exposing (SelectList)
 import Svg exposing (Svg, g, rect, stop, text_)
 import Svg.Attributes
     exposing
@@ -75,34 +77,89 @@ import UtilityFunctions
         , isHolding
         , linearTransform
         , normaliseRange
-        , portableIsExtinguisher
-        , portableIsFood
         , rangeCurrentValue
         )
 import Vector2d as Vector2d exposing (scaleBy)
-
-
-svgClass =
-    Svg.Attributes.class
 
 
 view : Model -> Document Msg
 view model =
     let
         body =
-            div pageGridContainerStyle
-                [ div
-                    (List.concat [ mapGridItemStyle, [ svgClass "zoom-svg" ] ])
+            div [ class.pageGrid.container ]
+                [ viewMenu model.menu
+                , div
+                    [ class.pageGrid.map, svgClass.zoomSvg ]
                     [ mainMap model
                     ]
                 , div
-                    agentInfoGridItemStyle
+                    [ class.pageGrid.agentInfo ]
                     [ renderTopButtons model
                     , agentsInfo model.time model.agents
                     ]
                 ]
     in
     { title = "Tulars", body = [ body ] }
+
+
+svgClass =
+    { borders = Svg.Attributes.class "borders"
+    , considerationChart = Svg.Attributes.class "consideration-chart"
+    , currentValue = Svg.Attributes.class "current-value"
+    , healthBar = Svg.Attributes.class "healthbar"
+    , held = Svg.Attributes.class "held"
+    , layer =
+        { names = Svg.Attributes.class "layer__names"
+        , statusBars = Svg.Attributes.class "layer__status-bars"
+        }
+    , progressBar = Svg.Attributes.class "progressbar"
+    , ticks = Svg.Attributes.class "ticks"
+    , zoomSvg = Svg.Attributes.class "zoom-svg"
+    }
+
+
+{-| Here's the only place CSS class strings should be directly referenced.
+
+That'll help keep track of usages.
+
+-}
+class =
+    { pageGrid =
+        { agentInfo = HA.class "page-grid__agent-info"
+        , container = HA.class "page-grid__container"
+        , map = HA.class "page-grid__map"
+        , menu = HA.class "page-grid__menu"
+        }
+    }
+
+
+viewMenu : Menu String -> Html Msg
+viewMenu menu =
+    let
+        items =
+            case menu of
+                NoneSelected list ->
+                    list
+                        |> List.map (text >> List.singleton >> div [])
+
+                OneSelected selectList ->
+                    selectList
+                        |> SelectList.selectedMap viewMenuItem
+    in
+    div [ class.pageGrid.menu ] items
+
+
+viewMenuItem : SelectList.Position -> SelectList String -> Html Msg
+viewMenuItem position selectList =
+    case position of
+        SelectList.BeforeSelected ->
+            text (selectList |> SelectList.selected)
+
+        SelectList.Selected ->
+            text ((selectList |> SelectList.selected) |> String.toUpper)
+
+        SelectList.AfterSelected ->
+            text (selectList |> SelectList.selected)
 
 
 renderTopButtons : Model -> Html Msg
@@ -208,36 +265,6 @@ agentsInfo currentTime agents =
         ]
 
 
-pageGridContainerStyle : List (Html.Attribute msg)
-pageGridContainerStyle =
-    [ style "display" "grid"
-    , style "width" "calc(100vw)"
-    , style "max-width" "calc(100vw)"
-    , style "height" "calc(100vh)"
-    , style "max-height" "calc(100vh)"
-    , style "overflow" "hidden"
-    , style "grid-template-columns" "repeat(2, 1fr)"
-    , style "grid-template-rows" "1fr"
-    ]
-
-
-mapGridItemStyle : List (Html.Attribute msg)
-mapGridItemStyle =
-    [ style "grid-column" "1 / 2"
-    , style "grid-row" "1 / 2"
-    , style "overflow" "hidden"
-    , style "margin" "0.5em"
-    ]
-
-
-agentInfoGridItemStyle : List (Html.Attribute msg)
-agentInfoGridItemStyle =
-    [ style "grid-column" "2 / 4"
-    , style "grid-row" "1 / 3"
-    , style "overflow" "auto"
-    ]
-
-
 inPx : Float -> String
 inPx number =
     String.fromFloat number ++ "px"
@@ -331,7 +358,7 @@ renderAgent agent =
          , renderName agent
             |> Svg.scaleAbout origin 0.6
          , renderHealthBar agent.hp
-         , g [ svgClass "held" ] held
+         , g [ svgClass.held ] held
          ]
             |> append call
         )
@@ -606,7 +633,7 @@ renderConsiderationChart agent currentTime action con =
 
         borders : Svg Msg
         borders =
-            g [ svgClass "borders" ]
+            g [ svgClass.borders ]
                 [ Svg.line [ x1 "0", x2 "100", y1 "100", y2 "100", stroke "var(--color-fg)" ] []
                 , Svg.line [ x1 "0", x2 "0", y1 "0", y2 "100", stroke "var(--color-fg)" ] []
                 ]
@@ -627,7 +654,7 @@ renderConsiderationChart agent currentTime action con =
 
         currentValue : Svg Msg
         currentValue =
-            g [ svgClass "current-value" ]
+            g [ svgClass.currentValue ]
                 [ Svg.circle
                     [ cx <| String.fromFloat <| xValForChart
                     , cy <| String.fromFloat <| 100 - linearTransform 0 100 chartYMin chartYMax yVal
@@ -639,7 +666,7 @@ renderConsiderationChart agent currentTime action con =
 
         ticks : Svg Msg
         ticks =
-            g [ svgClass "ticks" ]
+            g [ svgClass.ticks ]
                 [ tickHelper -5 100 "end" chartYMin
                 , tickHelper -5 0 "end" chartYMax
                 , tickHelper 0 115 "start" con.inputMin
@@ -650,7 +677,7 @@ renderConsiderationChart agent currentTime action con =
         chartBB
     <|
         g
-            [ svgClass "consideration-chart" ]
+            [ svgClass.considerationChart ]
             [ borders
             , samplePointsSvg
             , ticks
@@ -804,17 +831,12 @@ renderName agent =
 
 layer : Layer -> Svg.Attribute Msg
 layer l =
-    let
-        suffix : String
-        suffix =
-            case l of
-                Names ->
-                    "names"
+    case l of
+        Names ->
+            svgClass.layer.names
 
-                StatusBars ->
-                    "status-bars"
-    in
-    svgClass <| "layer__" ++ suffix
+        StatusBars ->
+            svgClass.layer.statusBars
 
 
 renderFood : Food -> Svg Msg
@@ -955,7 +977,7 @@ renderHealthBar hp =
         yOffset =
             5
     in
-    g [ svgClass "healthbar" ]
+    g [ svgClass.healthBar ]
         (if normalisedHP == 1 then
             []
 
@@ -999,7 +1021,7 @@ renderProgressBar range =
         yOffset =
             10
     in
-    g [ svgClass "progressbar" ]
+    g [ svgClass.progressBar ]
         (if normalised == 1 || normalised == 0 then
             []
 

@@ -9,6 +9,7 @@ import List exposing (map)
 import MapAccumulate exposing (mapAccumL)
 import Maybe exposing (withDefault)
 import Maybe.Extra
+import Menu exposing (Menu(..))
 import Physics exposing (collide)
 import Point2d as Point2d
 import Scenes exposing (loadScene, sceneA, sceneB, sceneC, sceneD)
@@ -82,6 +83,7 @@ initialModelAt posixTime =
     , fires = []
     , growables = []
     , extinguishers = []
+    , menu = NoneSelected [ "a", "b", "c" ]
     , retardants = []
     , paused = False
     }

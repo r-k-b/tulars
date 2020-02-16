@@ -55,3 +55,45 @@ html, body, #main {
 .layer__status-bars {
     z-index: 2;
 }
+
+.page-grid__container {
+    display: grid;
+    width: calc(100vw);
+    max-width: calc(100vw);
+    height: calc(100vh);
+    max-height: calc(100vh);
+    overflow: hidden;
+    grid-template-columns: 10em 1fr 1fr;
+    grid-template-rows: 1fr;
+    grid-template-areas:
+        "menu map info"
+        "menu map info";
+    grid-column-gap: 1em;
+    grid-row-gap: 1em;
+    padding: 1em;
+}
+
+.page-grid__map {
+    grid-area: map;
+    overflow: hidden;
+    margin: 0.5em;
+}
+
+.page-grid__agent-info {
+    grid-area: info;
+    overflow: auto;
+}
+
+.page-grid__menu {
+    grid-area: menu;
+    overflow: auto;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-start;
+}
+
+.page-grid__menu > * {
+    margin-top: 0.5em;
+    margin-bottom: 0.5em;
+}
