@@ -3,6 +3,7 @@ module Types exposing
     , ActionGenerator
     , ActionOutcome(..)
     , Agent
+    , CarryableCheck(..)
     , Collision
     , Consideration
     , ConsiderationInput(..)
@@ -173,8 +174,14 @@ type ConsiderationInput
     | CurrentlyCallingOut
     | IsCurrentAction
     | IAmBeggingForFood
-    | IsCarrying ( String, Portable -> Bool )
+    | Held CarryableCheck
     | FoodWasGivenAway Int
+
+
+type CarryableCheck
+    = IsAnything
+    | IsAFireExtinguisher
+    | IsFood
 
 
 type alias PhysicalProperties =

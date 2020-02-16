@@ -46,6 +46,7 @@ import Types
     exposing
         ( Action
         , Agent
+        , CarryableCheck(..)
         , Consideration
         , ConsiderationInput(..)
         , Fire
@@ -801,14 +802,30 @@ renderCI currentTime agent action ci =
         IsCurrentAction ->
             "Is action the current one? " ++ (action.name == agent.currentAction |> boolString)
 
-        IsCarrying ( desc, func ) ->
-            "Am I carrying " ++ desc ++ "? " ++ (isHolding ( desc, func ) agent.holding |> boolString)
+        Held carryCheck ->
+            "Am I carrying "
+                ++ describeCarryCheck carryCheck
+                ++ "? "
+                ++ (isHolding carryCheck agent.holding |> boolString)
 
         IAmBeggingForFood ->
             "Am I begging for food? " ++ (agent.beggingForFood |> boolString)
 
         FoodWasGivenAway foodID ->
             "Did I give this food away already? (id#" ++ String.fromInt foodID ++ ")"
+
+
+describeCarryCheck : CarryableCheck -> String
+describeCarryCheck carryableCheck =
+    case carryableCheck of
+        IsAnything ->
+            "anything"
+
+        IsAFireExtinguisher ->
+            "a fire extinguisher"
+
+        IsFood ->
+            "food"
 
 
 prettyPoint2d : Point2d.Point2d -> String

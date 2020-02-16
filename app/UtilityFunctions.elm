@@ -1,6 +1,5 @@
 module UtilityFunctions exposing
-    ( anyPortable
-    , boolString
+    ( boolString
     , clampTo
     , computeConsideration
     , computeUtility
@@ -18,8 +17,6 @@ module UtilityFunctions exposing
     , mapRange
     , normaliseRange
     , onlyArrestMomentum
-    , portableIsExtinguisher
-    , portableIsFood
     , rangeCurrentValue
     , setHitpoints
     , updateRange
@@ -32,28 +29,7 @@ import Maybe exposing (withDefault)
 import Point2d as Point2d
 import Set exposing (member)
 import Time exposing (Posix, posixToMillis)
-import Types
-    exposing
-        ( Action
-        , ActionGenerator
-        , ActionOutcome(..)
-        , Agent
-        , Consideration
-        , ConsiderationInput(..)
-        , Fire
-        , FireExtinguisher
-        , Food
-        , GeneratorType(..)
-        , Growable
-        , GrowableState(..)
-        , Hitpoints(..)
-        , Holding(..)
-        , InputFunction(..)
-        , Model
-        , Portable(..)
-        , Range(..)
-        , ReferenceToPortable(..)
-        )
+import Types exposing (Action, ActionGenerator, ActionOutcome(..), Agent, CarryableCheck(..), Consideration, ConsiderationInput(..), Fire, FireExtinguisher, Food, GeneratorType(..), Growable, GrowableState(..), Hitpoints(..), Holding(..), InputFunction(..), Model, Portable(..), Range(..), ReferenceToPortable(..))
 import Vector2d as Vector2d
 
 
@@ -189,7 +165,7 @@ getConsiderationRawValue agent currentTime action consideration =
                 == action.name
                 |> true1false0
 
-        IsCarrying somePortable ->
+        Held somePortable ->
             isHolding somePortable agent.holding
                 |> true1false0
 
@@ -212,47 +188,32 @@ true1false0 b =
         0
 
 
-portableIsExtinguisher : ( String, Portable -> Bool )
-portableIsExtinguisher =
-    ( "a fire extinguisher"
-    , \p ->
-        case p of
-            Extinguisher _ ->
-                True
-
-            _ ->
-                False
-    )
-
-
-portableIsFood : ( String, Portable -> Bool )
-portableIsFood =
-    ( "food"
-    , \p ->
-        case p of
-            Edible _ ->
-                True
-
-            _ ->
-                False
-    )
-
-
-anyPortable : ( String, Portable -> Bool )
-anyPortable =
-    ( "anything"
-    , \_ -> True
-    )
-
-
-isHolding : ( a, Portable -> Bool ) -> Holding -> Bool
-isHolding ( _, func ) held =
+isHolding : CarryableCheck -> Holding -> Bool
+isHolding check held =
     case held of
         EmptyHanded ->
             False
 
         BothHands p ->
-            func p
+            case check of
+                IsAnything ->
+                    True
+
+                IsAFireExtinguisher ->
+                    case p of
+                        Extinguisher _ ->
+                            True
+
+                        Edible _ ->
+                            False
+
+                IsFood ->
+                    case p of
+                        Extinguisher _ ->
+                            False
+
+                        Edible _ ->
+                            True
 
 
 clampTo : Consideration -> Float -> Float
@@ -504,7 +465,7 @@ avoidFire model _ =
                   }
                 , { name = "unless I've got an extinguisher"
                   , function = Linear 1 0
-                  , input = IsCarrying portableIsExtinguisher
+                  , input = Held IsAFireExtinguisher
                   , inputMin = 1
                   , inputMax = 0
                   , weighting = 0.9
@@ -526,7 +487,7 @@ dropFoodForBeggar model agent_ =
                 DropHeldFood
                 [ { name = "I am carrying some food"
                   , function = Linear 1 0
-                  , input = IsCarrying portableIsFood
+                  , input = Held IsFood
                   , inputMin = 0
                   , inputMax = 1
                   , weighting = 1
@@ -551,7 +512,7 @@ dropFoodForBeggar model agent_ =
                 ]
                 Dict.empty
     in
-    if isHolding portableIsFood agent_.holding then
+    if isHolding IsFood agent_.holding then
         model.agents
             |> List.filter (\other -> other.name /= agent_.name)
             |> List.filter .beggingForFood
@@ -571,7 +532,7 @@ eatCarriedFood _ agent =
                 EatHeldFood
                 [ { name = "currently carrying food"
                   , function = Linear 1 0
-                  , input = IsCarrying portableIsFood
+                  , input = Held IsFood
                   , inputMin = 0
                   , inputMax = 1
                   , weighting = 1
@@ -625,7 +586,7 @@ fightFires model agent_ =
                   }
                 , { name = "carrying an extinguisher"
                   , function = Linear 1 0
-                  , input = IsCarrying portableIsExtinguisher
+                  , input = Held IsAFireExtinguisher
                   , inputMin = 0
                   , inputMax = 1
                   , weighting = 1
@@ -649,7 +610,7 @@ fightFires model agent_ =
                   }
                 , { name = "carrying an extinguisher"
                   , function = Linear 1 0
-                  , input = IsCarrying portableIsExtinguisher
+                  , input = Held IsAFireExtinguisher
                   , inputMin = 0
                   , inputMax = 1
                   , weighting = 1
@@ -689,7 +650,7 @@ fightFires model agent_ =
                   }
                 , { name = "not already carrying an extinguisher"
                   , function = Linear 1 0
-                  , input = IsCarrying portableIsExtinguisher
+                  , input = Held IsAFireExtinguisher
                   , inputMin = 1
                   , inputMax = 0
                   , weighting = 1
@@ -790,7 +751,7 @@ moveToFood model _ =
                   }
                 , { name = "not already carrying food"
                   , function = Linear 1 0
-                  , input = IsCarrying portableIsFood
+                  , input = Held IsFood
                   , inputMin = 1
                   , inputMax = 0
                   , weighting = 1
@@ -821,7 +782,7 @@ moveToGiveFoodToBeggar model _ =
                 (MoveTo ("giveFoodTo(" ++ agent.name ++ ")") agent.physics.position)
                 [ { name = "I am carrying some food"
                   , function = Linear 1 0
-                  , input = IsCarrying portableIsFood
+                  , input = Held IsFood
                   , inputMin = 0
                   , inputMax = 1
                   , weighting = 1
@@ -894,7 +855,7 @@ pickUpFoodToEat model _ =
                 handsAreFree =
                     { name = "hands are free"
                     , function = Linear 1 0
-                    , input = IsCarrying anyPortable
+                    , input = Held IsAnything
                     , inputMin = 1
                     , inputMax = 0
                     , weighting = 1
