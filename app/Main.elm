@@ -5,11 +5,13 @@ import Browser.Events exposing (onAnimationFrame)
 import DefaultData exposing (armsReach, retardantRadius, unseeded)
 import Dict exposing (Dict)
 import Direction2d as Direction2d
+import Lazy.Tree
+import Lazy.Tree.Zipper as Zipper exposing (Zipper)
 import List exposing (map)
 import MapAccumulate exposing (mapAccumL)
 import Maybe exposing (withDefault)
 import Maybe.Extra
-import Menu exposing (Menu(..), MenuItem(..))
+import Menu exposing (MenuItem)
 import Physics exposing (collide)
 import Point2d as Point2d
 import Scenes exposing (loadScene, sceneA, sceneB, sceneC, sceneD)
@@ -97,24 +99,48 @@ init posixMillis =
     )
 
 
-initialMenu : Menu (MenuItem Msg)
+initialMenu : Zipper ( Bool, MenuItem )
 initialMenu =
-    [ ParentItem "Scenes"
-        (NoneSelected
-            [ SimpleItem "Scene A" (LoadScene sceneA)
-            , SimpleItem "Scene B" (LoadScene sceneB)
-            , SimpleItem "Scene C" (LoadScene sceneC)
+    let
+        items : List MenuItem
+        items =
+            [ { id = 1, name = "Foo", parent = Nothing }
+            , { id = 2, name = "Bar", parent = Nothing }
+            , { id = 3, name = "Baz", parent = Nothing }
+            , { id = 4, name = "Foobar", parent = Just 1 }
+            , { id = 5, name = "Bar child", parent = Just 2 }
+            , { id = 6, name = "Foobar child", parent = Just 4 }
             ]
-        )
-    , SimpleItem "Save" SaveClicked
-    , SimpleItem "Load" LoadClicked
-    , SimpleItem "Pause" TogglePaused
-    , SimpleItem "Export JSON" ExportClicked
-    ]
-        |> NoneSelected
+
+        root =
+            { id = -1, name = "root", parent = Nothing }
+    in
+    List.map (\b -> ( False, b )) items
+        |> Lazy.Tree.fromList (\p ( _, i ) -> Maybe.map (.id << Tuple.second) p == i.parent)
+        |> Lazy.Tree.Tree ( False, root )
+        |> Zipper.fromTree
 
 
 
+--[ ParentItem "Scenes"
+--    (NoneSelected
+--        [ SimpleItem "Scene A" (LoadScene sceneA)
+--        , SimpleItem "Scene B" (LoadScene sceneB)
+--        , SimpleItem "Scene C" (LoadScene sceneC)
+--        ]
+--    )
+--, SimpleItem "Save" SaveClicked
+--, SimpleItem "Load" LoadClicked
+--, SimpleItem "Pause" TogglePaused
+--, SimpleItem "Export JSON" ExportClicked
+--, ParentItem "Code"
+--    (NoneSelected
+--        [ SimpleItem "Default" (LoadScene sceneA)
+--        , SimpleItem "Elm Debugger" (LoadScene sceneB)
+--        , SimpleItem "Optimized JS" (LoadScene sceneC)
+--        ]
+--    )
+--]
 -- UPDATE
 
 
@@ -217,6 +243,21 @@ updateHelp msg model =
         SaveClicked ->
             -- todo
             model
+
+        CloseMainMenu ->
+            -- todo
+            model
+
+        OpenMainMenuSub ints ->
+            -- todo
+            model
+
+        ToggleMenuItem zipper ->
+            let
+                updatedMenu =
+                    Zipper.updateItem (\( s, i ) -> ( not s, i )) zipper
+            in
+            { model | menu = updatedMenu }
 
 
 moveProjectiles : Int -> List (Physical a) -> List (Physical a)

@@ -7,15 +7,15 @@ import Dict
 import Direction2d as Direction2d
 import Frame2d as Frame2d
 import Geometry.Svg as Svg
-import Html exposing (Attribute, Html, code, div, h2, h3, h4, h5, li, table, td, text, th, tr, ul)
+import Html exposing (Attribute, Html, button, code, div, h2, h3, h4, h5, li, table, td, text, th, tr, ul)
 import Html.Attributes as HA exposing (style)
 import Html.Events exposing (onClick)
+import Lazy.Tree.Zipper as Zipper exposing (Zipper)
 import LineSegment2d
-import Menu exposing (Menu(..), MenuItem(..))
+import Menu exposing (MenuItem)
 import Point2d as Point2d exposing (xCoordinate, yCoordinate)
 import Round
 import Scenes exposing (sceneA, sceneB, sceneC)
-import SelectList exposing (SelectList)
 import Svg exposing (Svg, g, rect, stop, text_)
 import Svg.Attributes
     exposing
@@ -89,7 +89,7 @@ view model =
             div [ class.pageGrid.container ]
                 [ viewMenu model.menu
                 , div
-                    [ class.pageGrid.map, svgClass.zoomSvg ]
+                    [ class.pageGrid.map, class.zoomSvg ]
                     [ mainMap model
                     ]
                 , div
@@ -114,7 +114,6 @@ svgClass =
         }
     , progressBar = Svg.Attributes.class "progressbar"
     , ticks = Svg.Attributes.class "ticks"
-    , zoomSvg = Svg.Attributes.class "zoom-svg"
     }
 
 
@@ -130,50 +129,90 @@ class =
         , map = HA.class "page-grid__map"
         , menu = HA.class "page-grid__menu"
         }
+    , zoomSvg = HA.class "zoom-svg"
     }
 
 
-viewMenu : Menu (MenuItem Msg) -> Html Msg
-viewMenu menu =
+viewMenu : Zipper ( Bool, MenuItem ) -> Html Msg
+viewMenu zipper =
+    Html.ul [] [ viewLevel (Zipper.root zipper) ]
+
+
+viewLevel : Zipper ( Bool, MenuItem ) -> Html Msg
+viewLevel zipper =
     let
-        items =
-            case menu of
-                NoneSelected list ->
-                    list
-                        |> List.map (viewMenuItem { selected = False })
-
-                OneSelected selectList ->
-                    selectList
-                        |> SelectList.selectedMap viewSelectedMenuItems
+        ( isOpen, item ) =
+            Zipper.current zipper
     in
-    div [ class.pageGrid.menu ] items
+    Html.li []
+        [ Html.a [ onClick <| ToggleMenuItem zipper ]
+            [ if not (Zipper.isEmpty zipper) then
+                Html.span []
+                    [ if isOpen then
+                        Html.text "- "
+
+                      else
+                        Html.text "+ "
+                    ]
+
+              else
+                Html.text ""
+            , Html.text item.name
+            ]
+        , Html.ul [] <|
+            if isOpen then
+                Zipper.openAll zipper
+                    |> List.map viewLevel
+
+            else
+                []
+        ]
 
 
-viewMenuItem : { selected : Bool } -> MenuItem Msg -> Html Msg
-viewMenuItem { selected } menuItem =
-    case menuItem of
-        SimpleItem string msg ->
-            div [ onClick msg ] [ text string ]
 
-        ParentItem string menu ->
-            -- what will the dom for a popout menu look like?
-            div [] [ text <| string ++ " ►" ]
-
-
-viewSelectedMenuItems : SelectList.Position -> SelectList (MenuItem Msg) -> Html Msg
-viewSelectedMenuItems position selectList =
-    case position of
-        SelectList.BeforeSelected ->
-            (selectList |> SelectList.selected)
-                |> viewMenuItem { selected = False }
-
-        SelectList.Selected ->
-            (selectList |> SelectList.selected)
-                |> viewMenuItem { selected = False }
-
-        SelectList.AfterSelected ->
-            (selectList |> SelectList.selected)
-                |> viewMenuItem { selected = False }
+--{-| `myAddress` is the series of indexes required to identify this menu inside a
+--tree structure of other menus.
+---}
+--viewMenuHelper : List Int -> Menu (MenuItem Msg) -> Html Msg
+--viewMenuHelper myAddress menu =
+--    let
+--        items =
+--            case menu of
+--                NoneSelected list ->
+--                    list
+--                        |> List.indexedMap (viewMenuItem { selected = False })
+--
+--                OneSelected selectList ->
+--                    --selectList
+--                    --    |> SelectList.indexedMap_ viewSelectedMenuItems
+--                    [ text "???" ]
+--    in
+--    div [ class.pageGrid.menu ] items
+--
+--
+--viewMenuItem : { selected : Bool } -> Int -> MenuItem Msg -> Html Msg
+--viewMenuItem { selected } index menuItem =
+--    case menuItem of
+--        SimpleItem string msg ->
+--            button [ onClick msg ] [ text string ]
+--
+--        ParentItem string menu ->
+--            -- what will the dom for a popout menu look like?
+--            button [] [ text <| string ++ " ►" ]
+--viewSelectedMenuItems : SelectList.Position -> SelectList (MenuItem Msg) -> Html Msg
+--viewSelectedMenuItems position selectList =
+--    case position of
+--        SelectList.BeforeSelected ->
+--            (selectList |> SelectList.selected)
+--                |> viewMenuItem { selected = False }
+--
+--        SelectList.Selected ->
+--            (selectList |> SelectList.selected)
+--                |> viewMenuItem { selected = False }
+--
+--        SelectList.AfterSelected ->
+--            (selectList |> SelectList.selected)
+--                |> viewMenuItem { selected = False }
 
 
 renderTopButtons : Model -> Html Msg

@@ -63,7 +63,7 @@ html, body, #main {
     height: calc(100vh);
     max-height: calc(100vh);
     overflow: hidden;
-    grid-template-columns: 10em 1fr 1fr;
+    grid-template-columns: 8em 1fr 1fr;
     grid-template-rows: 1fr;
     grid-template-areas:
         "menu map info"
@@ -90,7 +90,7 @@ html, body, #main {
     display: flex;
     flex-direction: column;
     justify-content: center;
-    align-items: flex-start;
+    align-items: stretch;
 }
 
 .page-grid__menu > * {

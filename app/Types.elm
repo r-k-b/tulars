@@ -30,7 +30,8 @@ module Types exposing
 
 import Dict exposing (Dict)
 import Direction2d exposing (Direction2d)
-import Menu exposing (Menu, MenuItem)
+import Lazy.Tree.Zipper exposing (Zipper)
+import Menu exposing (MenuItem)
 import Point2d exposing (Point2d)
 import Set exposing (Set)
 import Time exposing (Posix)
@@ -52,7 +53,7 @@ type alias Model =
     , fires : List Fire
     , growables : List Growable
     , extinguishers : List FireExtinguisher
-    , menu : Menu (MenuItem Msg)
+    , menu : Zipper ( Bool, MenuItem )
     , retardants : List Retardant
     , paused : Bool
     }
@@ -69,15 +70,18 @@ type alias Scene =
 
 
 type Msg
-    = ExportClicked
+    = CloseMainMenu
+    | ExportClicked
     | LoadClicked
+    | LoadScene Scene
+    | OpenMainMenuSub (List Int)
     | RAFtick Posix
     | SaveClicked
     | ToggleConditionsVisibility String String
     | ToggleConditionDetailsVisibility String String String
     | TogglePaused
+    | ToggleMenuItem (Zipper ( Bool, MenuItem ))
     | Reset
-    | LoadScene Scene
 
 
 type alias Agent =
