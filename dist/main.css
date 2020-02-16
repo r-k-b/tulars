@@ -129,3 +129,8 @@ html, body, #main {
     color: var(--color-fg);
     background-color: var(--color-bg--mostly);
 }
+
+/* Workaround for the unreadable "Export failure" message in Elm Debugger. */
+#elm-debugger-overlay > div {
+    width: auto !important;
+}
