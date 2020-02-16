@@ -12,7 +12,7 @@ import Html.Attributes as HA exposing (style)
 import Html.Events exposing (onClick)
 import Lazy.Tree.Zipper as Zipper exposing (Zipper)
 import LineSegment2d
-import Menu exposing (MenuItem)
+import Menu exposing (IsExpanded(..), MenuItem(..))
 import Point2d as Point2d exposing (xCoordinate, yCoordinate)
 import Round
 import Scenes exposing (sceneA, sceneB, sceneC)
@@ -124,7 +124,8 @@ That'll help keep track of usages, and with autocomplete.
 
 -}
 class =
-    { theme =
+    { activeMenuItem = HA.class "menu-item--active"
+    , theme =
         { notSoHarsh = HA.class "theme--not-so-harsh"
         }
     , pageGrid =
@@ -132,20 +133,22 @@ class =
         , container = HA.class "page-grid__container"
         , map = HA.class "page-grid__map"
         , menu = HA.class "page-grid__menu"
+        , subMenu = HA.class "page-grid__submenu"
         }
     , zoomSvg = HA.class "zoom-svg"
     }
 
 
-viewMenu : Zipper ( Bool, MenuItem ) -> List (Html Msg)
+viewMenu : Zipper (MenuItem Msg) -> List (Html Msg)
 viewMenu zipper =
     viewLevel { isRoot = True } (Zipper.root zipper)
 
 
-viewLevel : { isRoot : Bool } -> Zipper ( Bool, MenuItem ) -> List (Html Msg)
+viewLevel : { isRoot : Bool } -> Zipper (MenuItem Msg) -> List (Html Msg)
 viewLevel { isRoot } zipper =
     let
-        ( isOpen, item ) =
+        item : MenuItem Msg
+        item =
             Zipper.current zipper
     in
     if isRoot then
@@ -153,63 +156,29 @@ viewLevel { isRoot } zipper =
             |> List.concatMap (viewLevel { isRoot = False })
 
     else
-        [ Html.button [ onClick <| ToggleMenuItem zipper ]
-            [ Html.text item.name
-            ]
-        ]
-            ++ (if isOpen then
-                    Zipper.openAll zipper
-                        |> List.concatMap (viewLevel { isRoot = False })
+        case item of
+            SimpleItem name msg ->
+                [ Html.button [ onClick msg ]
+                    [ text name ]
+                ]
 
-                else
-                    []
-               )
+            ParentItem name isExpanded children ->
+                case isExpanded of
+                    NotExpanded ->
+                        [ Html.button [ onClick <| ToggleMenuItem zipper ]
+                            [ text name ]
+                        ]
 
-
-
---{-| `myAddress` is the series of indexes required to identify this menu inside a
---tree structure of other menus.
----}
---viewMenuHelper : List Int -> Menu (MenuItem Msg) -> Html Msg
---viewMenuHelper myAddress menu =
---    let
---        items =
---            case menu of
---                NoneSelected list ->
---                    list
---                        |> List.indexedMap (viewMenuItem { selected = False })
---
---                OneSelected selectList ->
---                    --selectList
---                    --    |> SelectList.indexedMap_ viewSelectedMenuItems
---                    [ text "???" ]
---    in
---    div [ class.pageGrid.menu ] items
---
---
---viewMenuItem : { selected : Bool } -> Int -> MenuItem Msg -> Html Msg
---viewMenuItem { selected } index menuItem =
---    case menuItem of
---        SimpleItem string msg ->
---            button [ onClick msg ] [ text string ]
---
---        ParentItem string menu ->
---            -- what will the dom for a popout menu look like?
---            button [] [ text <| string ++ " ►" ]
---viewSelectedMenuItems : SelectList.Position -> SelectList (MenuItem Msg) -> Html Msg
---viewSelectedMenuItems position selectList =
---    case position of
---        SelectList.BeforeSelected ->
---            (selectList |> SelectList.selected)
---                |> viewMenuItem { selected = False }
---
---        SelectList.Selected ->
---            (selectList |> SelectList.selected)
---                |> viewMenuItem { selected = False }
---
---        SelectList.AfterSelected ->
---            (selectList |> SelectList.selected)
---                |> viewMenuItem { selected = False }
+                    Expanded ->
+                        [ Html.button
+                            [ onClick <| ToggleMenuItem zipper
+                            , class.activeMenuItem
+                            ]
+                            [ text name ]
+                        , Zipper.openAll zipper
+                            |> List.concatMap (viewLevel { isRoot = False })
+                            |> div [ class.pageGrid.subMenu ]
+                        ]
 
 
 renderTopButtons : Model -> Html Msg

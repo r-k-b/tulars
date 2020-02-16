@@ -53,7 +53,7 @@ type alias Model =
     , fires : List Fire
     , growables : List Growable
     , extinguishers : List FireExtinguisher
-    , menu : Zipper ( Bool, MenuItem )
+    , menu : Zipper (MenuItem Msg)
     , retardants : List Retardant
     , paused : Bool
     }
@@ -70,18 +70,15 @@ type alias Scene =
 
 
 type Msg
-    = CloseMainMenu
-    | ExportClicked
+    = ExportClicked
     | LoadClicked
     | LoadScene Scene
-    | OpenMainMenuSub (List Int)
-    | RAFtick Posix
+    | RAFTick Posix
     | SaveClicked
     | ToggleConditionsVisibility String String
     | ToggleConditionDetailsVisibility String String String
     | TogglePaused
-    | ToggleMenuItem (Zipper ( Bool, MenuItem ))
-    | Reset
+    | ToggleMenuItem (Zipper (MenuItem Msg))
 
 
 type alias Agent =

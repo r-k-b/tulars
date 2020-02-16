@@ -94,15 +94,38 @@ html, body, #main {
 
 .page-grid__menu {
     grid-area: menu;
-    overflow: auto;
+    overflow: visible;
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: stretch;
     padding: 0.5em;
+    position: relative;
 }
 
-.page-grid__menu > * {
+.page-grid__menu > *,
+.page-grid__submenu > * {
     margin-top: 0.5em;
     margin-bottom: 0.5em;
+    position: relative;
+}
+
+.page-grid__submenu {
+    flex-direction: column;
+    justify-content: center;
+    align-items: stretch;
+    padding: 0.5em;
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 100%;
+    width: 8em;
+    display: flex;
+    background-color: var(--color-bg);
+    margin: 0;
+}
+
+.menu-item--active {
+    color: var(--color-fg);
+    background-color: var(--color-bg--mostly);
 }

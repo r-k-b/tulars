@@ -11,7 +11,7 @@ import List exposing (map)
 import MapAccumulate exposing (mapAccumL)
 import Maybe exposing (withDefault)
 import Maybe.Extra
-import Menu exposing (MenuItem)
+import Menu exposing (IsExpanded(..), MenuItem(..), getItemChildren, toggleExpanded)
 import Physics exposing (collide)
 import Point2d as Point2d
 import Scenes exposing (loadScene, sceneA, sceneB, sceneC, sceneD)
@@ -99,49 +99,44 @@ init posixMillis =
     )
 
 
-initialMenu : Zipper ( Bool, MenuItem )
+initialMenu : Zipper (MenuItem Msg)
 initialMenu =
     let
-        items : List MenuItem
-        items =
-            [ { id = 1, name = "Foo", parent = Nothing }
-            , { id = 2, name = "Bar", parent = Nothing }
-            , { id = 3, name = "Baz", parent = Nothing }
-            , { id = 4, name = "Foobar", parent = Just 1 }
-            , { id = 5, name = "Bar child", parent = Just 2 }
-            , { id = 6, name = "Foobar child", parent = Just 4 }
-            ]
+        s =
+            SimpleItem
 
-        root =
-            { id = -1, name = "root", parent = Nothing }
+        p =
+            ParentItem
+
+        tree : MenuItem Msg
+        tree =
+            p "root"
+                Expanded
+                [ p "Open a Scene"
+                    NotExpanded
+                    [ s "Load Scene A" (LoadScene sceneA)
+                    , s "Load Scene B" (LoadScene sceneB)
+                    , s "Load Scene C" (LoadScene sceneC)
+                    , s "Load Scene D" (LoadScene sceneD)
+                    ]
+                , s "Save" SaveClicked
+                , s "Load" LoadClicked
+                , s "Pause" TogglePaused
+                , s "Export JSON" ExportClicked
+                , p "Code"
+                    NotExpanded
+                    [ s "Default" (LoadScene sceneA)
+                    , s "Elm Debugger" (LoadScene sceneB)
+                    , s "Optimized JS" (LoadScene sceneC)
+                    ]
+                ]
     in
-    items
-        |> List.map (\b -> ( False, b ))
-        |> Lazy.Tree.fromList (\p ( _, i ) -> Maybe.map (.id << Tuple.second) p == i.parent)
-        |> Lazy.Tree.Tree ( False, root )
+    tree
+        |> Lazy.Tree.build getItemChildren
         |> Zipper.fromTree
 
 
 
---[ ParentItem "Scenes"
---    (NoneSelected
---        [ SimpleItem "Scene A" (LoadScene sceneA)
---        , SimpleItem "Scene B" (LoadScene sceneB)
---        , SimpleItem "Scene C" (LoadScene sceneC)
---        ]
---    )
---, SimpleItem "Save" SaveClicked
---, SimpleItem "Load" LoadClicked
---, SimpleItem "Pause" TogglePaused
---, SimpleItem "Export JSON" ExportClicked
---, ParentItem "Code"
---    (NoneSelected
---        [ SimpleItem "Default" (LoadScene sceneA)
---        , SimpleItem "Elm Debugger" (LoadScene sceneB)
---        , SimpleItem "Optimized JS" (LoadScene sceneC)
---        ]
---    )
---]
 -- UPDATE
 
 
@@ -153,13 +148,10 @@ update msg model =
 updateHelp : Msg -> Model -> Model
 updateHelp msg model =
     case msg of
-        Reset ->
-            initialModelAt model.time
-
         TogglePaused ->
             { model | paused = not model.paused }
 
-        RAFtick newT ->
+        RAFTick newT ->
             if model.paused then
                 { model | time = newT }
 
@@ -245,18 +237,10 @@ updateHelp msg model =
             -- todo
             model
 
-        CloseMainMenu ->
-            -- todo
-            model
-
-        OpenMainMenuSub ints ->
-            -- todo
-            model
-
         ToggleMenuItem zipper ->
             let
                 updatedMenu =
-                    Zipper.updateItem (\( s, i ) -> ( not s, i )) zipper
+                    Zipper.updateItem toggleExpanded zipper
             in
             { model | menu = updatedMenu }
 
@@ -1340,4 +1324,4 @@ subscriptions model =
         Sub.none
 
     else
-        Sub.batch [ onAnimationFrame RAFtick ]
+        Sub.batch [ onAnimationFrame RAFTick ]
