@@ -115,7 +115,8 @@ initialMenu =
         root =
             { id = -1, name = "root", parent = Nothing }
     in
-    List.map (\b -> ( False, b )) items
+    items
+        |> List.map (\b -> ( False, b ))
         |> Lazy.Tree.fromList (\p ( _, i ) -> Maybe.map (.id << Tuple.second) p == i.parent)
         |> Lazy.Tree.Tree ( False, root )
         |> Zipper.fromTree

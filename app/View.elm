@@ -88,6 +88,7 @@ view model =
         body =
             div [ class.pageGrid.container ]
                 [ viewMenu model.menu
+                    |> div [ class.pageGrid.menu, class.theme.notSoHarsh ]
                 , div
                     [ class.pageGrid.map, class.zoomSvg ]
                     [ mainMap model
@@ -119,11 +120,14 @@ svgClass =
 
 {-| Here's the only place CSS class strings should be directly referenced.
 
-That'll help keep track of usages.
+That'll help keep track of usages, and with autocomplete.
 
 -}
 class =
-    { pageGrid =
+    { theme =
+        { notSoHarsh = HA.class "theme--not-so-harsh"
+        }
+    , pageGrid =
         { agentInfo = HA.class "page-grid__agent-info"
         , container = HA.class "page-grid__container"
         , map = HA.class "page-grid__map"
@@ -133,40 +137,33 @@ class =
     }
 
 
-viewMenu : Zipper ( Bool, MenuItem ) -> Html Msg
+viewMenu : Zipper ( Bool, MenuItem ) -> List (Html Msg)
 viewMenu zipper =
-    Html.ul [] [ viewLevel (Zipper.root zipper) ]
+    viewLevel { isRoot = True } (Zipper.root zipper)
 
 
-viewLevel : Zipper ( Bool, MenuItem ) -> Html Msg
-viewLevel zipper =
+viewLevel : { isRoot : Bool } -> Zipper ( Bool, MenuItem ) -> List (Html Msg)
+viewLevel { isRoot } zipper =
     let
         ( isOpen, item ) =
             Zipper.current zipper
     in
-    Html.li []
-        [ Html.a [ onClick <| ToggleMenuItem zipper ]
-            [ if not (Zipper.isEmpty zipper) then
-                Html.span []
-                    [ if isOpen then
-                        Html.text "- "
+    if isRoot then
+        Zipper.openAll zipper
+            |> List.concatMap (viewLevel { isRoot = False })
 
-                      else
-                        Html.text "+ "
-                    ]
-
-              else
-                Html.text ""
-            , Html.text item.name
+    else
+        [ Html.button [ onClick <| ToggleMenuItem zipper ]
+            [ Html.text item.name
             ]
-        , Html.ul [] <|
-            if isOpen then
-                Zipper.openAll zipper
-                    |> List.map viewLevel
-
-            else
-                []
         ]
+            ++ (if isOpen then
+                    Zipper.openAll zipper
+                        |> List.concatMap (viewLevel { isRoot = False })
+
+                else
+                    []
+               )
 
 
 
