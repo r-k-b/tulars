@@ -1,6 +1,6 @@
 module Types exposing
     ( Action
-    , ActionGenerator(..)
+    , ActionGenerator
     , ActionOutcome(..)
     , Agent
     , Collision
@@ -10,6 +10,7 @@ module Types exposing
     , Fire
     , FireExtinguisher
     , Food
+    , GeneratorType(..)
     , Growable
     , GrowableState(..)
     , Hitpoints(..)
@@ -86,7 +87,7 @@ type alias Agent =
     , physics : PhysicalProperties
     , constantActions : List Action
     , variableActions : List Action
-    , actionGenerators : List ActionGenerator
+    , actionGenerators : List GeneratorType
     , visibleActions : Dict String Bool
     , currentAction : String
     , currentOutcome : String
@@ -108,8 +109,19 @@ type alias Action =
     }
 
 
-type ActionGenerator
-    = ActionGenerator Name Generator
+type GeneratorType
+    = AvoidFire
+    | DropFoodForBeggars
+    | EatCarriedFood
+    | FightFires
+    | HoverNear String
+    | MaintainPersonalSpace
+    | MoveToFood
+    | MoveToGiveFoodToBeggars
+    | PickUpFoodToEat
+    | PlantThingsToEatLater
+    | SetBeggingState
+    | StopAtFood
 
 
 type ActionOutcome
@@ -258,7 +270,7 @@ type alias Name =
     String
 
 
-type alias Generator =
+type alias ActionGenerator =
     Model -> Agent -> List Action
 
 

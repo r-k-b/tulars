@@ -25,18 +25,25 @@ module UtilityFunctions exposing
     , updateRange
     )
 
+import DefaultData exposing (armsReach, defaultHysteresis, withSuffix)
 import Dict
+import Direction2d
+import Maybe exposing (withDefault)
 import Point2d as Point2d
 import Set exposing (member)
 import Time exposing (Posix, posixToMillis)
 import Types
     exposing
         ( Action
-        , ActionGenerator(..)
+        , ActionGenerator
         , ActionOutcome(..)
         , Agent
         , Consideration
         , ConsiderationInput(..)
+        , Fire
+        , FireExtinguisher
+        , Food
+        , GeneratorType(..)
         , Growable
         , GrowableState(..)
         , Hitpoints(..)
@@ -45,6 +52,7 @@ import Types
         , Model
         , Portable(..)
         , Range(..)
+        , ReferenceToPortable(..)
         )
 import Vector2d as Vector2d
 
@@ -273,14 +281,14 @@ computeVariableActions model agent =
         |> List.concat
 
 
-applyList : Model -> Agent -> List ActionGenerator -> List (List Action)
+applyList : Model -> Agent -> List GeneratorType -> List (List Action)
 applyList model agent generators =
     case generators of
         [] ->
             []
 
-        (ActionGenerator _ gen) :: rest ->
-            gen model agent :: applyList model agent rest
+        genType :: rest ->
+            forGenerator genType model agent :: applyList model agent rest
 
 
 isMovementAction : Action -> Bool
@@ -411,7 +419,7 @@ hpAsFloat hp =
 hpRawValue : Hitpoints -> Float
 hpRawValue hp =
     case hp of
-        Hitpoints current max ->
+        Hitpoints current _ ->
             current
 
 
@@ -436,3 +444,631 @@ isReadyToPlant growable =
 
         DeadPlant _ ->
             False
+
+
+forGenerator : GeneratorType -> ActionGenerator
+forGenerator genType =
+    case genType of
+        AvoidFire ->
+            avoidFire
+
+        DropFoodForBeggars ->
+            dropFoodForBeggar
+
+        EatCarriedFood ->
+            eatCarriedFood
+
+        FightFires ->
+            fightFires
+
+        HoverNear name ->
+            hoverNear name
+
+        MaintainPersonalSpace ->
+            maintainPersonalSpace
+
+        MoveToFood ->
+            moveToFood
+
+        MoveToGiveFoodToBeggars ->
+            moveToGiveFoodToBeggar
+
+        PickUpFoodToEat ->
+            pickUpFoodToEat
+
+        PlantThingsToEatLater ->
+            plantGrowables
+
+        SetBeggingState ->
+            setBeggingState
+
+        StopAtFood ->
+            stopAtFood
+
+
+avoidFire : ActionGenerator
+avoidFire model _ =
+    let
+        goalPerItem : Fire -> Action
+        goalPerItem fire =
+            Action
+                ("get away from the fire" |> withSuffix fire.id)
+                (MoveAwayFrom ("fire" |> withSuffix fire.id) fire.physics.position)
+                [ { name = "too close to fire"
+                  , function = Linear 1 0
+                  , input = DistanceToTargetPoint fire.physics.position
+                  , inputMin = 100
+                  , inputMax = 10
+                  , weighting = 3
+                  , offset = 0
+                  }
+                , { name = "unless I've got an extinguisher"
+                  , function = Linear 1 0
+                  , input = IsCarrying portableIsExtinguisher
+                  , inputMin = 1
+                  , inputMax = 0
+                  , weighting = 0.9
+                  , offset = 0.1
+                  }
+                ]
+                Dict.empty
+    in
+    List.map goalPerItem model.fires
+
+
+dropFoodForBeggar : ActionGenerator
+dropFoodForBeggar model agent_ =
+    let
+        goalPerItem : Agent -> Action
+        goalPerItem agent =
+            Action
+                ("drop food for beggar (" ++ agent.name ++ ")")
+                DropHeldFood
+                [ { name = "I am carrying some food"
+                  , function = Linear 1 0
+                  , input = IsCarrying portableIsFood
+                  , inputMin = 0
+                  , inputMax = 1
+                  , weighting = 1
+                  , offset = 0
+                  }
+                , { name = "beggar is nearby"
+                  , function = Linear 1 0
+                  , input = DistanceToTargetPoint agent.physics.position
+                  , inputMin = 40
+                  , inputMax = 10
+                  , weighting = 1
+                  , offset = 0
+                  }
+                , { name = "I don't want to eat the food"
+                  , function = Linear 1 0
+                  , input = Hunger
+                  , inputMin = 1
+                  , inputMax = 0.5
+                  , weighting = 1
+                  , offset = 0
+                  }
+                ]
+                Dict.empty
+    in
+    if isHolding portableIsFood agent_.holding then
+        model.agents
+            |> List.filter (\other -> other.name /= agent_.name)
+            |> List.filter .beggingForFood
+            |> List.map goalPerItem
+
+    else
+        []
+
+
+eatCarriedFood : ActionGenerator
+eatCarriedFood _ agent =
+    let
+        goalPerItem : Maybe Action
+        goalPerItem =
+            Action
+                "eat carried meal"
+                EatHeldFood
+                [ { name = "currently carrying food"
+                  , function = Linear 1 0
+                  , input = IsCarrying portableIsFood
+                  , inputMin = 0
+                  , inputMax = 1
+                  , weighting = 1
+                  , offset = 0
+                  }
+                , { name = "hunger"
+                  , function = Linear 1 0
+                  , input = Hunger
+                  , inputMin = 0
+                  , inputMax = 1
+                  , weighting = 3
+                  , offset = 0
+                  }
+                , defaultHysteresis 0.1
+                ]
+                Dict.empty
+                |> Just
+    in
+    List.filterMap identity <|
+        case agent.holding of
+            EmptyHanded ->
+                []
+
+            BothHands (Edible _) ->
+                [ goalPerItem ]
+
+            BothHands _ ->
+                []
+
+
+fightFires : ActionGenerator
+fightFires model agent_ =
+    let
+        shootExtinguisher : Agent -> Fire -> Action
+        shootExtinguisher agent fire =
+            let
+                direction =
+                    Direction2d.from agent.physics.position fire.physics.position
+                        |> withDefault (Direction2d.fromAngle 0)
+            in
+            Action
+                ("use extinguisher on fire" |> withSuffix fire.id)
+                (ShootExtinguisher direction)
+                [ { name = "within range"
+                  , function = Linear 1 0
+                  , input = DistanceToTargetPoint fire.physics.position
+                  , inputMin = 60
+                  , inputMax = 55
+                  , weighting = 3
+                  , offset = 0
+                  }
+                , { name = "carrying an extinguisher"
+                  , function = Linear 1 0
+                  , input = IsCarrying portableIsExtinguisher
+                  , inputMin = 0
+                  , inputMax = 1
+                  , weighting = 1
+                  , offset = 0
+                  }
+                ]
+                Dict.empty
+
+        getWithinFightingRange : Fire -> Action
+        getWithinFightingRange fire =
+            Action
+                ("get within range" |> withSuffix fire.id)
+                (MoveTo ("fire" |> withSuffix fire.id) fire.physics.position)
+                [ { name = "close enough"
+                  , function = Asymmetric 0.3 10 0.5 0.8 0.97 -1000 0.5 1
+                  , input = DistanceToTargetPoint fire.physics.position
+                  , inputMin = 400
+                  , inputMax = 30
+                  , weighting = 3
+                  , offset = 0
+                  }
+                , { name = "carrying an extinguisher"
+                  , function = Linear 1 0
+                  , input = IsCarrying portableIsExtinguisher
+                  , inputMin = 0
+                  , inputMax = 1
+                  , weighting = 1
+                  , offset = 0
+                  }
+                ]
+                Dict.empty
+
+        pickupNearbyExtinguishers : FireExtinguisher -> Action
+        pickupNearbyExtinguishers extinguisher =
+            Action
+                ("pick up a nearby fire extinguisher" |> withSuffix extinguisher.id)
+                (PickUp <| ExtinguisherID extinguisher.id)
+                [ { name = "in pickup range"
+                  , function = Exponential 0.01
+                  , input = DistanceToTargetPoint extinguisher.physics.position
+                  , inputMin = 26
+                  , inputMax = 25
+                  , weighting = 2
+                  , offset = 0
+                  }
+                ]
+                Dict.empty
+
+        moveToGetExtinguishers : FireExtinguisher -> Action
+        moveToGetExtinguishers extinguisher =
+            Action
+                ("move to get an extinguisher" |> withSuffix extinguisher.id)
+                (MoveTo ("fire extinguisher" |> withSuffix extinguisher.id) extinguisher.physics.position)
+                [ { name = "get close enough to pick it up"
+                  , function = Linear 1 0
+                  , input = DistanceToTargetPoint extinguisher.physics.position
+                  , inputMin = 10
+                  , inputMax = 20
+                  , weighting = 1
+                  , offset = 0
+                  }
+                , { name = "not already carrying an extinguisher"
+                  , function = Linear 1 0
+                  , input = IsCarrying portableIsExtinguisher
+                  , inputMin = 1
+                  , inputMax = 0
+                  , weighting = 1
+                  , offset = 0
+                  }
+                ]
+                Dict.empty
+    in
+    if List.length model.fires > 0 then
+        List.map (shootExtinguisher agent_) model.fires
+            ++ List.map getWithinFightingRange model.fires
+            ++ List.map pickupNearbyExtinguishers model.extinguishers
+            ++ List.map moveToGetExtinguishers model.extinguishers
+
+    else
+        []
+
+
+hoverNear : String -> ActionGenerator
+hoverNear targetAgentName model _ =
+    let
+        goalPerItem : Agent -> Action
+        goalPerItem otherAgent =
+            Action
+                ("hang around " ++ targetAgentName)
+                (MoveTo otherAgent.name otherAgent.physics.position)
+                [ { name = "close, but not close enough"
+                  , function = Normal 2.6 0.5 10
+                  , input = DistanceToTargetPoint otherAgent.physics.position
+                  , inputMin = armsReach
+                  , inputMax = armsReach * 3
+                  , weighting = 0.6
+                  , offset = 0
+                  }
+                ]
+                Dict.empty
+    in
+    model.agents
+        |> List.filter (\other -> other.name == targetAgentName)
+        |> List.map goalPerItem
+
+
+maintainPersonalSpace : ActionGenerator
+maintainPersonalSpace model agent =
+    let
+        goalPerItem : Agent -> Action
+        goalPerItem otherAgent =
+            Action
+                ("maintain personal space from " ++ otherAgent.name)
+                (MoveAwayFrom otherAgent.name otherAgent.physics.position)
+                [ { name = "space invaded"
+                  , function = Linear 1 0
+                  , input = DistanceToTargetPoint otherAgent.physics.position
+                  , inputMin = 15
+                  , inputMax = 5
+                  , weighting = 1
+                  , offset = 0
+                  }
+                ]
+                Dict.empty
+    in
+    model.agents
+        |> List.filter (\other -> other.name /= agent.name)
+        |> List.map goalPerItem
+
+
+moveToFood : ActionGenerator
+moveToFood model _ =
+    let
+        goalPerItem : Food -> Action
+        goalPerItem food =
+            Action
+                ("move toward edible food" |> withSuffix food.id)
+                (MoveTo ("food" |> withSuffix food.id) food.physics.position)
+                [ { name = "hunger"
+                  , function = Linear 1 0
+                  , input = Hunger
+                  , inputMin = 0
+                  , inputMax = 1
+                  , weighting = 3
+                  , offset = 0
+                  }
+                , { name = "too far from food item"
+                  , function = Exponential 2
+                  , input = DistanceToTargetPoint food.physics.position
+                  , inputMin = 3000
+                  , inputMax = armsReach
+                  , weighting = 1
+                  , offset = 0
+                  }
+                , { name = "in range of food item"
+                  , function = Exponential 0.01
+                  , input = DistanceToTargetPoint food.physics.position
+                  , inputMin = armsReach * 0.9
+                  , inputMax = armsReach
+                  , weighting = 1
+                  , offset = 0
+                  }
+                , { name = "not already carrying food"
+                  , function = Linear 1 0
+                  , input = IsCarrying portableIsFood
+                  , inputMin = 1
+                  , inputMax = 0
+                  , weighting = 1
+                  , offset = 0
+                  }
+                , { name = "haven't given this away before"
+                  , function = Linear 1 0
+                  , input = FoodWasGivenAway food.id
+                  , inputMin = 0
+                  , inputMax = 1
+                  , weighting = -1
+                  , offset = 1
+                  }
+                , defaultHysteresis 0.1
+                ]
+                Dict.empty
+    in
+    List.map goalPerItem model.foods
+
+
+moveToGiveFoodToBeggar : ActionGenerator
+moveToGiveFoodToBeggar model _ =
+    let
+        goalPerItem : Agent -> Action
+        goalPerItem agent =
+            Action
+                ("move to give food to beggar (" ++ agent.name ++ ")")
+                (MoveTo ("giveFoodTo(" ++ agent.name ++ ")") agent.physics.position)
+                [ { name = "I am carrying some food"
+                  , function = Linear 1 0
+                  , input = IsCarrying portableIsFood
+                  , inputMin = 0
+                  , inputMax = 1
+                  , weighting = 1
+                  , offset = 0
+                  }
+                , { name = "beggar is reasonably close"
+                  , function = Linear 1 0
+                  , input = DistanceToTargetPoint agent.physics.position
+                  , inputMin = 500
+                  , inputMax = 0
+                  , weighting = 1
+                  , offset = 0
+                  }
+                , { name = "I don't want to eat the food"
+                  , function = Linear 1 0
+                  , input = Hunger
+                  , inputMin = 1
+                  , inputMax = 0.5
+                  , weighting = 1
+                  , offset = 0
+                  }
+                ]
+                Dict.empty
+    in
+    model.agents
+        |> List.filter .beggingForFood
+        |> List.map goalPerItem
+
+
+pickUpFoodToEat : ActionGenerator
+pickUpFoodToEat model _ =
+    let
+        goalsPerItem : Food -> List Action
+        goalsPerItem food =
+            let
+                inPickupRange : Consideration
+                inPickupRange =
+                    { name = "in pickup range"
+                    , function = Exponential 0.01
+                    , input = DistanceToTargetPoint food.physics.position
+                    , inputMin = armsReach
+                    , inputMax = armsReach * 0.9
+                    , weighting = 2
+                    , offset = 0
+                    }
+
+                hungry : Consideration
+                hungry =
+                    { name = "hungry"
+                    , function = Linear 1 0
+                    , input = Hunger
+                    , inputMin = 0
+                    , inputMax = 1
+                    , weighting = 3
+                    , offset = 0
+                    }
+
+                haventGivenAwayBefore : Consideration
+                haventGivenAwayBefore =
+                    { name = "haven't given this away before"
+                    , function = Linear 1 0
+                    , input = FoodWasGivenAway food.id
+                    , inputMin = 0
+                    , inputMax = 1
+                    , weighting = -2
+                    , offset = 1
+                    }
+
+                handsAreFree : Consideration
+                handsAreFree =
+                    { name = "hands are free"
+                    , function = Linear 1 0
+                    , input = IsCarrying anyPortable
+                    , inputMin = 1
+                    , inputMax = 0
+                    , weighting = 1
+                    , offset = 0
+                    }
+
+                handsAreFull : Consideration
+                handsAreFull =
+                    { handsAreFree | inputMin = 0, inputMax = 1 }
+            in
+            [ Action
+                ("pick up food to eat" |> withSuffix food.id)
+                (PickUp <| EdibleID food.id)
+                [ inPickupRange
+                , hungry
+                , haventGivenAwayBefore
+                , handsAreFree
+                , defaultHysteresis 0.1
+                ]
+                Dict.empty
+            , Action
+                ("drop held thing to grab" |> withSuffix food.id)
+                DropHeldThing
+                [ inPickupRange
+                , hungry
+                , haventGivenAwayBefore
+                , handsAreFull
+                ]
+                Dict.empty
+            ]
+    in
+    List.concatMap goalsPerItem model.foods
+
+
+plantGrowables : ActionGenerator
+plantGrowables model agent =
+    let
+        getInSeedPlantingRange : Growable -> Action
+        getInSeedPlantingRange growable =
+            Action
+                ("get in seed planting range of closest growable" |> withSuffix growable.id)
+                (MoveTo ("growable" |> withSuffix growable.id) growable.physics.position)
+                [ { name = "distance to fertile soil"
+                  , function = Linear 1 0
+                  , input = DistanceToTargetPoint growable.physics.position
+                  , inputMin = armsReach * 0.9
+                  , inputMax = armsReach
+                  , weighting = 0.2
+                  , offset = 0
+                  }
+                ]
+                Dict.empty
+
+        plantSeed : Growable -> Action
+        plantSeed growable =
+            Action
+                ("plant seed in growable" |> withSuffix growable.id)
+                (PlantSeed growable.id)
+                [ { name = "close enough to plant the seed"
+                  , function = Linear 1 0
+                  , input = DistanceToTargetPoint growable.physics.position
+                  , inputMin = armsReach
+                  , inputMax = armsReach * 0.9
+                  , weighting = 1
+                  , offset = 0
+                  }
+                ]
+                Dict.empty
+
+        stopMovingWhenPlantingSeeds : Growable -> Action
+        stopMovingWhenPlantingSeeds growable =
+            Action
+                ("stop when in range of fertile growable" |> withSuffix growable.id)
+                ArrestMomentum
+                [ { name = "in range of fertile growable"
+                  , function = Linear 1 0
+                  , input = DistanceToTargetPoint growable.physics.position
+                  , inputMin = armsReach
+                  , inputMax = armsReach * 0.9
+                  , weighting = 0.4
+                  , offset = 0
+                  }
+                ]
+                Dict.empty
+    in
+    let
+        targets : List Growable
+        targets =
+            model.growables
+                |> List.filter isReadyToPlant
+                |> List.sortBy (.physics >> .position >> Point2d.distanceFrom agent.physics.position)
+                |> List.take 1
+    in
+    (targets |> List.map getInSeedPlantingRange)
+        ++ (targets |> List.map plantSeed)
+        ++ (targets |> List.map stopMovingWhenPlantingSeeds)
+
+
+setBeggingState : ActionGenerator
+setBeggingState _ agent =
+    let
+        ceaseBegging : Action
+        ceaseBegging =
+            Action
+                "quit begging"
+                (BeggingForFood False)
+                [ { name = "I'm no longer hungry"
+                  , function = Linear 1 0
+                  , input = Hunger
+                  , inputMin = 0.4
+                  , inputMax = 0.3
+                  , weighting = 1
+                  , offset = 0
+                  }
+                ]
+                Dict.empty
+
+        beginBegging : Action
+        beginBegging =
+            Action
+                "start begging"
+                (BeggingForFood True)
+                [ { name = "I'm hungry"
+                  , function = Linear 1 0
+                  , input = Hunger
+                  , inputMin = 0.7
+                  , inputMax = 1
+                  , weighting = 1
+                  , offset = 0
+                  }
+                ]
+                Dict.empty
+    in
+    if agent.beggingForFood then
+        [ ceaseBegging ]
+
+    else
+        [ beginBegging ]
+
+
+stopAtFood : ActionGenerator
+stopAtFood model _ =
+    let
+        goalPerItem : Food -> Action
+        goalPerItem food =
+            Action
+                ("stop when in range of edible food" |> withSuffix food.id)
+                ArrestMomentum
+                [ { name = "in range of food item"
+                  , function = Exponential 0.01
+                  , input = DistanceToTargetPoint food.physics.position
+                  , inputMin = armsReach
+                  , inputMax = armsReach * 0.9
+                  , weighting = 1
+                  , offset = 0
+                  }
+                , { name = "still moving"
+                  , function = Sigmoid 10 0.5
+                  , input = CurrentSpeed
+                  , inputMin = 3
+                  , inputMax = 6
+                  , weighting = 1
+                  , offset = 0
+                  }
+                , { name = "haven't given this away before"
+                  , function = Linear 1 0
+                  , input = FoodWasGivenAway food.id
+                  , inputMin = 0
+                  , inputMax = 1
+                  , weighting = -2
+                  , offset = 1
+                  }
+                , defaultHysteresis 0.1
+                ]
+                Dict.empty
+    in
+    List.map goalPerItem model.foods
