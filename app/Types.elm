@@ -30,7 +30,7 @@ module Types exposing
 
 import Dict exposing (Dict)
 import Direction2d exposing (Direction2d)
-import Menu exposing (Menu)
+import Menu exposing (Menu, MenuItem)
 import Point2d exposing (Point2d)
 import Set exposing (Set)
 import Time exposing (Posix)
@@ -52,7 +52,7 @@ type alias Model =
     , fires : List Fire
     , growables : List Growable
     , extinguishers : List FireExtinguisher
-    , menu : Menu String
+    , menu : Menu (MenuItem Msg)
     , retardants : List Retardant
     , paused : Bool
     }
@@ -69,7 +69,10 @@ type alias Scene =
 
 
 type Msg
-    = RAFtick Posix
+    = ExportClicked
+    | LoadClicked
+    | RAFtick Posix
+    | SaveClicked
     | ToggleConditionsVisibility String String
     | ToggleConditionDetailsVisibility String String String
     | TogglePaused

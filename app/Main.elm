@@ -9,7 +9,7 @@ import List exposing (map)
 import MapAccumulate exposing (mapAccumL)
 import Maybe exposing (withDefault)
 import Maybe.Extra
-import Menu exposing (Menu(..))
+import Menu exposing (Menu(..), MenuItem(..))
 import Physics exposing (collide)
 import Point2d as Point2d
 import Scenes exposing (loadScene, sceneA, sceneB, sceneC, sceneD)
@@ -83,7 +83,7 @@ initialModelAt posixTime =
     , fires = []
     , growables = []
     , extinguishers = []
-    , menu = NoneSelected [ "a", "b", "c" ]
+    , menu = initialMenu
     , retardants = []
     , paused = False
     }
@@ -95,6 +95,23 @@ init posixMillis =
     ( initialModelAt (Time.millisToPosix posixMillis)
     , Cmd.none
     )
+
+
+initialMenu : Menu (MenuItem Msg)
+initialMenu =
+    [ ParentItem "Scenes"
+        (NoneSelected
+            [ SimpleItem "Scene A" (LoadScene sceneA)
+            , SimpleItem "Scene B" (LoadScene sceneB)
+            , SimpleItem "Scene C" (LoadScene sceneC)
+            ]
+        )
+    , SimpleItem "Save" SaveClicked
+    , SimpleItem "Load" LoadClicked
+    , SimpleItem "Pause" TogglePaused
+    , SimpleItem "Export JSON" ExportClicked
+    ]
+        |> NoneSelected
 
 
 
@@ -188,6 +205,18 @@ updateHelp msg model =
 
         LoadScene scene ->
             model |> loadScene scene
+
+        ExportClicked ->
+            -- todo
+            model
+
+        LoadClicked ->
+            -- todo
+            model
+
+        SaveClicked ->
+            -- todo
+            model
 
 
 moveProjectiles : Int -> List (Physical a) -> List (Physical a)

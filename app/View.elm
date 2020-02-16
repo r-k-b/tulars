@@ -11,7 +11,7 @@ import Html exposing (Attribute, Html, code, div, h2, h3, h4, h5, li, table, td,
 import Html.Attributes as HA exposing (style)
 import Html.Events exposing (onClick)
 import LineSegment2d
-import Menu exposing (Menu(..))
+import Menu exposing (Menu(..), MenuItem(..))
 import Point2d as Point2d exposing (xCoordinate, yCoordinate)
 import Round
 import Scenes exposing (sceneA, sceneB, sceneC)
@@ -133,33 +133,47 @@ class =
     }
 
 
-viewMenu : Menu String -> Html Msg
+viewMenu : Menu (MenuItem Msg) -> Html Msg
 viewMenu menu =
     let
         items =
             case menu of
                 NoneSelected list ->
                     list
-                        |> List.map (text >> List.singleton >> div [])
+                        |> List.map (viewMenuItem { selected = False })
 
                 OneSelected selectList ->
                     selectList
-                        |> SelectList.selectedMap viewMenuItem
+                        |> SelectList.selectedMap viewSelectedMenuItems
     in
     div [ class.pageGrid.menu ] items
 
 
-viewMenuItem : SelectList.Position -> SelectList String -> Html Msg
-viewMenuItem position selectList =
+viewMenuItem : { selected : Bool } -> MenuItem Msg -> Html Msg
+viewMenuItem { selected } menuItem =
+    case menuItem of
+        SimpleItem string msg ->
+            div [ onClick msg ] [ text string ]
+
+        ParentItem string menu ->
+            -- what will the dom for a popout menu look like?
+            div [] [ text <| string ++ " ►" ]
+
+
+viewSelectedMenuItems : SelectList.Position -> SelectList (MenuItem Msg) -> Html Msg
+viewSelectedMenuItems position selectList =
     case position of
         SelectList.BeforeSelected ->
-            text (selectList |> SelectList.selected)
+            (selectList |> SelectList.selected)
+                |> viewMenuItem { selected = False }
 
         SelectList.Selected ->
-            text ((selectList |> SelectList.selected) |> String.toUpper)
+            (selectList |> SelectList.selected)
+                |> viewMenuItem { selected = False }
 
         SelectList.AfterSelected ->
-            text (selectList |> SelectList.selected)
+            (selectList |> SelectList.selected)
+                |> viewMenuItem { selected = False }
 
 
 renderTopButtons : Model -> Html Msg
