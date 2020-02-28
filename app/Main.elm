@@ -15,6 +15,7 @@ import Menu exposing (IsExpanded(..), MenuItem(..), getItemChildren, toggleExpan
 import Physics exposing (collide)
 import Point2d as Point2d
 import Scenes exposing (loadScene, sceneA, sceneB, sceneC, sceneD)
+import SelectList
 import Set exposing (insert)
 import Time exposing (Posix)
 import Types
@@ -39,6 +40,7 @@ import Types
         , Range(..)
         , ReferenceToPortable(..)
         , Retardant
+        , Route(..)
         , Signal(..)
         )
 import UtilityFunctions
@@ -88,6 +90,7 @@ initialModelAt posixTime =
     , menu = initialMenu
     , retardants = []
     , paused = False
+    , tabs = SelectList.fromLists [] MainMap []
     }
         |> loadScene sceneD
 
@@ -235,6 +238,12 @@ updateHelp msg model =
 
         SaveClicked ->
             -- todo
+            model
+
+        TabClicked route ->
+            model
+
+        TabCloserClicked route ->
             model
 
         ToggleMenuItem zipper ->

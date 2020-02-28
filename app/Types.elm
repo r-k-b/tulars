@@ -26,6 +26,7 @@ module Types exposing
     , Range(..)
     , ReferenceToPortable(..)
     , Retardant
+    , Route(..)
     , Scene
     , Signal(..)
     )
@@ -35,6 +36,7 @@ import Direction2d exposing (Direction2d)
 import Lazy.Tree.Zipper exposing (Zipper)
 import Menu exposing (MenuItem)
 import Point2d exposing (Point2d)
+import SelectList exposing (SelectList)
 import Set exposing (Set)
 import Time exposing (Posix)
 import Vector2d exposing (Vector2d)
@@ -58,7 +60,12 @@ type alias Model =
     , menu : Zipper (MenuItem Msg)
     , retardants : List Retardant
     , paused : Bool
+    , tabs : SelectList Route
     }
+
+
+type Route
+    = MainMap
 
 
 type alias Scene =
@@ -77,6 +84,8 @@ type Msg
     | LoadScene Scene
     | RAFTick Posix
     | SaveClicked
+    | TabClicked Route
+    | TabCloserClicked Route
     | ToggleConditionsVisibility String String
     | ToggleConditionDetailsVisibility String String String
     | TogglePaused

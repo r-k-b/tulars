@@ -7,7 +7,25 @@ import Dict
 import Direction2d as Direction2d
 import Frame2d as Frame2d
 import Geometry.Svg as Svg
-import Html exposing (Attribute, Html, button, code, div, h2, h3, h4, h5, li, table, td, text, th, tr, ul)
+import Html
+    exposing
+        ( Attribute
+        , Html
+        , code
+        , div
+        , h2
+        , h3
+        , h4
+        , h5
+        , li
+        , span
+        , table
+        , td
+        , text
+        , th
+        , tr
+        , ul
+        )
 import Html.Attributes as HA exposing (style)
 import Html.Events exposing (onClick)
 import Lazy.Tree.Zipper as Zipper exposing (Zipper)
@@ -15,7 +33,7 @@ import LineSegment2d
 import Menu exposing (IsExpanded(..), MenuItem(..))
 import Point2d as Point2d exposing (xCoordinate, yCoordinate)
 import Round
-import Scenes exposing (sceneA, sceneB, sceneC)
+import SelectList exposing (SelectList)
 import Svg exposing (Svg, g, rect, stop, text_)
 import Svg.Attributes
     exposing
@@ -63,6 +81,7 @@ import Types
         , Portable(..)
         , Range(..)
         , Retardant
+        , Route(..)
         , Signal(..)
         )
 import UtilityFunctions
@@ -87,17 +106,18 @@ view : Model -> Document Msg
 view model =
     let
         body =
-            div [ class.pageGrid.container ]
+            div [ classes.pageGrid.container |> HA.class ]
                 [ viewMenu model.menu
-                    |> div [ class.pageGrid.menu, class.theme.notSoHarsh ]
+                    |> div
+                        [ classes.pageGrid.menu |> HA.class
+                        , classes.theme.notSoHarsh |> HA.class
+                        ]
+                , viewTabs model.tabs
                 , div
-                    [ class.pageGrid.map, class.zoomSvg ]
-                    [ mainMap model
+                    [ classes.pageGrid.content |> HA.class
+                    , classes.zoomSvg |> HA.class
                     ]
-                , div
-                    [ class.pageGrid.agentInfo ]
-                    [ renderTopButtons model
-                    , agentsInfo model.time model.agents
+                    [ mainMap model
                     ]
                 ]
     in
@@ -124,20 +144,77 @@ svgClass =
 That'll help keep track of usages, and with autocomplete.
 
 -}
-class =
-    { activeMenuItem = HA.class "menu-item--active"
+classes =
+    { activeMenuItem = "menu-item--active"
+    , clickable = "clickable"
     , theme =
-        { notSoHarsh = HA.class "theme--not-so-harsh"
+        { notSoHarsh = "theme--not-so-harsh"
         }
     , pageGrid =
-        { agentInfo = HA.class "page-grid__agent-info"
-        , container = HA.class "page-grid__container"
-        , map = HA.class "page-grid__map"
-        , menu = HA.class "page-grid__menu"
-        , subMenu = HA.class "page-grid__submenu"
+        { agentInfo = "page-grid__agent-info"
+        , container = "page-grid__container"
+        , content = "page-grid__content"
+        , menu = "page-grid__menu"
+        , subMenu = "page-grid__submenu"
+        , tabs = "page-grid__tabs"
         }
-    , zoomSvg = HA.class "zoom-svg"
+    , selectedTab = "page-grid__tabs__tab--selected"
+    , tab = "page-grid__tabs__tab"
+    , tabCloser = "page-grid__tabs__tab-closer"
+    , tabText = "page-grid__tabs__tab__text"
+    , zoomSvg = "zoom-svg"
     }
+
+
+viewTabs : SelectList Route -> Html Msg
+viewTabs tabs =
+    div [ classes.pageGrid.tabs |> HA.class, classes.theme.notSoHarsh |> HA.class ]
+        (tabs |> SelectList.selectedMap viewTab)
+
+
+viewTab : SelectList.Position -> SelectList Route -> Html Msg
+viewTab position tabs =
+    let
+        selected =
+            tabs |> SelectList.selected
+    in
+    div
+        [ classes.tab |> HA.class
+        , HA.classList
+            [ ( classes.selectedTab, position |> isSelected )
+            ]
+        , onClick <| TabClicked selected
+        ]
+        [ span
+            [ classes.tabText |> HA.class
+            ]
+            [ selected |> tabName |> text ]
+        , span
+            [ classes.tabCloser |> HA.class
+            , classes.clickable |> HA.class
+            , onClick <| TabCloserClicked selected
+            ]
+            [ text "×" ]
+        ]
+
+
+isSelected position =
+    case position of
+        SelectList.BeforeSelected ->
+            False
+
+        SelectList.Selected ->
+            True
+
+        SelectList.AfterSelected ->
+            False
+
+
+tabName : Route -> String
+tabName route =
+    case route of
+        MainMap ->
+            "Main Map Main Map Main Map Main Map Main Map Main Map Main Map Main Map Main Map Main Map Main Map "
 
 
 viewMenu : Zipper (MenuItem Msg) -> List (Html Msg)
@@ -173,34 +250,13 @@ viewLevel { isRoot } zipper =
                     Expanded ->
                         [ Html.button
                             [ onClick <| ToggleMenuItem zipper
-                            , class.activeMenuItem
+                            , classes.activeMenuItem |> HA.class
                             ]
                             [ text name ]
                         , Zipper.openAll zipper
                             |> List.concatMap (viewLevel { isRoot = False })
-                            |> div [ class.pageGrid.subMenu ]
+                            |> div [ classes.pageGrid.subMenu |> HA.class ]
                         ]
-
-
-renderTopButtons : Model -> Html Msg
-renderTopButtons model =
-    div [ style "position" "sticky", style "top" "0", style "z-index" "1" ]
-        [ Html.button [ Html.Events.onClick TogglePaused ]
-            [ text
-                (if model.paused then
-                    "Unpause"
-
-                 else
-                    "Pause"
-                )
-            ]
-        , Html.button [ onClick (LoadScene sceneA) ]
-            [ text "Load Scene A" ]
-        , Html.button [ onClick (LoadScene sceneB) ]
-            [ text "Load Scene B" ]
-        , Html.button [ onClick (LoadScene sceneC) ]
-            [ text "Load Scene C" ]
-        ]
 
 
 bb : BoundingBox2d

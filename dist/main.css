@@ -71,16 +71,21 @@ html, body, #main {
     height: calc(100vh);
     max-height: calc(100vh);
     overflow: hidden;
-    grid-template-columns: 8em 1fr 1fr;
-    grid-template-rows: 1fr;
-    grid-template-areas: "menu map info" "menu map info";
+    grid-template-columns: 8em 1fr;
+    grid-template-rows: auto 1fr;
+    /*@formatter:off*/
+    /* https://youtrack.jetbrains.com/issue/WEB-10013 */
+    grid-template-areas:
+        "tabs tabs"
+        "menu content";
+    /*@formatter:on*/
     grid-column-gap: 0;
     grid-row-gap: 0;
     padding: 0;
 }
 
-.page-grid__map {
-    grid-area: map;
+.page-grid__content {
+    grid-area: content;
     overflow: hidden;
     margin: 0.5em;
     padding: 0.5em;
@@ -133,4 +138,40 @@ html, body, #main {
 /* Workaround for the unreadable "Export failure" message in Elm Debugger. */
 #elm-debugger-overlay > div {
     width: auto !important;
+}
+
+.page-grid__tabs {
+    grid-area: tabs;
+    display: flex;
+}
+
+.page-grid__tabs__tab {
+    flex: 0 1 12em;
+    margin: 0 0.1em;
+    background-color: var(--color-bg--almost);
+    padding: 0.5em;
+    display: flex;
+    min-width: 0;
+    max-width: 12em;
+}
+
+.page-grid__tabs__tab--selected {
+    background-color: var(--color-bg--mostly);
+}
+
+.page-grid__tabs__tab__text {
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+.page-grid__tabs__tab-closer {
+    flex-grow: 0;
+    flex-shrink: 0;
+    flex-basis: 1em;
+    padding: 0 0.2em;
+}
+
+.clickable {
+    cursor: pointer;
 }
