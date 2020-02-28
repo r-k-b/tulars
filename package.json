@@ -35,6 +35,6 @@
   "devDependencies": {
     "elm-format": "0.8.2",
     "elm-live": "^4.0.2",
-    "uglify-js": "3.7.7"
+    "uglify-js": "3.8.0"
   }
 }
