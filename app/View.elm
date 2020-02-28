@@ -28,6 +28,7 @@ import Html
         )
 import Html.Attributes as HA exposing (style)
 import Html.Events exposing (onClick)
+import Json.Decode as JD
 import Lazy.Tree.Zipper as Zipper exposing (Zipper)
 import LineSegment2d
 import Menu exposing (IsExpanded(..), MenuItem(..))
@@ -169,52 +170,40 @@ classes =
 viewTabs : SelectList Route -> Html Msg
 viewTabs tabs =
     div [ classes.pageGrid.tabs |> HA.class, classes.theme.notSoHarsh |> HA.class ]
-        (tabs |> SelectList.selectedMap viewTab)
+        (tabs |> SelectList.indexedMap viewTab)
 
 
-viewTab : SelectList.Position -> SelectList Route -> Html Msg
-viewTab position tabs =
-    let
-        selected =
-            tabs |> SelectList.selected
-    in
+viewTab : Int -> Route -> Html Msg
+viewTab relativeIndex tab =
     div
         [ classes.tab |> HA.class
-        , HA.classList
-            [ ( classes.selectedTab, position |> isSelected )
-            ]
-        , onClick <| TabClicked selected
+        , HA.classList [ ( classes.selectedTab, relativeIndex == 0 ) ]
+        , classes.clickable |> HA.class
+        , onClick <| TabClicked relativeIndex
         ]
         [ span
-            [ classes.tabText |> HA.class
-            ]
-            [ selected |> tabName |> text ]
+            [ classes.tabText |> HA.class ]
+            [ tab |> tabName |> text ]
         , span
             [ classes.tabCloser |> HA.class
             , classes.clickable |> HA.class
-            , onClick <| TabCloserClicked selected
+            , onClickNoPropagation <| TabCloserClicked tab relativeIndex
+            , HA.title "Close tab"
             ]
             [ text "×" ]
         ]
 
 
-isSelected position =
-    case position of
-        SelectList.BeforeSelected ->
-            False
-
-        SelectList.Selected ->
-            True
-
-        SelectList.AfterSelected ->
-            False
+onClickNoPropagation : Msg -> Attribute Msg
+onClickNoPropagation msg =
+    Html.Events.stopPropagationOn "click" (JD.succeed ( msg, True ))
 
 
 tabName : Route -> String
 tabName route =
     case route of
         MainMap ->
-            "Main Map Main Map Main Map Main Map Main Map Main Map Main Map Main Map Main Map Main Map Main Map "
+            "Main Map"
 
 
 viewMenu : Zipper (MenuItem Msg) -> List (Html Msg)

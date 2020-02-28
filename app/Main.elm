@@ -1,4 +1,4 @@
-module Main exposing (main, pickUpFood)
+module Main exposing (closeTabAt, main, pickUpFood)
 
 import Browser
 import Browser.Events exposing (onAnimationFrame)
@@ -15,7 +15,7 @@ import Menu exposing (IsExpanded(..), MenuItem(..), getItemChildren, toggleExpan
 import Physics exposing (collide)
 import Point2d as Point2d
 import Scenes exposing (loadScene, sceneA, sceneB, sceneC, sceneD)
-import SelectList
+import SelectList exposing (SelectList)
 import Set exposing (insert)
 import Time exposing (Posix)
 import Types
@@ -240,11 +240,11 @@ updateHelp msg model =
             -- todo
             model
 
-        TabClicked route ->
-            model
+        TabClicked relativeIndex ->
+            { model | tabs = model.tabs |> selectTabAt relativeIndex }
 
-        TabCloserClicked route ->
-            model
+        TabCloserClicked route index ->
+            { model | tabs = model.tabs |> closeTabAt index route }
 
         ToggleMenuItem zipper ->
             let
@@ -252,6 +252,49 @@ updateHelp msg model =
                     Zipper.updateItem toggleExpanded zipper
             in
             { model | menu = updatedMenu }
+
+
+selectTabAt : Int -> SelectList Route -> SelectList Route
+selectTabAt relativeIndex tabs =
+    tabs |> SelectList.moveBy relativeIndex
+
+
+closeTabAt : Int -> a -> SelectList a -> SelectList a
+closeTabAt relativeIndex route tabs =
+    let
+        foundTabs : Maybe (SelectList a)
+        foundTabs =
+            tabs |> SelectList.selectBy relativeIndex
+
+        backToOriginalSelection : Int
+        backToOriginalSelection =
+            if relativeIndex < 0 then
+                -relativeIndex - 1
+
+            else if relativeIndex > 0 then
+                min relativeIndex (SelectList.afterLength tabs - 1)
+                    |> (*) -1
+
+            else
+                0
+
+        weAreDeletingTheExpectedTabAt : SelectList a -> Bool
+        weAreDeletingTheExpectedTabAt validOffset =
+            route == (validOffset |> SelectList.selected)
+    in
+    case foundTabs of
+        Nothing ->
+            tabs
+
+        Just validOffset ->
+            if weAreDeletingTheExpectedTabAt validOffset then
+                validOffset
+                    |> SelectList.attempt SelectList.delete
+                    |> SelectList.attempt
+                        (SelectList.selectBy backToOriginalSelection)
+
+            else
+                tabs
 
 
 moveProjectiles : Int -> List (Physical a) -> List (Physical a)

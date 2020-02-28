@@ -4,8 +4,9 @@ import DefaultData exposing (agentRadius, foodRadius)
 import Dict
 import Direction2d
 import Expect exposing (Expectation, FloatingPointTolerance(..))
-import Main exposing (pickUpFood)
+import Main exposing (closeTabAt, pickUpFood)
 import Point2d
+import SelectList
 import Set
 import Test exposing (Test, describe, test)
 import Types exposing (Agent, Food, Hitpoints(..), Holding(..), Portable(..), Range(..))
@@ -82,44 +83,77 @@ food3OutOfReach =
 
 suite : Test
 suite =
-    describe "object pickup"
-        [ describe "food items"
-            [ test "no such food ID means nothing happens" <|
+    describe "main"
+        [ describe "object pickup"
+            [ describe "food items"
+                [ test "no such food ID means nothing happens" <|
+                    \_ ->
+                        pickUpFood
+                            agent
+                            3
+                            [ food1, food2 ]
+                            |> Expect.equal ( agent, [ food1, food2 ] )
+                , test "the first food item is picked up" <|
+                    \_ ->
+                        pickUpFood
+                            agent
+                            1
+                            [ food1, food2 ]
+                            |> Expect.equal
+                                ( { agent | holding = BothHands (Edible food1) }
+                                , [ food2 ]
+                                )
+                , test "the second food item is picked up" <|
+                    \_ ->
+                        pickUpFood
+                            agent
+                            2
+                            [ food1, food2 ]
+                            |> Expect.equal
+                                ( { agent | holding = BothHands (Edible food2) }
+                                , [ food1 ]
+                                )
+                , test "a food item out of range is not picked up" <|
+                    \_ ->
+                        pickUpFood
+                            agent
+                            3
+                            [ food1, food2, food3OutOfReach ]
+                            |> Expect.equal
+                                ( agent
+                                , [ food1, food2, food3OutOfReach ]
+                                )
+                ]
+            ]
+        , let
+            sl =
+                SelectList.fromLists
+          in
+          describe "tabs"
+            [ test "closing the active tab should select the next tab to the right" <|
                 \_ ->
-                    pickUpFood
-                        agent
-                        3
-                        [ food1, food2 ]
-                        |> Expect.equal ( agent, [ food1, food2 ] )
-            , test "the first food item is picked up" <|
+                    sl [ 'a', 'b' ] 'c' [ 'd', 'e' ]
+                        |> closeTabAt 0 'c'
+                        |> Expect.equal (sl [ 'a', 'b' ] 'd' [ 'e' ])
+            , test "closing a left tab should preserve the selection" <|
                 \_ ->
-                    pickUpFood
-                        agent
-                        1
-                        [ food1, food2 ]
-                        |> Expect.equal
-                            ( { agent | holding = BothHands (Edible food1) }
-                            , [ food2 ]
-                            )
-            , test "the second food item is picked up" <|
+                    sl [ 'a', 'b', 'c' ] 'd' [ 'e' ]
+                        |> closeTabAt -2 'b'
+                        |> Expect.equal (sl [ 'a', 'c' ] 'd' [ 'e' ])
+            , test "closing a right tab should preserve the selection" <|
                 \_ ->
-                    pickUpFood
-                        agent
-                        2
-                        [ food1, food2 ]
-                        |> Expect.equal
-                            ( { agent | holding = BothHands (Edible food2) }
-                            , [ food1 ]
-                            )
-            , test "a food item out of range is not picked up" <|
+                    sl [ 'a' ] 'b' [ 'c', 'd', 'e' ]
+                        |> closeTabAt 2 'd'
+                        |> Expect.equal (sl [ 'a' ] 'b' [ 'c', 'e' ])
+            , test "closing the far right tab should preserve the selection" <|
                 \_ ->
-                    pickUpFood
-                        agent
-                        3
-                        [ food1, food2, food3OutOfReach ]
-                        |> Expect.equal
-                            ( agent
-                            , [ food1, food2, food3OutOfReach ]
-                            )
+                    sl [ 'a' ] 'b' [ 'c', 'd', 'e' ]
+                        |> closeTabAt 3 'e'
+                        |> Expect.equal (sl [ 'a' ] 'b' [ 'c', 'd' ])
+            , test "closing the far left tab should preserve the selection" <|
+                \_ ->
+                    sl [ 'a', 'b', 'c' ] 'd' [ 'e' ]
+                        |> closeTabAt -3 'a'
+                        |> Expect.equal (sl [ 'b', 'c' ] 'd' [ 'e' ])
             ]
         ]

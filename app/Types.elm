@@ -84,8 +84,8 @@ type Msg
     | LoadScene Scene
     | RAFTick Posix
     | SaveClicked
-    | TabClicked Route
-    | TabCloserClicked Route
+    | TabClicked Int
+    | TabCloserClicked Route Int
     | ToggleConditionsVisibility String String
     | ToggleConditionDetailsVisibility String String String
     | TogglePaused
