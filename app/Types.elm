@@ -65,7 +65,8 @@ type alias Model =
 
 
 type Route
-    = MainMap
+    = About
+    | MainMap
 
 
 type alias Scene =
@@ -86,6 +87,7 @@ type Msg
     | SaveClicked
     | TabClicked Int
     | TabCloserClicked Route Int
+    | TabOpenerClicked Route
     | ToggleConditionsVisibility String String
     | ToggleConditionDetailsVisibility String String String
     | TogglePaused

@@ -11,6 +11,7 @@ import Html
     exposing
         ( Attribute
         , Html
+        , a
         , code
         , div
         , h2
@@ -18,6 +19,7 @@ import Html
         , h4
         , h5
         , li
+        , p
         , span
         , table
         , td
@@ -26,7 +28,7 @@ import Html
         , tr
         , ul
         )
-import Html.Attributes as HA exposing (style)
+import Html.Attributes as HA exposing (href, style)
 import Html.Events exposing (onClick)
 import Json.Decode as JD
 import Lazy.Tree.Zipper as Zipper exposing (Zipper)
@@ -34,7 +36,7 @@ import LineSegment2d
 import Menu exposing (IsExpanded(..), MenuItem(..))
 import Point2d as Point2d exposing (xCoordinate, yCoordinate)
 import Round
-import SelectList exposing (SelectList)
+import SelectList exposing (SelectList, selected)
 import Svg exposing (Svg, g, rect, stop, text_)
 import Svg.Attributes
     exposing
@@ -118,7 +120,12 @@ view model =
                     [ classes.pageGrid.content |> HA.class
                     , classes.zoomSvg |> HA.class
                     ]
-                    [ mainMap model
+                    [ case model.tabs |> selected of
+                        About ->
+                            viewAboutPage
+
+                        MainMap ->
+                            mainMap model
                     ]
                 ]
     in
@@ -202,6 +209,9 @@ onClickNoPropagation msg =
 tabName : Route -> String
 tabName route =
     case route of
+        About ->
+            "About Tulars"
+
         MainMap ->
             "Main Map"
 
@@ -1122,3 +1132,24 @@ renderProgressBar range =
 origin : Point2d.Point2d
 origin =
     Point2d.fromCoordinates ( 0, 0 )
+
+
+viewAboutPage : Html Msg
+viewAboutPage =
+    div []
+        [ p []
+            [ text "\"Tulars\", an exploration of "
+            , a [ href "http://www.gameaipro.com/GameAIPro/GameAIPro_Chapter09_An_Introduction_to_Utility_Theory.pdf" ]
+                [ text "Utility Theory" ]
+            , text " applied to entities in game design."
+            ]
+        , p []
+            [ text "Source available at "
+            , a [ href "https://github.com/r-k-b/tulars" ] [ text "github.com" ]
+            , text ", under the GNU Affero General Public Licence 3.0."
+            ]
+        , p []
+            [ text "Created by "
+            , a [ href "https://github.com/r-k-b" ] [ text "Robert K. Bell" ]
+            ]
+        ]

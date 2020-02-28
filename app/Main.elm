@@ -15,7 +15,7 @@ import Menu exposing (IsExpanded(..), MenuItem(..), getItemChildren, toggleExpan
 import Physics exposing (collide)
 import Point2d as Point2d
 import Scenes exposing (loadScene, sceneA, sceneB, sceneC, sceneD)
-import SelectList exposing (SelectList)
+import SelectList exposing (SelectList, selected)
 import Set exposing (insert)
 import Time exposing (Posix)
 import Types
@@ -132,6 +132,7 @@ initialMenu =
                     , s "Elm Debugger" (LoadScene sceneB)
                     , s "Optimized JS" (LoadScene sceneC)
                     ]
+                , s "About" (About |> TabOpenerClicked)
                 ]
     in
     tree
@@ -151,6 +152,9 @@ update msg model =
 updateHelp : Msg -> Model -> Model
 updateHelp msg model =
     case msg of
+        TabOpenerClicked route ->
+            { model | tabs = model.tabs |> openTabFor route }
+
         TogglePaused ->
             { model | paused = not model.paused }
 
@@ -256,7 +260,23 @@ updateHelp msg model =
 
 selectTabAt : Int -> SelectList Route -> SelectList Route
 selectTabAt relativeIndex tabs =
-    tabs |> SelectList.moveBy relativeIndex
+    tabs |> SelectList.attempt (SelectList.selectBy relativeIndex)
+
+
+{-| Selects an existing tab with a matching route, or creates a new tab to the
+right of the current tab, selecting the new tab.
+-}
+openTabFor : Route -> SelectList Route -> SelectList Route
+openTabFor targetRoute tabs =
+    if (tabs |> selected) == targetRoute then
+        tabs
+
+    else
+        Maybe.Extra.orList
+            [ tabs |> SelectList.selectBeforeIf ((==) targetRoute)
+            , tabs |> SelectList.selectAfterIf ((==) targetRoute)
+            ]
+            |> withDefault (tabs |> SelectList.insertBefore targetRoute)
 
 
 closeTabAt : Int -> a -> SelectList a -> SelectList a
