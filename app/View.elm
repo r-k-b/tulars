@@ -33,7 +33,7 @@ import Html.Events exposing (onClick)
 import Json.Decode as JD
 import Lazy.Tree.Zipper as Zipper exposing (Zipper)
 import LineSegment2d
-import Menu exposing (IsExpanded(..), MenuItem(..))
+import Menu exposing (IsExpanded(..), MenuItem(..), expandedAsBool)
 import Point2d as Point2d exposing (xCoordinate, yCoordinate)
 import Round
 import SelectList exposing (SelectList, selected)
@@ -126,6 +126,9 @@ view model =
 
                         MainMap ->
                             mainMap model
+
+                        Variants ->
+                            viewVariantsPage
                     ]
                 ]
     in
@@ -215,6 +218,9 @@ tabName route =
         MainMap ->
             "Main Map"
 
+        Variants ->
+            "Code Variants"
+
 
 viewMenu : Zipper (MenuItem Msg) -> List (Html Msg)
 viewMenu zipper =
@@ -239,23 +245,22 @@ viewLevel { isRoot } zipper =
                     [ text name ]
                 ]
 
-            ParentItem name isExpanded children ->
-                case isExpanded of
-                    NotExpanded ->
-                        [ Html.button [ onClick <| ToggleMenuItem zipper ]
-                            [ text name ]
+            ParentItem name isExpanded _ ->
+                if isExpanded |> expandedAsBool then
+                    [ Html.button
+                        [ onClick <| ToggleMenuItem zipper
+                        , classes.activeMenuItem |> HA.class
                         ]
+                        [ text name ]
+                    , Zipper.openAll zipper
+                        |> List.concatMap (viewLevel { isRoot = False })
+                        |> div [ classes.pageGrid.subMenu |> HA.class ]
+                    ]
 
-                    Expanded ->
-                        [ Html.button
-                            [ onClick <| ToggleMenuItem zipper
-                            , classes.activeMenuItem |> HA.class
-                            ]
-                            [ text name ]
-                        , Zipper.openAll zipper
-                            |> List.concatMap (viewLevel { isRoot = False })
-                            |> div [ classes.pageGrid.subMenu |> HA.class ]
-                        ]
+                else
+                    [ Html.button [ onClick <| ToggleMenuItem zipper ]
+                        [ text name ]
+                    ]
 
 
 bb : BoundingBox2d
@@ -1151,5 +1156,16 @@ viewAboutPage =
         , p []
             [ text "Created by "
             , a [ href "https://github.com/r-k-b" ] [ text "Robert K. Bell" ]
+            ]
+        ]
+
+
+viewVariantsPage : Html Msg
+viewVariantsPage =
+    div []
+        [ ul []
+            [ li [] [ a [ href "/index.html" ] [ text "Default" ] ]
+            , li [] [ a [ href "/debug.html" ] [ text "Elm Debugger active" ] ]
+            , li [] [ a [ href "/optimized.html" ] [ text "Optimized JS" ] ]
             ]
         ]

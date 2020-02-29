@@ -11,7 +11,7 @@ import List exposing (map)
 import MapAccumulate exposing (mapAccumL)
 import Maybe exposing (withDefault)
 import Maybe.Extra
-import Menu exposing (IsExpanded(..), MenuItem(..), getItemChildren, toggleExpanded)
+import Menu exposing (IsExpanded(..), MenuItem(..), closeItem, getItemChildren, keepItemExpanded)
 import Physics exposing (collide)
 import Point2d as Point2d
 import Scenes exposing (loadScene, sceneA, sceneB, sceneC, sceneD)
@@ -108,15 +108,14 @@ initialMenu =
         s =
             SimpleItem
 
-        p =
-            ParentItem
+        p name items =
+            ParentItem name NotExpanded items
 
         tree : MenuItem Msg
         tree =
-            p "root"
+            ParentItem "root"
                 Expanded
                 [ p "Open a Scene"
-                    NotExpanded
                     [ s "Load Scene A" (LoadScene sceneA)
                     , s "Load Scene B" (LoadScene sceneB)
                     , s "Load Scene C" (LoadScene sceneC)
@@ -124,15 +123,27 @@ initialMenu =
                     ]
                 , s "Save" SaveClicked
                 , s "Load" LoadClicked
-                , s "Pause" TogglePaused
+                , s "Pause" TogglePaused -- need to allow dynamic labels...
                 , s "Export JSON" ExportClicked
-                , p "Code"
-                    NotExpanded
-                    [ s "Default" (LoadScene sceneA)
-                    , s "Elm Debugger" (LoadScene sceneB)
-                    , s "Optimized JS" (LoadScene sceneC)
-                    ]
+                , s "Variants" (Variants |> TabOpenerClicked)
                 , s "About" (About |> TabOpenerClicked)
+                , p "Deeper Tree example"
+                    [ p "dt 1"
+                        [ p "dt 1 a" [ s "dt 1 a x" TogglePaused ]
+                        , p "dt 1 b" [ s "dt 1 b y" TogglePaused ]
+                        , p "dt 1 c" [ s "dt 1 c z" TogglePaused ]
+                        ]
+                    , p "dt 2"
+                        [ p "dt 2 a" [ s "dt 2 a x" TogglePaused ]
+                        , p "dt 2 b" [ s "dt 2 b y" TogglePaused ]
+                        , p "dt 2 c" [ s "dt 2 c z" TogglePaused ]
+                        ]
+                    , p "dt 3"
+                        [ p "dt 3 a" [ s "dt 3 a x" TogglePaused ]
+                        , p "dt 3 b" [ s "dt 3 b y" TogglePaused ]
+                        , p "dt 3 c" [ s "dt 3 c z" TogglePaused ]
+                        ]
+                    ]
                 ]
     in
     tree
@@ -252,8 +263,13 @@ updateHelp msg model =
 
         ToggleMenuItem zipper ->
             let
+                updatedMenu : Zipper (MenuItem Msg)
                 updatedMenu =
-                    Zipper.updateItem toggleExpanded zipper
+                    zipper
+                        |> Zipper.updateItem keepItemExpanded
+                        --|> Zipper.up
+                        --|> withDefault zipper
+                        |> Zipper.update (Lazy.Tree.map closeItem)
             in
             { model | menu = updatedMenu }
 

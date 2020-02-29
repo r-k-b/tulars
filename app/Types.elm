@@ -67,6 +67,7 @@ type alias Model =
 type Route
     = About
     | MainMap
+    | Variants
 
 
 type alias Scene =

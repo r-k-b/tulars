@@ -9,26 +9,53 @@ type MenuItem msg
 type IsExpanded
     = NotExpanded
     | Expanded
+    | KeepExpanded
 
 
-toggleExpanded : MenuItem msg -> MenuItem msg
-toggleExpanded item =
+closeItem : MenuItem msg -> MenuItem msg
+closeItem item =
     case item of
         SimpleItem _ _ ->
             item
 
         ParentItem name isExpanded children ->
-            ParentItem name (flipExpand isExpanded) children
+            ParentItem name (close isExpanded) children
 
 
-flipExpand : IsExpanded -> IsExpanded
-flipExpand isExpanded =
+keepItemExpanded : MenuItem msg -> MenuItem msg
+keepItemExpanded item =
+    case item of
+        SimpleItem _ _ ->
+            item
+
+        ParentItem name _ children ->
+            ParentItem name KeepExpanded children
+
+
+close : IsExpanded -> IsExpanded
+close isExpanded =
     case isExpanded of
         NotExpanded ->
-            Expanded
+            NotExpanded
 
         Expanded ->
             NotExpanded
+
+        KeepExpanded ->
+            Expanded
+
+
+expandedAsBool : IsExpanded -> Bool
+expandedAsBool isExpanded =
+    case isExpanded of
+        NotExpanded ->
+            False
+
+        Expanded ->
+            True
+
+        KeepExpanded ->
+            True
 
 
 getItemChildren : MenuItem msg -> List (MenuItem msg)
