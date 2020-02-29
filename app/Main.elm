@@ -5,19 +5,19 @@ import Browser.Events exposing (onAnimationFrame)
 import DefaultData exposing (armsReach, retardantRadius, unseeded)
 import Dict exposing (Dict)
 import Direction2d as Direction2d
-import Lazy.Tree
-import Lazy.Tree.Zipper as Zipper exposing (Zipper)
 import List exposing (map)
 import MapAccumulate exposing (mapAccumL)
 import Maybe exposing (withDefault)
 import Maybe.Extra
-import Menu exposing (IsExpanded(..), MenuItem(..), closeItem, getItemChildren, keepItemExpanded)
+import Menu exposing (IsExpanded(..), MenuItem(..))
 import Physics exposing (collide)
 import Point2d as Point2d
 import Scenes exposing (loadScene, sceneA, sceneB, sceneC, sceneD)
 import SelectList exposing (SelectList, selected)
 import Set exposing (insert)
 import Time exposing (Posix)
+import Tree exposing (Tree, tree)
+import Tree.Zipper as Zipper exposing (Zipper)
 import Types
     exposing
         ( Action
@@ -105,16 +105,15 @@ init posixMillis =
 initialMenu : Zipper (MenuItem Msg)
 initialMenu =
     let
-        s =
-            SimpleItem
+        s name msg =
+            tree (SimpleItem name msg) []
 
-        p name items =
-            ParentItem name NotExpanded items
+        p name =
+            tree (ParentItem name)
 
-        tree : MenuItem Msg
-        tree =
-            ParentItem "root"
-                Expanded
+        initialTree : Tree (MenuItem Msg)
+        initialTree =
+            p "root"
                 [ p "Open a Scene"
                     [ s "Load Scene A" (LoadScene sceneA)
                     , s "Load Scene B" (LoadScene sceneB)
@@ -146,8 +145,7 @@ initialMenu =
                     ]
                 ]
     in
-    tree
-        |> Lazy.Tree.build getItemChildren
+    initialTree
         |> Zipper.fromTree
 
 
@@ -262,16 +260,16 @@ updateHelp msg model =
             { model | tabs = model.tabs |> closeTabAt index route }
 
         ToggleMenuItem zipper ->
-            let
-                updatedMenu : Zipper (MenuItem Msg)
-                updatedMenu =
-                    zipper
-                        |> Zipper.updateItem keepItemExpanded
-                        --|> Zipper.up
-                        --|> withDefault zipper
-                        |> Zipper.update (Lazy.Tree.map closeItem)
-            in
-            { model | menu = updatedMenu }
+            --let
+            --    updatedMenu : Zipper (MenuItem Msg)
+            --    updatedMenu =
+            --        zipper
+            --            |> Zipper.updateItem keepItemExpanded
+            --            |> Zipper.up
+            --            |> withDefault zipper
+            --|> Zipper.update (Lazy.Tree.map closeItem)
+            --in
+            model
 
 
 selectTabAt : Int -> SelectList Route -> SelectList Route

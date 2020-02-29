@@ -1,35 +1,18 @@
 module Menu exposing (..)
 
+import Tree exposing (Tree, tree)
+import Tree.Zipper as Zipper exposing (Zipper, toTree)
+
 
 type MenuItem msg
     = SimpleItem String msg
-    | ParentItem String IsExpanded (List (MenuItem msg))
+    | ParentItem String
 
 
 type IsExpanded
     = NotExpanded
     | Expanded
     | KeepExpanded
-
-
-closeItem : MenuItem msg -> MenuItem msg
-closeItem item =
-    case item of
-        SimpleItem _ _ ->
-            item
-
-        ParentItem name isExpanded children ->
-            ParentItem name (close isExpanded) children
-
-
-keepItemExpanded : MenuItem msg -> MenuItem msg
-keepItemExpanded item =
-    case item of
-        SimpleItem _ _ ->
-            item
-
-        ParentItem name _ children ->
-            ParentItem name KeepExpanded children
 
 
 close : IsExpanded -> IsExpanded
@@ -58,11 +41,53 @@ expandedAsBool isExpanded =
             True
 
 
-getItemChildren : MenuItem msg -> List (MenuItem msg)
-getItemChildren menuItem =
-    case menuItem of
-        SimpleItem _ _ ->
-            []
+type CullInfo
+    = NoChildren
+    | HadChildren
 
-        ParentItem _ _ children ->
-            children
+
+cullInvisible : Zipper a -> Tree ( a, CullInfo )
+cullInvisible zipper =
+    let
+        truncatedListOfChildren : List ( a, CullInfo )
+        truncatedListOfChildren =
+            zipper
+                |> Zipper.children
+                |> List.map snip
+    in
+    zipper
+        |> toTree
+        |> Tree.map (\a -> ( a, HadChildren ))
+
+
+snip : Tree a -> ( a, CullInfo )
+snip tree =
+    ( tree |> Tree.label
+    , case tree |> Tree.children of
+        [] ->
+            NoChildren
+
+        _ ->
+            HadChildren
+    )
+
+
+cullInvisibleHelper : Zipper a -> Tree ( a, CullInfo ) -> ( Maybe (Zipper a), Tree ( a, CullInfo ) )
+cullInvisibleHelper focus innerTree =
+    let
+        label : ( a, CullInfo )
+        label =
+            ( focus |> Zipper.label, HadChildren )
+
+        children : List (Tree ( a, CullInfo ))
+        children =
+            innerTree
+                :: (focus
+                        |> Zipper.children
+                        |> List.map
+                            (Tree.map
+                                (\tree -> ( tree |> Tree.label |> (\l -> tree l []), NoChildren ))
+                            )
+                   )
+    in
+    ( focus |> Zipper.parent, tree label children )

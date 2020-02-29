@@ -31,7 +31,6 @@ import Html
 import Html.Attributes as HA exposing (href, style)
 import Html.Events exposing (onClick)
 import Json.Decode as JD
-import Lazy.Tree.Zipper as Zipper exposing (Zipper)
 import LineSegment2d
 import Menu exposing (IsExpanded(..), MenuItem(..), expandedAsBool)
 import Point2d as Point2d exposing (xCoordinate, yCoordinate)
@@ -62,6 +61,7 @@ import Svg.Attributes
         , y2
         )
 import Time exposing (Posix)
+import Tree.Zipper exposing (Zipper)
 import Tuple exposing (first, second)
 import Types
     exposing
@@ -224,43 +224,44 @@ tabName route =
 
 viewMenu : Zipper (MenuItem Msg) -> List (Html Msg)
 viewMenu zipper =
-    viewLevel { isRoot = True } (Zipper.root zipper)
+    viewLevel { isRoot = True } (Tree.Zipper.root zipper)
 
 
 viewLevel : { isRoot : Bool } -> Zipper (MenuItem Msg) -> List (Html Msg)
 viewLevel { isRoot } zipper =
-    let
-        item : MenuItem Msg
-        item =
-            Zipper.current zipper
-    in
-    if isRoot then
-        Zipper.openAll zipper
-            |> List.concatMap (viewLevel { isRoot = False })
-
-    else
-        case item of
-            SimpleItem name msg ->
-                [ Html.button [ onClick msg ]
-                    [ text name ]
-                ]
-
-            ParentItem name isExpanded _ ->
-                if isExpanded |> expandedAsBool then
-                    [ Html.button
-                        [ onClick <| ToggleMenuItem zipper
-                        , classes.activeMenuItem |> HA.class
-                        ]
-                        [ text name ]
-                    , Zipper.openAll zipper
-                        |> List.concatMap (viewLevel { isRoot = False })
-                        |> div [ classes.pageGrid.subMenu |> HA.class ]
-                    ]
-
-                else
-                    [ Html.button [ onClick <| ToggleMenuItem zipper ]
-                        [ text name ]
-                    ]
+    --let
+    --    item : MenuItem Msg
+    --    item =
+    --        Tree.Zipper.current zipper
+    --in
+    --if isRoot then
+    --    Zipper.openAll zipper
+    --        |> List.concatMap (viewLevel { isRoot = False })
+    --
+    --else
+    --    case item of
+    --        SimpleItem name msg ->
+    --            [ Html.button [ onClick msg ]
+    --                [ text name ]
+    --            ]
+    --
+    --        ParentItem name isExpanded _ ->
+    --            if isExpanded |> expandedAsBool then
+    --                [ Html.button
+    --                    [ onClick <| ToggleMenuItem zipper
+    --                    , classes.activeMenuItem |> HA.class
+    --                    ]
+    --                    [ text name ]
+    --                , Zipper.openAll zipper
+    --                    |> List.concatMap (viewLevel { isRoot = False })
+    --                    |> div [ classes.pageGrid.subMenu |> HA.class ]
+    --                ]
+    --
+    --            else
+    --                [ Html.button [ onClick <| ToggleMenuItem zipper ]
+    --                    [ text name ]
+    --                ]
+    [ text "fixme" ]
 
 
 bb : BoundingBox2d
