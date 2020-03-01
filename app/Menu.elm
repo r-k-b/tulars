@@ -28,9 +28,10 @@ close isExpanded =
             Expanded
 
 
-type CullInfo
-    = NoChildren
-    | HadChildren
+type alias CullInfo a =
+    { label : a
+    , hadChildren : Bool
+    }
 
 
 zipperToBreadcrumbs : Zipper a -> ( a, List a )
@@ -56,15 +57,15 @@ zipperToBreadcrumbsHelper maybeZipper label crumbs =
 
 type alias AnnotatedCrumb a =
     { label : a
-    , siblingsBefore : List a
-    , siblingsAfter : List a
+    , siblingsBefore : List (CullInfo a)
+    , siblingsAfter : List (CullInfo a)
     , directChildren : AnnotatedCrumbChildren a
     }
 
 
 type AnnotatedCrumbChildren a
-    = NoMoreCrumbs (List a)
-    | CrumbTrailContinues (List a) (AnnotatedCrumb a) (List a)
+    = NoMoreCrumbs (List (CullInfo a))
+    | CrumbTrailContinues (List (CullInfo a)) (AnnotatedCrumb a) (List (CullInfo a))
 
 
 zipperToAnnotatedBreadcrumbs : Zipper a -> AnnotatedCrumb a
@@ -73,12 +74,12 @@ zipperToAnnotatedBreadcrumbs zipper =
         endOfTheTrail : AnnotatedCrumb a
         endOfTheTrail =
             { label = zipper |> Zipper.label
-            , siblingsBefore = zipper |> Zipper.siblingsBeforeFocus |> getLabels
-            , siblingsAfter = zipper |> Zipper.siblingsAfterFocus |> getLabels
+            , siblingsBefore = zipper |> Zipper.siblingsBeforeFocus |> getCullInfos
+            , siblingsAfter = zipper |> Zipper.siblingsAfterFocus |> getCullInfos
             , directChildren =
                 zipper
                     |> Zipper.children
-                    |> getLabels
+                    |> getCullInfos
                     |> NoMoreCrumbs
             }
     in
@@ -87,9 +88,16 @@ zipperToAnnotatedBreadcrumbs zipper =
         endOfTheTrail
 
 
-getLabels : List (Tree a) -> List a
-getLabels trees =
-    trees |> List.map Tree.label
+getCullInfos : List (Tree a) -> List (CullInfo a)
+getCullInfos trees =
+    trees |> List.map getCullInfo
+
+
+getCullInfo : Tree a -> CullInfo a
+getCullInfo tree =
+    { label = tree |> Tree.label
+    , hadChildren = tree |> Tree.children |> List.length |> (<) 0
+    }
 
 
 zipperToAnnotatedBreadcrumbsHelper :
@@ -106,11 +114,11 @@ zipperToAnnotatedBreadcrumbsHelper maybeZipper crumbs =
                     , siblingsBefore =
                         parent
                             |> Zipper.siblingsBeforeFocus
-                            |> getLabels
+                            |> getCullInfos
                     , siblingsAfter =
                         parent
                             |> Zipper.siblingsAfterFocus
-                            |> getLabels
+                            |> getCullInfos
                     , directChildren =
                         CrumbTrailContinues
                             []

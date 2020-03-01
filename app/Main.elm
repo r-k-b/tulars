@@ -120,13 +120,30 @@ initialMenu =
                     , s "Load Scene C" (LoadScene sceneC)
                     , s "Load Scene D" (LoadScene sceneD)
                     ]
+                , p "Deeper Tree example 1"
+                    [ p "dt 1"
+                        [ p "dt 1 a" [ s "dt 1 a x" TogglePaused ]
+                        , p "dt 1 b" [ s "dt 1 b y" TogglePaused ]
+                        , p "dt 1 c" [ s "dt 1 c z" TogglePaused ]
+                        ]
+                    , p "dt 2"
+                        [ p "dt 2 a" [ s "dt 2 a x" TogglePaused ]
+                        , p "dt 2 b" [ s "dt 2 b y" TogglePaused ]
+                        , p "dt 2 c" [ s "dt 2 c z" TogglePaused ]
+                        ]
+                    , p "dt 3"
+                        [ p "dt 3 a" [ s "dt 3 a x" TogglePaused ]
+                        , p "dt 3 b" [ s "dt 3 b y" TogglePaused ]
+                        , p "dt 3 c" [ s "dt 3 c z" TogglePaused ]
+                        ]
+                    ]
                 , s "Save" SaveClicked
                 , s "Load" LoadClicked
                 , s "Pause" TogglePaused -- need to allow dynamic labels...
                 , s "Export JSON" ExportClicked
                 , s "Variants" (Variants |> TabOpenerClicked)
                 , s "About" (About |> TabOpenerClicked)
-                , p "Deeper Tree example"
+                , p "Deeper Tree example 2"
                     [ p "dt 1"
                         [ p "dt 1 a" [ s "dt 1 a x" TogglePaused ]
                         , p "dt 1 b" [ s "dt 1 b y" TogglePaused ]
@@ -145,8 +162,15 @@ initialMenu =
                     ]
                 ]
     in
-    initialTree
+    (initialTree
         |> Zipper.fromTree
+        |> Zipper.forward
+        |> Maybe.andThen Zipper.nextSibling
+        |> Maybe.andThen Zipper.forward
+        |> Maybe.map always
+        |> Maybe.withDefault (\() -> Debug.todo "stop moving the zipper")
+    )
+        ()
 
 
 

@@ -7,32 +7,12 @@ import Dict
 import Direction2d as Direction2d
 import Frame2d as Frame2d
 import Geometry.Svg as Svg
-import Html
-    exposing
-        ( Attribute
-        , Html
-        , a
-        , code
-        , div
-        , h2
-        , h3
-        , h4
-        , h5
-        , li
-        , p
-        , span
-        , table
-        , td
-        , text
-        , th
-        , tr
-        , ul
-        )
+import Html exposing (Attribute, Html, a, button, code, div, h2, h3, h4, h5, li, p, span, table, td, text, th, tr, ul)
 import Html.Attributes as HA exposing (href, style)
 import Html.Events exposing (onClick)
 import Json.Decode as JD
 import LineSegment2d
-import Menu exposing (IsExpanded(..), MenuItem(..), expandedAsBool)
+import Menu exposing (AnnotatedCrumb, AnnotatedCrumbChildren(..), CullInfo, IsExpanded(..), MenuItem(..), zipperToAnnotatedBreadcrumbs)
 import Point2d as Point2d exposing (xCoordinate, yCoordinate)
 import Round
 import SelectList exposing (SelectList, selected)
@@ -224,44 +204,91 @@ tabName route =
 
 viewMenu : Zipper (MenuItem Msg) -> List (Html Msg)
 viewMenu zipper =
-    viewLevel { isRoot = True } (Tree.Zipper.root zipper)
+    zipper
+        |> zipperToAnnotatedBreadcrumbs
+        |> viewCrumbTrail { atRoot = True }
 
 
-viewLevel : { isRoot : Bool } -> Zipper (MenuItem Msg) -> List (Html Msg)
-viewLevel { isRoot } zipper =
-    --let
-    --    item : MenuItem Msg
-    --    item =
-    --        Tree.Zipper.current zipper
-    --in
-    --if isRoot then
-    --    Zipper.openAll zipper
-    --        |> List.concatMap (viewLevel { isRoot = False })
-    --
-    --else
-    --    case item of
-    --        SimpleItem name msg ->
-    --            [ Html.button [ onClick msg ]
-    --                [ text name ]
-    --            ]
-    --
-    --        ParentItem name isExpanded _ ->
-    --            if isExpanded |> expandedAsBool then
-    --                [ Html.button
-    --                    [ onClick <| ToggleMenuItem zipper
-    --                    , classes.activeMenuItem |> HA.class
-    --                    ]
-    --                    [ text name ]
-    --                , Zipper.openAll zipper
-    --                    |> List.concatMap (viewLevel { isRoot = False })
-    --                    |> div [ classes.pageGrid.subMenu |> HA.class ]
-    --                ]
-    --
-    --            else
-    --                [ Html.button [ onClick <| ToggleMenuItem zipper ]
-    --                    [ text name ]
-    --                ]
-    [ text "fixme" ]
+viewCrumbTrail : { atRoot : Bool } -> AnnotatedCrumb (MenuItem Msg) -> List (Html Msg)
+viewCrumbTrail { atRoot } crumbTrail =
+    if atRoot then
+        crumbTrail.directChildren |> viewChildrenOfCrumb
+
+    else
+        let
+            item : MenuItem Msg
+            item =
+                crumbTrail.label
+        in
+        List.concat
+            [ crumbTrail.siblingsBefore |> List.concatMap viewMenuItem
+            , viewExpandedMenuItem crumbTrail.label crumbTrail.directChildren
+            , crumbTrail.siblingsAfter |> List.concatMap viewMenuItem
+            ]
+
+
+viewChildrenOfCrumb : AnnotatedCrumbChildren (MenuItem Msg) -> List (Html Msg)
+viewChildrenOfCrumb annotatedCrumbChildren =
+    case annotatedCrumbChildren of
+        NoMoreCrumbs directChildren ->
+            directChildren |> List.concatMap viewMenuItem
+
+        CrumbTrailContinues siblingsBefore annotatedCrumb siblingsAfter ->
+            List.concat
+                [ siblingsBefore |> List.concatMap viewMenuItem
+                , viewCrumbTrail { atRoot = False } annotatedCrumb
+                , siblingsAfter |> List.concatMap viewMenuItem
+                ]
+
+
+viewExpandedMenuItem :
+    MenuItem Msg
+    -> AnnotatedCrumbChildren (MenuItem Msg)
+    -> List (Html Msg)
+viewExpandedMenuItem menuItem children =
+    case menuItem of
+        SimpleItem name msg ->
+            [ button [] [ text <| name ++ " (simple)" ]
+            ]
+
+        ParentItem name ->
+            [ button
+                [ -- onClick <| ToggleMenuItem zipper
+                  classes.activeMenuItem |> HA.class
+                ]
+                [ text name ]
+            , viewChildrenOfCrumb children
+                |> div [ classes.pageGrid.subMenu |> HA.class ]
+            ]
+
+
+viewMenuItem : CullInfo (MenuItem Msg) -> List (Html Msg)
+viewMenuItem cullInfo =
+    case cullInfo.label of
+        SimpleItem name msg ->
+            [ Html.button [ onClick msg ]
+                [ text name ]
+            ]
+
+        ParentItem name ->
+            if cullInfo.hadChildren then
+                [ Html.button
+                    [-- onClick <| ToggleMenuItem zipper
+                     -- classes.activeMenuItem |> HA.class
+                    ]
+                    [ text <| name ++ " >" ]
+
+                --, Zipper.openAll zipper
+                --    |> List.concatMap (viewCrumb { isRoot = False })
+                --    |> div [ classes.pageGrid.subMenu |> HA.class ]
+                ]
+
+            else
+                [ Html.button
+                    [-- onClick <| ToggleMenuItem zipper
+                    ]
+                    [ text name ]
+                ]
 
 
 bb : BoundingBox2d

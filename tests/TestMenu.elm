@@ -2,7 +2,7 @@ module TestMenu exposing (suite)
 
 import Expect exposing (Expectation, FloatingPointTolerance(..))
 import Maybe exposing (andThen)
-import Menu exposing (AnnotatedCrumb, AnnotatedCrumbChildren(..), CullInfo(..), zipperToAnnotatedBreadcrumbs, zipperToBreadcrumbs)
+import Menu exposing (AnnotatedCrumb, AnnotatedCrumbChildren(..), CullInfo, zipperToAnnotatedBreadcrumbs, zipperToBreadcrumbs)
 import Test exposing (Test, describe, test)
 import Tree exposing (tree)
 import Tree.Zipper as Zipper exposing (Zipper)
@@ -75,14 +75,21 @@ suite =
                                 []
                                 { label = 'b'
                                 , siblingsBefore = []
-                                , siblingsAfter = [ 'c', 'd' ]
+                                , siblingsAfter =
+                                    [ { label = 'c', hadChildren = True }
+                                    , { label = 'd', hadChildren = False }
+                                    ]
                                 , directChildren =
                                     CrumbTrailContinues []
                                         { label = 'e'
                                         , siblingsBefore = []
                                         , siblingsAfter = []
                                         , directChildren =
-                                            NoMoreCrumbs [ 'g' ]
+                                            NoMoreCrumbs
+                                                [ { label = 'g'
+                                                  , hadChildren = True
+                                                  }
+                                                ]
                                         }
                                         []
                                 }
@@ -126,15 +133,23 @@ suite =
                             CrumbTrailContinues
                                 []
                                 { label = 'b'
-                                , siblingsBefore = [ 'c' ]
-                                , siblingsAfter = [ 'd' ]
+                                , siblingsBefore =
+                                    [ { label = 'c', hadChildren = True }
+                                    ]
+                                , siblingsAfter =
+                                    [ { label = 'd', hadChildren = False }
+                                    ]
                                 , directChildren =
                                     CrumbTrailContinues []
                                         { label = 'e'
                                         , siblingsBefore = []
                                         , siblingsAfter = []
                                         , directChildren =
-                                            NoMoreCrumbs [ 'g' ]
+                                            NoMoreCrumbs
+                                                [ { label = 'g'
+                                                  , hadChildren = True
+                                                  }
+                                                ]
                                         }
                                         []
                                 }
