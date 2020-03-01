@@ -194,6 +194,7 @@ updateHelp msg model =
     case msg of
         TabOpenerClicked route ->
             { model | tabs = model.tabs |> openTabFor route }
+                |> andCloseTheMenu
 
         TogglePaused ->
             { model | paused = not model.paused }
