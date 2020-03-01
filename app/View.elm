@@ -3,6 +3,7 @@ module View exposing (view)
 import BoundingBox2d as BoundingBox2d exposing (BoundingBox2d)
 import Browser exposing (Document)
 import Circle2d as Circle2d
+import CypressHandles exposing (cypress)
 import Dict
 import Direction2d as Direction2d
 import Frame2d as Frame2d
@@ -37,13 +38,12 @@ import Menu
     exposing
         ( AnnotatedCrumb
         , AnnotatedCrumbChildren(..)
-        , IsExpanded(..)
-        , MenuItem(..)
         , zipperToAnnotatedBreadcrumbs
         )
 import Point2d as Point2d exposing (xCoordinate, yCoordinate)
 import Round
 import SelectList exposing (SelectList, selected)
+import StylingClasses exposing (classes, svgClass)
 import Svg exposing (Svg, g, rect, stop, text_)
 import Svg.Attributes
     exposing
@@ -87,6 +87,8 @@ import Types
         , Holding(..)
         , InputFunction(..)
         , Layer(..)
+        , MenuItem
+        , MenuItemType(..)
         , Model
         , Msg(..)
         , Portable(..)
@@ -127,6 +129,7 @@ view model =
                 , div
                     [ classes.pageGrid.content |> HA.class
                     , classes.zoomSvg |> HA.class
+                    , cypress.mainContent
                     ]
                     [ case model.tabs |> selected of
                         About ->
@@ -143,56 +146,13 @@ view model =
     { title = "Tulars", body = [ body ] }
 
 
-svgClass =
-    { borders = Svg.Attributes.class "borders"
-    , considerationChart = Svg.Attributes.class "consideration-chart"
-    , currentValue = Svg.Attributes.class "current-value"
-    , healthBar = Svg.Attributes.class "healthbar"
-    , held = Svg.Attributes.class "held"
-    , layer =
-        { names = Svg.Attributes.class "layer__names"
-        , statusBars = Svg.Attributes.class "layer__status-bars"
-        }
-    , progressBar = Svg.Attributes.class "progressbar"
-    , ticks = Svg.Attributes.class "ticks"
-    }
-
-
-{-| Here's the only place CSS class strings should be directly referenced.
-
-That'll help keep track of usages, and with autocomplete.
-
--}
-classes =
-    { activeMenuItem = "menu-item--active"
-    , clickable = "clickable"
-    , theme =
-        { notSoHarsh = "theme--not-so-harsh"
-        }
-    , pageGrid =
-        { agentInfo = "page-grid__agent-info"
-        , container = "page-grid__container"
-        , content = "page-grid__content"
-        , menu = "page-grid__menu"
-        , subMenu = "page-grid__submenu"
-        , tabs = "page-grid__tabs"
-        }
-    , parentButton =
-        { button = "parent-button"
-        , text = "parent-button__text"
-        , indicator = "parent-button__indicator"
-        }
-    , selectedTab = "page-grid__tabs__tab--selected"
-    , tab = "page-grid__tabs__tab"
-    , tabCloser = "page-grid__tabs__tab-closer"
-    , tabText = "page-grid__tabs__tab__text"
-    , zoomSvg = "zoom-svg"
-    }
-
-
 viewTabs : SelectList Route -> Html Msg
 viewTabs tabs =
-    div [ classes.pageGrid.tabs |> HA.class, classes.theme.notSoHarsh |> HA.class ]
+    div
+        [ classes.pageGrid.tabs |> HA.class
+        , classes.theme.notSoHarsh |> HA.class
+        , cypress.tabs.bar
+        ]
         (tabs |> SelectList.indexedMap viewTab)
 
 
@@ -203,6 +163,7 @@ viewTab relativeIndex tab =
         , HA.classList [ ( classes.selectedTab, relativeIndex == 0 ) ]
         , classes.clickable |> HA.class
         , onClick <| TabClicked relativeIndex
+        , cypress.tabs.tab
         ]
         [ span
             [ classes.tabText |> HA.class ]
@@ -274,22 +235,29 @@ viewExpandedMenuItem :
     -> AnnotatedCrumbChildren (MenuItem Msg)
     -> List (Html Msg)
 viewExpandedMenuItem menuItem children =
-    case menuItem |> Zipper.label of
-        SimpleItem name msg ->
+    let
+        focus =
+            menuItem |> Zipper.label
+    in
+    case focus.menuItemType of
+        SimpleItem msg ->
             [ button
-                [ onClick msg ]
-                [ text <| name ++ " (simple)" ]
+                [ onClick msg
+                , focus.cypressHandle |> orNoAttribute
+                ]
+                [ text <| focus.name ++ " (simple)" ]
             ]
 
-        ParentItem name ->
+        ParentItem ->
             [ button
                 [ onClick <| OpenMenuAt (menuItem |> Zipper.root)
                 , classes.activeMenuItem |> HA.class
                 , classes.parentButton.button |> HA.class
+                , focus.cypressHandle |> orNoAttribute
                 ]
                 [ span
                     [ classes.parentButton.text |> HA.class ]
-                    [ text name ]
+                    [ text focus.name ]
                 , span
                     [ classes.parentButton.indicator |> HA.class ]
                     [ text "▶" ]
@@ -301,22 +269,29 @@ viewExpandedMenuItem menuItem children =
 
 viewMenuItem : Zipper (MenuItem Msg) -> List (Html Msg)
 viewMenuItem item =
-    case item |> Zipper.label of
-        SimpleItem name msg ->
+    let
+        focus =
+            item |> Zipper.label
+    in
+    case focus.menuItemType of
+        SimpleItem msg ->
             [ Html.button
-                [ onClick msg ]
-                [ text name ]
+                [ onClick msg
+                , focus.cypressHandle |> orNoAttribute
+                ]
+                [ text focus.name ]
             ]
 
-        ParentItem name ->
+        ParentItem ->
             if item |> Zipper.children |> List.length |> (<) 0 then
                 [ button
                     [ onClick <| OpenMenuAt item
                     , classes.parentButton.button |> HA.class
+                    , focus.cypressHandle |> orNoAttribute
                     ]
                     [ span
                         [ classes.parentButton.text |> HA.class ]
-                        [ text name ]
+                        [ text focus.name ]
                     , span
                         [ classes.parentButton.indicator |> HA.class ]
                         [ text "▶" ]
@@ -326,8 +301,9 @@ viewMenuItem item =
             else
                 [ button
                     [ onClick <| OpenMenuAt item
+                    , focus.cypressHandle |> orNoAttribute
                     ]
-                    [ text name ]
+                    [ text focus.name ]
                 ]
 
 
@@ -1237,3 +1213,8 @@ viewVariantsPage =
             , li [] [ a [ href "/optimized.html" ] [ text "Optimized JS" ] ]
             ]
         ]
+
+
+orNoAttribute : Maybe (Html.Attribute msg) -> Html.Attribute msg
+orNoAttribute maybeAttr =
+    maybeAttr |> Maybe.withDefault (HA.attribute "data-empty" "")

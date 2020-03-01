@@ -30,6 +30,15 @@ Then, open one of these in a browser:
 Run `npm test`.
 
 
+# integration tests
+
+Not part of the default `npm test`, yet.
+
+While the site is running on `localhost:8000`, run:
+
+    npm run cypress:open
+
+
 # misc
 
 [Verlet integration](https://en.wikipedia.org/wiki/Verlet_integration)

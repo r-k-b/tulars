@@ -2,6 +2,7 @@ module Main exposing (closeTabAt, main, pickUpFood)
 
 import Browser
 import Browser.Events exposing (onAnimationFrame)
+import CypressHandles exposing (cypress)
 import DefaultData exposing (armsReach, retardantRadius, unseeded)
 import Dict exposing (Dict)
 import Direction2d as Direction2d
@@ -9,7 +10,6 @@ import List exposing (map)
 import MapAccumulate exposing (mapAccumL)
 import Maybe exposing (withDefault)
 import Maybe.Extra
-import Menu exposing (IsExpanded(..), MenuItem(..))
 import Physics exposing (collide)
 import Point2d as Point2d
 import Scenes exposing (loadScene, sceneA, sceneB, sceneC, sceneD)
@@ -32,6 +32,8 @@ import Types
         , GrowableState(..)
         , Hitpoints(..)
         , Holding(..)
+        , MenuItem
+        , MenuItemType(..)
         , Model
         , Msg(..)
         , Physical
@@ -106,10 +108,25 @@ initialMenu : Zipper (MenuItem Msg)
 initialMenu =
     let
         s name msg =
-            tree (SimpleItem name msg) []
+            tree
+                { name = name
+                , menuItemType = SimpleItem msg
+                , cypressHandle = Nothing
+                }
+                []
 
         p name =
-            tree (ParentItem name)
+            tree
+                { name = name
+                , menuItemType = ParentItem
+                , cypressHandle = Nothing
+                }
+
+        cyHandle attr =
+            Tree.mapLabel
+                (\label ->
+                    { label | cypressHandle = Just attr }
+                )
     in
     p "root"
         [ p "Open a Scene"
@@ -141,6 +158,7 @@ initialMenu =
         , s "Export JSON" ExportClicked
         , s "Variants" (Variants |> TabOpenerClicked)
         , s "About" (About |> TabOpenerClicked)
+            |> cyHandle cypress.mainMenu.about
         , p "Deeper Tree example 2"
             [ p "dt 1"
                 [ p "dt 1 a" [ s "dt 1 a x" TogglePaused ]

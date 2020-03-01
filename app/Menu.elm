@@ -4,30 +4,6 @@ import Maybe exposing (withDefault)
 import Tree.Zipper as Zipper exposing (Zipper)
 
 
-type MenuItem msg
-    = SimpleItem String msg
-    | ParentItem String
-
-
-type IsExpanded
-    = NotExpanded
-    | Expanded
-    | KeepExpanded
-
-
-close : IsExpanded -> IsExpanded
-close isExpanded =
-    case isExpanded of
-        NotExpanded ->
-            NotExpanded
-
-        Expanded ->
-            NotExpanded
-
-        KeepExpanded ->
-            Expanded
-
-
 zipperToBreadcrumbs : Zipper a -> ( a, List a )
 zipperToBreadcrumbs zipper =
     zipperToBreadcrumbsHelper

@@ -18,6 +18,8 @@ module Types exposing
     , Holding(..)
     , InputFunction(..)
     , Layer(..)
+    , MenuItem
+    , MenuItemType(..)
     , Model
     , Msg(..)
     , Physical
@@ -29,11 +31,12 @@ module Types exposing
     , Route(..)
     , Scene
     , Signal(..)
+    , close
     )
 
 import Dict exposing (Dict)
 import Direction2d exposing (Direction2d)
-import Menu exposing (MenuItem)
+import Html
 import Point2d exposing (Point2d)
 import SelectList exposing (SelectList)
 import Set exposing (Set)
@@ -319,3 +322,37 @@ type alias FireExtinguisher =
 type Layer
     = Names
     | StatusBars
+
+
+{-| Be sure to use CypressHandles.cypress.\* rather than inline strings and
+attributes.
+-}
+type alias MenuItem msg =
+    { cypressHandle : Maybe (Html.Attribute msg)
+    , menuItemType : MenuItemType msg
+    , name : String
+    }
+
+
+type MenuItemType msg
+    = SimpleItem msg
+    | ParentItem
+
+
+type IsExpanded
+    = NotExpanded
+    | Expanded
+    | KeepExpanded
+
+
+close : IsExpanded -> IsExpanded
+close isExpanded =
+    case isExpanded of
+        NotExpanded ->
+            NotExpanded
+
+        Expanded ->
+            NotExpanded
+
+        KeepExpanded ->
+            Expanded

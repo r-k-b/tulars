@@ -18,3 +18,38 @@ import './commands'
 
 // Alternatively you can use CommonJS syntax:
 // require('./commands')
+
+const att = (handle) => `[data-cy="${handle}"]`
+
+/**
+ * Central list of element references used by all Cypress tests.
+ *
+ * Pro tip: Keeping all the keys sorted alphabetically will cut down on merge
+ * conflicts, and make it easier to spot differences with the Elm equivalent.
+ *
+ * ---
+ *
+ * How can we automatically keep these in sync with `app/CypressHandles.elm`?
+ *
+ * @example
+ * import {handle} from '../support'
+ * // ...
+ *   cy.get(handle.tabs.bar)
+ *     .children(handle.tabs.tab)
+ *     .should('have.length', 1)
+ * // ...
+ */
+export const handle =
+    {
+        mainContent: att("main-content"),
+        mainMenu:
+            {
+                about: att("main-menu__about"),
+                loadScene: att("main-menu__load-scene"),
+            },
+        tabs:
+            {
+                bar: att("tab-bar"),
+                tab: att("tab-bar__tab"),
+            },
+    }
