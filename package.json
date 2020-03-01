@@ -6,6 +6,7 @@
   "scripts": {
     "build": "elm make app/Main.elm --output=dist/main.js",
     "build-debug": "./debug.sh",
+    "cypress:open": "cypress open",
     "deploy": "npm run build-all && firebase deploy",
     "build-optimized": "./optimize.sh",
     "build-all": "npm run build && npm run build-optimized && npm run build-debug && git rev-parse HEAD > dist/version.txt",
@@ -33,6 +34,7 @@
     "natives": "^1.1.6"
   },
   "devDependencies": {
+    "cypress": "^4.1.0",
     "elm-format": "0.8.3",
     "elm-live": "^4.0.2",
     "uglify-js": "3.8.0"
