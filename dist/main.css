@@ -3,7 +3,7 @@
     --color-bg--almost: rgb(50, 50, 50);
     --color-bg--mostly: rgb(118, 118, 118);
     --color-fg: white;
-    --color-link-fg: rgb(0, 0, 238);
+    --color-link-fg: rgb(138, 138, 255);
 
     background-color: var(--color-bg);
     color: var(--color-fg);
