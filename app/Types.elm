@@ -33,12 +33,12 @@ module Types exposing
 
 import Dict exposing (Dict)
 import Direction2d exposing (Direction2d)
-import Lazy.Tree.Zipper exposing (Zipper)
 import Menu exposing (MenuItem)
 import Point2d exposing (Point2d)
 import SelectList exposing (SelectList)
 import Set exposing (Set)
 import Time exposing (Posix)
+import Tree.Zipper exposing (Zipper)
 import Vector2d exposing (Vector2d)
 
 
@@ -92,7 +92,7 @@ type Msg
     | ToggleConditionsVisibility String String
     | ToggleConditionDetailsVisibility String String String
     | TogglePaused
-    | ToggleMenuItem (Zipper (MenuItem Msg))
+    | OpenMenuAt (Zipper (MenuItem Msg))
 
 
 type alias Agent =

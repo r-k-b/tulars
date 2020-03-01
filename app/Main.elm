@@ -5,19 +5,19 @@ import Browser.Events exposing (onAnimationFrame)
 import DefaultData exposing (armsReach, retardantRadius, unseeded)
 import Dict exposing (Dict)
 import Direction2d as Direction2d
-import Lazy.Tree
-import Lazy.Tree.Zipper as Zipper exposing (Zipper)
 import List exposing (map)
 import MapAccumulate exposing (mapAccumL)
 import Maybe exposing (withDefault)
 import Maybe.Extra
-import Menu exposing (IsExpanded(..), MenuItem(..), closeItem, getItemChildren, keepItemExpanded)
+import Menu exposing (IsExpanded(..), MenuItem(..))
 import Physics exposing (collide)
 import Point2d as Point2d
 import Scenes exposing (loadScene, sceneA, sceneB, sceneC, sceneD)
 import SelectList exposing (SelectList, selected)
 import Set exposing (insert)
 import Time exposing (Posix)
+import Tree exposing (Tree, tree)
+import Tree.Zipper as Zipper exposing (Zipper)
 import Types
     exposing
         ( Action
@@ -105,49 +105,60 @@ init posixMillis =
 initialMenu : Zipper (MenuItem Msg)
 initialMenu =
     let
-        s =
-            SimpleItem
+        s name msg =
+            tree (SimpleItem name msg) []
 
-        p name items =
-            ParentItem name NotExpanded items
-
-        tree : MenuItem Msg
-        tree =
-            ParentItem "root"
-                Expanded
-                [ p "Open a Scene"
-                    [ s "Load Scene A" (LoadScene sceneA)
-                    , s "Load Scene B" (LoadScene sceneB)
-                    , s "Load Scene C" (LoadScene sceneC)
-                    , s "Load Scene D" (LoadScene sceneD)
-                    ]
-                , s "Save" SaveClicked
-                , s "Load" LoadClicked
-                , s "Pause" TogglePaused -- need to allow dynamic labels...
-                , s "Export JSON" ExportClicked
-                , s "Variants" (Variants |> TabOpenerClicked)
-                , s "About" (About |> TabOpenerClicked)
-                , p "Deeper Tree example"
-                    [ p "dt 1"
-                        [ p "dt 1 a" [ s "dt 1 a x" TogglePaused ]
-                        , p "dt 1 b" [ s "dt 1 b y" TogglePaused ]
-                        , p "dt 1 c" [ s "dt 1 c z" TogglePaused ]
-                        ]
-                    , p "dt 2"
-                        [ p "dt 2 a" [ s "dt 2 a x" TogglePaused ]
-                        , p "dt 2 b" [ s "dt 2 b y" TogglePaused ]
-                        , p "dt 2 c" [ s "dt 2 c z" TogglePaused ]
-                        ]
-                    , p "dt 3"
-                        [ p "dt 3 a" [ s "dt 3 a x" TogglePaused ]
-                        , p "dt 3 b" [ s "dt 3 b y" TogglePaused ]
-                        , p "dt 3 c" [ s "dt 3 c z" TogglePaused ]
-                        ]
-                    ]
-                ]
+        p name =
+            tree (ParentItem name)
     in
-    tree
-        |> Lazy.Tree.build getItemChildren
+    p "root"
+        [ p "Open a Scene"
+            [ s "Load Scene A" (LoadScene sceneA)
+            , s "Load Scene B" (LoadScene sceneB)
+            , s "Load Scene C" (LoadScene sceneC)
+            , s "Load Scene D" (LoadScene sceneD)
+            ]
+        , p "Deeper Tree example 1"
+            [ p "dt 1"
+                [ p "dt 1 a" [ s "dt 1 a x" TogglePaused ]
+                , p "dt 1 b" [ s "dt 1 b y" TogglePaused ]
+                , p "dt 1 c" [ s "dt 1 c z" TogglePaused ]
+                ]
+            , p "dt 2"
+                [ p "dt 2 a" [ s "dt 2 a x" TogglePaused ]
+                , p "dt 2 b" [ s "dt 2 b y" TogglePaused ]
+                , p "dt 2 c" [ s "dt 2 c z" TogglePaused ]
+                ]
+            , p "dt 3"
+                [ p "dt 3 a" [ s "dt 3 a x" TogglePaused ]
+                , p "dt 3 b" [ s "dt 3 b y" TogglePaused ]
+                , p "dt 3 c" [ s "dt 3 c z" TogglePaused ]
+                ]
+            ]
+        , s "Save" SaveClicked
+        , s "Load" LoadClicked
+        , s "Pause" TogglePaused -- need to allow dynamic labels...
+        , s "Export JSON" ExportClicked
+        , s "Variants" (Variants |> TabOpenerClicked)
+        , s "About" (About |> TabOpenerClicked)
+        , p "Deeper Tree example 2"
+            [ p "dt 1"
+                [ p "dt 1 a" [ s "dt 1 a x" TogglePaused ]
+                , p "dt 1 b" [ s "dt 1 b y" TogglePaused ]
+                , p "dt 1 c" [ s "dt 1 c z" TogglePaused ]
+                ]
+            , p "dt 2"
+                [ p "dt 2 a" [ s "dt 2 a x" TogglePaused ]
+                , p "dt 2 b" [ s "dt 2 b y" TogglePaused ]
+                , p "dt 2 c" [ s "dt 2 c z" TogglePaused ]
+                ]
+            , p "dt 3"
+                [ p "dt 3 a" [ s "dt 3 a x" TogglePaused ]
+                , p "dt 3 b" [ s "dt 3 b y" TogglePaused ]
+                , p "dt 3 c" [ s "dt 3 c z" TogglePaused ]
+                ]
+            ]
+        ]
         |> Zipper.fromTree
 
 
@@ -261,17 +272,8 @@ updateHelp msg model =
         TabCloserClicked route index ->
             { model | tabs = model.tabs |> closeTabAt index route }
 
-        ToggleMenuItem zipper ->
-            let
-                updatedMenu : Zipper (MenuItem Msg)
-                updatedMenu =
-                    zipper
-                        |> Zipper.updateItem keepItemExpanded
-                        --|> Zipper.up
-                        --|> withDefault zipper
-                        |> Zipper.update (Lazy.Tree.map closeItem)
-            in
-            { model | menu = updatedMenu }
+        OpenMenuAt zipper ->
+            { model | menu = zipper }
 
 
 selectTabAt : Int -> SelectList Route -> SelectList Route
