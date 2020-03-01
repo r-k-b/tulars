@@ -1,0 +1,26 @@
+# info: http://editorconfig.org
+# vs-plugin: https://marketplace.visualstudio.com/items?itemName=EditorConfigTeam.EditorConfig
+
+[*]
+charset = utf-8
+indent_size = 4
+tab_width = 4
+insert_final_newline = true
+max_line_length = 80
+
+[*.cs]
+indent_style = tab
+
+[*.{cshtml,aspx,ps1}]
+indent_style = space
+
+[*.{js,ts,less,css}]
+indent_style = space
+trim_trailing_whitespace = true
+
+[*.coffee]
+indent_style = tab
+trim_trailing_whitespace = true
+
+[*.csproj]
+indent_size = 2
