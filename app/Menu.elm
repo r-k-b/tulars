@@ -1,6 +1,6 @@
 module Menu exposing (..)
 
-import Tree exposing (Tree)
+import Maybe exposing (withDefault)
 import Tree.Zipper as Zipper exposing (Zipper)
 
 
@@ -28,12 +28,6 @@ close isExpanded =
             Expanded
 
 
-type alias CullInfo a =
-    { label : a
-    , hadChildren : Bool
-    }
-
-
 zipperToBreadcrumbs : Zipper a -> ( a, List a )
 zipperToBreadcrumbs zipper =
     zipperToBreadcrumbsHelper
@@ -56,16 +50,16 @@ zipperToBreadcrumbsHelper maybeZipper label crumbs =
 
 
 type alias AnnotatedCrumb a =
-    { label : a
-    , siblingsBefore : List (CullInfo a)
-    , siblingsAfter : List (CullInfo a)
+    { focus : Zipper a
+    , siblingsBefore : List (Zipper a)
+    , siblingsAfter : List (Zipper a)
     , directChildren : AnnotatedCrumbChildren a
     }
 
 
 type AnnotatedCrumbChildren a
-    = NoMoreCrumbs (List (CullInfo a))
-    | CrumbTrailContinues (List (CullInfo a)) (AnnotatedCrumb a) (List (CullInfo a))
+    = NoMoreCrumbs (List (Zipper a))
+    | CrumbTrailContinues (List (Zipper a)) (AnnotatedCrumb a) (List (Zipper a))
 
 
 zipperToAnnotatedBreadcrumbs : Zipper a -> AnnotatedCrumb a
@@ -73,31 +67,25 @@ zipperToAnnotatedBreadcrumbs zipper =
     let
         endOfTheTrail : AnnotatedCrumb a
         endOfTheTrail =
-            { label = zipper |> Zipper.label
-            , siblingsBefore = zipper |> Zipper.siblingsBeforeFocus |> getCullInfos
-            , siblingsAfter = zipper |> Zipper.siblingsAfterFocus |> getCullInfos
+            { focus = zipper
+            , siblingsBefore = zipper |> siblingsBeforeFocus []
+            , siblingsAfter = zipper |> siblingsAfterFocus [] |> List.reverse
             , directChildren =
-                zipper
-                    |> Zipper.children
-                    |> getCullInfos
+                let
+                    firstChild : Maybe (Zipper a)
+                    firstChild =
+                        zipper |> Zipper.firstChild
+                in
+                firstChild
+                    |> Maybe.map (\first -> siblingsAfterFocus [ first ] first)
+                    |> withDefault []
+                    |> List.reverse
                     |> NoMoreCrumbs
             }
     in
     zipperToAnnotatedBreadcrumbsHelper
         (zipper |> Zipper.parent)
         endOfTheTrail
-
-
-getCullInfos : List (Tree a) -> List (CullInfo a)
-getCullInfos trees =
-    trees |> List.map getCullInfo
-
-
-getCullInfo : Tree a -> CullInfo a
-getCullInfo tree =
-    { label = tree |> Tree.label
-    , hadChildren = tree |> Tree.children |> List.length |> (<) 0
-    }
 
 
 zipperToAnnotatedBreadcrumbsHelper :
@@ -110,15 +98,9 @@ zipperToAnnotatedBreadcrumbsHelper maybeZipper crumbs =
             let
                 nextCrumb : AnnotatedCrumb a
                 nextCrumb =
-                    { label = parent |> Zipper.label
-                    , siblingsBefore =
-                        parent
-                            |> Zipper.siblingsBeforeFocus
-                            |> getCullInfos
-                    , siblingsAfter =
-                        parent
-                            |> Zipper.siblingsAfterFocus
-                            |> getCullInfos
+                    { focus = parent
+                    , siblingsBefore = parent |> siblingsBeforeFocus []
+                    , siblingsAfter = parent |> siblingsAfterFocus [] |> List.reverse
                     , directChildren =
                         CrumbTrailContinues
                             []
@@ -132,3 +114,23 @@ zipperToAnnotatedBreadcrumbsHelper maybeZipper crumbs =
 
         Nothing ->
             crumbs
+
+
+siblingsBeforeFocus : List (Zipper a) -> Zipper a -> List (Zipper a)
+siblingsBeforeFocus accumulator zipper =
+    case zipper |> Zipper.previousSibling of
+        Nothing ->
+            accumulator
+
+        Just sibling ->
+            siblingsBeforeFocus (sibling :: accumulator) sibling
+
+
+siblingsAfterFocus : List (Zipper a) -> Zipper a -> List (Zipper a)
+siblingsAfterFocus accumulator zipper =
+    case zipper |> Zipper.nextSibling of
+        Nothing ->
+            accumulator
+
+        Just sibling ->
+            siblingsAfterFocus (sibling :: accumulator) sibling

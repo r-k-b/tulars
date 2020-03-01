@@ -110,67 +110,56 @@ initialMenu =
 
         p name =
             tree (ParentItem name)
-
-        initialTree : Tree (MenuItem Msg)
-        initialTree =
-            p "root"
-                [ p "Open a Scene"
-                    [ s "Load Scene A" (LoadScene sceneA)
-                    , s "Load Scene B" (LoadScene sceneB)
-                    , s "Load Scene C" (LoadScene sceneC)
-                    , s "Load Scene D" (LoadScene sceneD)
-                    ]
-                , p "Deeper Tree example 1"
-                    [ p "dt 1"
-                        [ p "dt 1 a" [ s "dt 1 a x" TogglePaused ]
-                        , p "dt 1 b" [ s "dt 1 b y" TogglePaused ]
-                        , p "dt 1 c" [ s "dt 1 c z" TogglePaused ]
-                        ]
-                    , p "dt 2"
-                        [ p "dt 2 a" [ s "dt 2 a x" TogglePaused ]
-                        , p "dt 2 b" [ s "dt 2 b y" TogglePaused ]
-                        , p "dt 2 c" [ s "dt 2 c z" TogglePaused ]
-                        ]
-                    , p "dt 3"
-                        [ p "dt 3 a" [ s "dt 3 a x" TogglePaused ]
-                        , p "dt 3 b" [ s "dt 3 b y" TogglePaused ]
-                        , p "dt 3 c" [ s "dt 3 c z" TogglePaused ]
-                        ]
-                    ]
-                , s "Save" SaveClicked
-                , s "Load" LoadClicked
-                , s "Pause" TogglePaused -- need to allow dynamic labels...
-                , s "Export JSON" ExportClicked
-                , s "Variants" (Variants |> TabOpenerClicked)
-                , s "About" (About |> TabOpenerClicked)
-                , p "Deeper Tree example 2"
-                    [ p "dt 1"
-                        [ p "dt 1 a" [ s "dt 1 a x" TogglePaused ]
-                        , p "dt 1 b" [ s "dt 1 b y" TogglePaused ]
-                        , p "dt 1 c" [ s "dt 1 c z" TogglePaused ]
-                        ]
-                    , p "dt 2"
-                        [ p "dt 2 a" [ s "dt 2 a x" TogglePaused ]
-                        , p "dt 2 b" [ s "dt 2 b y" TogglePaused ]
-                        , p "dt 2 c" [ s "dt 2 c z" TogglePaused ]
-                        ]
-                    , p "dt 3"
-                        [ p "dt 3 a" [ s "dt 3 a x" TogglePaused ]
-                        , p "dt 3 b" [ s "dt 3 b y" TogglePaused ]
-                        , p "dt 3 c" [ s "dt 3 c z" TogglePaused ]
-                        ]
-                    ]
-                ]
     in
-    (initialTree
+    p "root"
+        [ p "Open a Scene"
+            [ s "Load Scene A" (LoadScene sceneA)
+            , s "Load Scene B" (LoadScene sceneB)
+            , s "Load Scene C" (LoadScene sceneC)
+            , s "Load Scene D" (LoadScene sceneD)
+            ]
+        , p "Deeper Tree example 1"
+            [ p "dt 1"
+                [ p "dt 1 a" [ s "dt 1 a x" TogglePaused ]
+                , p "dt 1 b" [ s "dt 1 b y" TogglePaused ]
+                , p "dt 1 c" [ s "dt 1 c z" TogglePaused ]
+                ]
+            , p "dt 2"
+                [ p "dt 2 a" [ s "dt 2 a x" TogglePaused ]
+                , p "dt 2 b" [ s "dt 2 b y" TogglePaused ]
+                , p "dt 2 c" [ s "dt 2 c z" TogglePaused ]
+                ]
+            , p "dt 3"
+                [ p "dt 3 a" [ s "dt 3 a x" TogglePaused ]
+                , p "dt 3 b" [ s "dt 3 b y" TogglePaused ]
+                , p "dt 3 c" [ s "dt 3 c z" TogglePaused ]
+                ]
+            ]
+        , s "Save" SaveClicked
+        , s "Load" LoadClicked
+        , s "Pause" TogglePaused -- need to allow dynamic labels...
+        , s "Export JSON" ExportClicked
+        , s "Variants" (Variants |> TabOpenerClicked)
+        , s "About" (About |> TabOpenerClicked)
+        , p "Deeper Tree example 2"
+            [ p "dt 1"
+                [ p "dt 1 a" [ s "dt 1 a x" TogglePaused ]
+                , p "dt 1 b" [ s "dt 1 b y" TogglePaused ]
+                , p "dt 1 c" [ s "dt 1 c z" TogglePaused ]
+                ]
+            , p "dt 2"
+                [ p "dt 2 a" [ s "dt 2 a x" TogglePaused ]
+                , p "dt 2 b" [ s "dt 2 b y" TogglePaused ]
+                , p "dt 2 c" [ s "dt 2 c z" TogglePaused ]
+                ]
+            , p "dt 3"
+                [ p "dt 3 a" [ s "dt 3 a x" TogglePaused ]
+                , p "dt 3 b" [ s "dt 3 b y" TogglePaused ]
+                , p "dt 3 c" [ s "dt 3 c z" TogglePaused ]
+                ]
+            ]
+        ]
         |> Zipper.fromTree
-        |> Zipper.forward
-        |> Maybe.andThen Zipper.nextSibling
-        |> Maybe.andThen Zipper.forward
-        |> Maybe.map always
-        |> Maybe.withDefault (\() -> Debug.todo "stop moving the zipper")
-    )
-        ()
 
 
 
@@ -283,17 +272,8 @@ updateHelp msg model =
         TabCloserClicked route index ->
             { model | tabs = model.tabs |> closeTabAt index route }
 
-        ToggleMenuItem zipper ->
-            --let
-            --    updatedMenu : Zipper (MenuItem Msg)
-            --    updatedMenu =
-            --        zipper
-            --            |> Zipper.updateItem keepItemExpanded
-            --            |> Zipper.up
-            --            |> withDefault zipper
-            --|> Zipper.update (Lazy.Tree.map closeItem)
-            --in
-            model
+        OpenMenuAt zipper ->
+            { model | menu = zipper }
 
 
 selectTabAt : Int -> SelectList Route -> SelectList Route

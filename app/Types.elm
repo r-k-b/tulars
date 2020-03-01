@@ -92,7 +92,7 @@ type Msg
     | ToggleConditionsVisibility String String
     | ToggleConditionDetailsVisibility String String String
     | TogglePaused
-    | ToggleMenuItem (Zipper (MenuItem Msg))
+    | OpenMenuAt (Zipper (MenuItem Msg))
 
 
 type alias Agent =
