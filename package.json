@@ -8,7 +8,7 @@
     "build-debug": "./debug.sh",
     "deploy": "npm run build-all && firebase deploy",
     "build-optimized": "./optimize.sh",
-    "build-all": "npm run build && npm run buid-optimized && npm run build-debug && git rev-parse HEAD > dist/version.txt",
+    "build-all": "npm run build && npm run build-optimized && npm run build-debug && git rev-parse HEAD > dist/version.txt",
     "live": "npx elm-live app/Main.elm --hot --dir='dist' -- --output=\"dist/main.js\"",
     "postinstall": "npm run build-all",
     "test": "elm-test",
