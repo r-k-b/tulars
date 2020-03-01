@@ -1,4 +1,4 @@
-html, .theme--default {
+:root, .theme--default {
     --color-bg: black;
     --color-bg--almost: rgb(50, 50, 50);
     --color-bg--mostly: rgb(118, 118, 118);
@@ -10,7 +10,7 @@ html, .theme--default {
 }
 
 @media (prefers-color-scheme: light) {
-    html, .theme--default {
+    :root, .theme--default {
         --color-bg: white;
         --color-bg--almost: rgb(239, 239, 239);
         --color-bg--mostly: rgb(118, 118, 118);
