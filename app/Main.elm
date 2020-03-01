@@ -179,6 +179,7 @@ updateHelp msg model =
 
         TogglePaused ->
             { model | paused = not model.paused }
+                |> andCloseTheMenu
 
         RAFTick newT ->
             if model.paused then
@@ -252,7 +253,7 @@ updateHelp msg model =
             { model | agents = newAgents }
 
         LoadScene scene ->
-            model |> loadScene scene
+            model |> loadScene scene |> andCloseTheMenu
 
         ExportClicked ->
             -- todo
@@ -1415,3 +1416,8 @@ subscriptions model =
 
     else
         Sub.batch [ onAnimationFrame RAFTick ]
+
+
+andCloseTheMenu : Model -> Model
+andCloseTheMenu model =
+    { model | menu = model.menu |> Zipper.root }

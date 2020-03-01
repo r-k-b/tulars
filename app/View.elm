@@ -277,9 +277,7 @@ viewExpandedMenuItem menuItem children =
     case menuItem |> Zipper.label of
         SimpleItem name msg ->
             [ button
-                [ onClick msg
-                , onClick <| OpenMenuAt (menuItem |> Zipper.root)
-                ]
+                [ onClick msg ]
                 [ text <| name ++ " (simple)" ]
             ]
 
@@ -306,9 +304,7 @@ viewMenuItem item =
     case item |> Zipper.label of
         SimpleItem name msg ->
             [ Html.button
-                [ onClick msg
-                , onClick <| OpenMenuAt (item |> Zipper.root)
-                ]
+                [ onClick msg ]
                 [ text name ]
             ]
 
