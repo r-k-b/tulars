@@ -29,6 +29,16 @@
     color: var(--color-fg);
 }
 
+@media (prefers-color-scheme: light) {
+    .theme--not-so-harsh {
+        --color-bg: hsl(0, 0%, 84%);
+        --color-bg--almost: rgb(228, 228, 228);
+        --color-bg--mostly: rgb(175, 175, 175);
+        --color-fg: #070707;
+        --color-link-fg: rgb(0, 0, 238);
+    }
+}
+
 
 /* ↑ vars & themes (CSS Custom Properties) */
 /* ↓ the rest */
