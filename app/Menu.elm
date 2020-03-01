@@ -1,7 +1,7 @@
 module Menu exposing (..)
 
-import Tree exposing (Tree, tree)
-import Tree.Zipper as Zipper exposing (Zipper, toTree)
+import Tree exposing (Tree)
+import Tree.Zipper as Zipper exposing (Zipper)
 
 
 type MenuItem msg
@@ -28,66 +28,99 @@ close isExpanded =
             Expanded
 
 
-expandedAsBool : IsExpanded -> Bool
-expandedAsBool isExpanded =
-    case isExpanded of
-        NotExpanded ->
-            False
-
-        Expanded ->
-            True
-
-        KeepExpanded ->
-            True
-
-
 type CullInfo
     = NoChildren
     | HadChildren
 
 
-cullInvisible : Zipper a -> Tree ( a, CullInfo )
-cullInvisible zipper =
+zipperToBreadcrumbs : Zipper a -> ( a, List a )
+zipperToBreadcrumbs zipper =
+    zipperToBreadcrumbsHelper
+        (zipper |> Zipper.parent)
+        (zipper |> Zipper.label)
+        []
+
+
+zipperToBreadcrumbsHelper : Maybe (Zipper a) -> a -> List a -> ( a, List a )
+zipperToBreadcrumbsHelper maybeZipper label crumbs =
+    case maybeZipper of
+        Just parent ->
+            zipperToBreadcrumbsHelper
+                (parent |> Zipper.parent)
+                (parent |> Zipper.label)
+                (label :: crumbs)
+
+        Nothing ->
+            ( label, crumbs )
+
+
+type alias AnnotatedCrumb a =
+    { label : a
+    , siblingsBefore : List a
+    , siblingsAfter : List a
+    , directChildren : AnnotatedCrumbChildren a
+    }
+
+
+type AnnotatedCrumbChildren a
+    = NoMoreCrumbs (List a)
+    | CrumbTrailContinues (List a) (AnnotatedCrumb a) (List a)
+
+
+zipperToAnnotatedBreadcrumbs : Zipper a -> AnnotatedCrumb a
+zipperToAnnotatedBreadcrumbs zipper =
     let
-        truncatedListOfChildren : List ( a, CullInfo )
-        truncatedListOfChildren =
-            zipper
-                |> Zipper.children
-                |> List.map snip
+        endOfTheTrail : AnnotatedCrumb a
+        endOfTheTrail =
+            { label = zipper |> Zipper.label
+            , siblingsBefore = zipper |> Zipper.siblingsBeforeFocus |> getLabels
+            , siblingsAfter = zipper |> Zipper.siblingsAfterFocus |> getLabels
+            , directChildren =
+                zipper
+                    |> Zipper.children
+                    |> getLabels
+                    |> NoMoreCrumbs
+            }
     in
-    zipper
-        |> toTree
-        |> Tree.map (\a -> ( a, HadChildren ))
+    zipperToAnnotatedBreadcrumbsHelper
+        (zipper |> Zipper.parent)
+        endOfTheTrail
 
 
-snip : Tree a -> ( a, CullInfo )
-snip tree =
-    ( tree |> Tree.label
-    , case tree |> Tree.children of
-        [] ->
-            NoChildren
-
-        _ ->
-            HadChildren
-    )
+getLabels : List (Tree a) -> List a
+getLabels trees =
+    trees |> List.map Tree.label
 
 
-cullInvisibleHelper : Zipper a -> Tree ( a, CullInfo ) -> ( Maybe (Zipper a), Tree ( a, CullInfo ) )
-cullInvisibleHelper focus innerTree =
-    let
-        label : ( a, CullInfo )
-        label =
-            ( focus |> Zipper.label, HadChildren )
+zipperToAnnotatedBreadcrumbsHelper :
+    Maybe (Zipper a)
+    -> AnnotatedCrumb a
+    -> AnnotatedCrumb a
+zipperToAnnotatedBreadcrumbsHelper maybeZipper crumbs =
+    case maybeZipper of
+        Just parent ->
+            let
+                nextCrumb : AnnotatedCrumb a
+                nextCrumb =
+                    { label = parent |> Zipper.label
+                    , siblingsBefore =
+                        parent
+                            |> Zipper.siblingsBeforeFocus
+                            |> getLabels
+                    , siblingsAfter =
+                        parent
+                            |> Zipper.siblingsAfterFocus
+                            |> getLabels
+                    , directChildren =
+                        CrumbTrailContinues
+                            []
+                            crumbs
+                            []
+                    }
+            in
+            zipperToAnnotatedBreadcrumbsHelper
+                (parent |> Zipper.parent)
+                nextCrumb
 
-        children : List (Tree ( a, CullInfo ))
-        children =
-            innerTree
-                :: (focus
-                        |> Zipper.children
-                        |> List.map
-                            (Tree.map
-                                (\tree -> ( tree |> Tree.label |> (\l -> tree l []), NoChildren ))
-                            )
-                   )
-    in
-    ( focus |> Zipper.parent, tree label children )
+        Nothing ->
+            crumbs
