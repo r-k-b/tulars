@@ -33,6 +33,7 @@ import Types
         , Hitpoints(..)
         , Holding(..)
         , MenuItem
+        , MenuItemLabel(..)
         , MenuItemType(..)
         , Model
         , Msg(..)
@@ -109,6 +110,14 @@ initialMenu =
     let
         s name msg =
             tree
+                { name = TextLabel name
+                , menuItemType = SimpleItem msg
+                , cypressHandle = Nothing
+                }
+                []
+
+        labelledS name msg =
+            tree
                 { name = name
                 , menuItemType = SimpleItem msg
                 , cypressHandle = Nothing
@@ -117,7 +126,7 @@ initialMenu =
 
         p name =
             tree
-                { name = name
+                { name = TextLabel name
                 , menuItemType = ParentItem
                 , cypressHandle = Nothing
                 }
@@ -136,44 +145,44 @@ initialMenu =
             , s "Load Scene D" (LoadScene sceneD)
             ]
         , p "Deeper Tree example 1"
-            [ p "dt 1"
-                [ p "dt 1 a" [ s "dt 1 a x" TogglePaused ]
-                , p "dt 1 b" [ s "dt 1 b y" TogglePaused ]
-                , p "dt 1 c" [ s "dt 1 c z" TogglePaused ]
+            [ p "dt ex1 1"
+                [ p "dt ex1 1 a" [ s "dt ex1 1 a x" TogglePaused ]
+                , p "dt ex1 1 b" [ s "dt ex1 1 b y" TogglePaused ]
+                , p "dt ex1 1 c" [ s "dt ex1 1 c z" TogglePaused ]
                 ]
-            , p "dt 2"
-                [ p "dt 2 a" [ s "dt 2 a x" TogglePaused ]
-                , p "dt 2 b" [ s "dt 2 b y" TogglePaused ]
-                , p "dt 2 c" [ s "dt 2 c z" TogglePaused ]
+            , p "dt ex1 2"
+                [ p "dt ex1 2 a" [ s "dt ex1 2 a x" TogglePaused ]
+                , p "dt ex1 2 b" [ s "dt ex1 2 b y" TogglePaused ]
+                , p "dt ex1 2 c" [ s "dt ex1 2 c z" TogglePaused ]
                 ]
-            , p "dt 3"
-                [ p "dt 3 a" [ s "dt 3 a x" TogglePaused ]
-                , p "dt 3 b" [ s "dt 3 b y" TogglePaused ]
-                , p "dt 3 c" [ s "dt 3 c z" TogglePaused ]
+            , p "dt ex1 3"
+                [ p "dt ex1 3 a" [ s "dt ex1 3 a x" TogglePaused ]
+                , p "dt ex1 3 b" [ s "dt ex1 3 b y" TogglePaused ]
+                , p "dt ex1 3 c" [ s "dt ex1 3 c z" TogglePaused ]
                 ]
             ]
         , s "Save" SaveClicked
         , s "Load" LoadClicked
-        , s "Pause" TogglePaused -- need to allow dynamic labels...
+        , labelledS PauseLabel TogglePaused
         , s "Export JSON" ExportClicked
         , s "Variants" (Variants |> TabOpenerClicked)
         , s "About" (About |> TabOpenerClicked)
             |> cyHandle cypress.mainMenu.about
         , p "Deeper Tree example 2"
-            [ p "dt 1"
-                [ p "dt 1 a" [ s "dt 1 a x" TogglePaused ]
-                , p "dt 1 b" [ s "dt 1 b y" TogglePaused ]
-                , p "dt 1 c" [ s "dt 1 c z" TogglePaused ]
+            [ p "dt ex2 1"
+                [ p "dt ex2 1 a" [ s "dt ex2 1 a x" TogglePaused ]
+                , p "dt ex2 1 b" [ s "dt ex2 1 b y" TogglePaused ]
+                , p "dt ex2 1 c" [ s "dt ex2 1 c z" TogglePaused ]
                 ]
-            , p "dt 2"
-                [ p "dt 2 a" [ s "dt 2 a x" TogglePaused ]
-                , p "dt 2 b" [ s "dt 2 b y" TogglePaused ]
-                , p "dt 2 c" [ s "dt 2 c z" TogglePaused ]
+            , p "dt ex2 2"
+                [ p "dt ex2 2 a" [ s "dt ex2 2 a x" TogglePaused ]
+                , p "dt ex2 2 b" [ s "dt ex2 2 b y" TogglePaused ]
+                , p "dt ex2 2 c" [ s "dt ex2 2 c z" TogglePaused ]
                 ]
-            , p "dt 3"
-                [ p "dt 3 a" [ s "dt 3 a x" TogglePaused ]
-                , p "dt 3 b" [ s "dt 3 b y" TogglePaused ]
-                , p "dt 3 c" [ s "dt 3 c z" TogglePaused ]
+            , p "dt ex2 3"
+                [ p "dt ex2 3 a" [ s "dt ex2 3 a x" TogglePaused ]
+                , p "dt ex2 3 b" [ s "dt ex2 3 b y" TogglePaused ]
+                , p "dt ex2 3 c" [ s "dt ex2 3 c z" TogglePaused ]
                 ]
             ]
         ]

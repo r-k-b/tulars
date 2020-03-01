@@ -19,6 +19,7 @@ module Types exposing
     , InputFunction(..)
     , Layer(..)
     , MenuItem
+    , MenuItemLabel(..)
     , MenuItemType(..)
     , Model
     , Msg(..)
@@ -330,8 +331,13 @@ attributes.
 type alias MenuItem msg =
     { cypressHandle : Maybe (Html.Attribute msg)
     , menuItemType : MenuItemType msg
-    , name : String
+    , name : MenuItemLabel
     }
+
+
+type MenuItemLabel
+    = TextLabel String
+    | PauseLabel
 
 
 type MenuItemType msg

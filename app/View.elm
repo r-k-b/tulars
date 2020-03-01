@@ -88,6 +88,7 @@ import Types
         , InputFunction(..)
         , Layer(..)
         , MenuItem
+        , MenuItemLabel(..)
         , MenuItemType(..)
         , Model
         , Msg(..)
@@ -120,7 +121,7 @@ view model =
     let
         body =
             div [ classes.pageGrid.container |> HA.class ]
-                [ viewMenu model.menu
+                [ viewMenu model.paused model.menu
                     |> div
                         [ classes.pageGrid.menu |> HA.class
                         , classes.theme.notSoHarsh |> HA.class
@@ -196,45 +197,46 @@ tabName route =
             "Code Variants"
 
 
-viewMenu : Zipper (MenuItem Msg) -> List (Html Msg)
-viewMenu zipper =
+viewMenu : Bool -> Zipper (MenuItem Msg) -> List (Html Msg)
+viewMenu isPaused zipper =
     zipper
         |> zipperToAnnotatedBreadcrumbs
-        |> viewCrumbTrail { atRoot = True }
+        |> viewCrumbTrail isPaused { atRoot = True }
 
 
-viewCrumbTrail : { atRoot : Bool } -> AnnotatedCrumb (MenuItem Msg) -> List (Html Msg)
-viewCrumbTrail { atRoot } crumbTrail =
+viewCrumbTrail : Bool -> { atRoot : Bool } -> AnnotatedCrumb (MenuItem Msg) -> List (Html Msg)
+viewCrumbTrail isPaused { atRoot } crumbTrail =
     if atRoot then
-        crumbTrail.directChildren |> viewChildrenOfCrumb
+        crumbTrail.directChildren |> viewChildrenOfCrumb isPaused
 
     else
         List.concat
-            [ crumbTrail.siblingsBefore |> List.concatMap viewMenuItem
-            , viewExpandedMenuItem crumbTrail.focus crumbTrail.directChildren
-            , crumbTrail.siblingsAfter |> List.concatMap viewMenuItem
+            [ crumbTrail.siblingsBefore |> List.concatMap (viewMenuItem isPaused)
+            , viewExpandedMenuItem isPaused crumbTrail.focus crumbTrail.directChildren
+            , crumbTrail.siblingsAfter |> List.concatMap (viewMenuItem isPaused)
             ]
 
 
-viewChildrenOfCrumb : AnnotatedCrumbChildren (MenuItem Msg) -> List (Html Msg)
-viewChildrenOfCrumb annotatedCrumbChildren =
+viewChildrenOfCrumb : Bool -> AnnotatedCrumbChildren (MenuItem Msg) -> List (Html Msg)
+viewChildrenOfCrumb isPaused annotatedCrumbChildren =
     case annotatedCrumbChildren of
         NoMoreCrumbs directChildren ->
-            directChildren |> List.concatMap viewMenuItem
+            directChildren |> List.concatMap (viewMenuItem isPaused)
 
         CrumbTrailContinues siblingsBefore annotatedCrumb siblingsAfter ->
             List.concat
-                [ siblingsBefore |> List.concatMap viewMenuItem
-                , viewCrumbTrail { atRoot = False } annotatedCrumb
-                , siblingsAfter |> List.concatMap viewMenuItem
+                [ siblingsBefore |> List.concatMap (viewMenuItem isPaused)
+                , viewCrumbTrail isPaused { atRoot = False } annotatedCrumb
+                , siblingsAfter |> List.concatMap (viewMenuItem isPaused)
                 ]
 
 
 viewExpandedMenuItem :
-    Zipper (MenuItem Msg)
+    Bool
+    -> Zipper (MenuItem Msg)
     -> AnnotatedCrumbChildren (MenuItem Msg)
     -> List (Html Msg)
-viewExpandedMenuItem menuItem children =
+viewExpandedMenuItem isPaused menuItem children =
     let
         focus =
             menuItem |> Zipper.label
@@ -245,7 +247,7 @@ viewExpandedMenuItem menuItem children =
                 [ onClick msg
                 , focus.cypressHandle |> orNoAttribute
                 ]
-                [ text <| focus.name ++ " (simple)" ]
+                [ text <| labelToString isPaused focus.name ++ " (simple)" ]
             ]
 
         ParentItem ->
@@ -257,18 +259,18 @@ viewExpandedMenuItem menuItem children =
                 ]
                 [ span
                     [ classes.parentButton.text |> HA.class ]
-                    [ text focus.name ]
+                    [ text (labelToString isPaused focus.name) ]
                 , span
                     [ classes.parentButton.indicator |> HA.class ]
                     [ text "▶" ]
                 ]
-            , viewChildrenOfCrumb children
+            , viewChildrenOfCrumb isPaused children
                 |> div [ classes.pageGrid.subMenu |> HA.class ]
             ]
 
 
-viewMenuItem : Zipper (MenuItem Msg) -> List (Html Msg)
-viewMenuItem item =
+viewMenuItem : Bool -> Zipper (MenuItem Msg) -> List (Html Msg)
+viewMenuItem isPaused item =
     let
         focus =
             item |> Zipper.label
@@ -279,7 +281,7 @@ viewMenuItem item =
                 [ onClick msg
                 , focus.cypressHandle |> orNoAttribute
                 ]
-                [ text focus.name ]
+                [ text (labelToString isPaused focus.name) ]
             ]
 
         ParentItem ->
@@ -291,7 +293,7 @@ viewMenuItem item =
                     ]
                     [ span
                         [ classes.parentButton.text |> HA.class ]
-                        [ text focus.name ]
+                        [ text (labelToString isPaused focus.name) ]
                     , span
                         [ classes.parentButton.indicator |> HA.class ]
                         [ text "▶" ]
@@ -303,7 +305,7 @@ viewMenuItem item =
                     [ onClick <| OpenMenuAt item
                     , focus.cypressHandle |> orNoAttribute
                     ]
-                    [ text focus.name ]
+                    [ text (labelToString isPaused focus.name) ]
                 ]
 
 
@@ -1218,3 +1220,17 @@ viewVariantsPage =
 orNoAttribute : Maybe (Html.Attribute msg) -> Html.Attribute msg
 orNoAttribute maybeAttr =
     maybeAttr |> Maybe.withDefault (HA.attribute "data-empty" "")
+
+
+labelToString : Bool -> MenuItemLabel -> String
+labelToString isPaused label =
+    case label of
+        TextLabel string ->
+            string
+
+        PauseLabel ->
+            if isPaused then
+                "Unpause"
+
+            else
+                "Pause"
