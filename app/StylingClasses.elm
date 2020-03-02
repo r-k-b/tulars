@@ -14,9 +14,11 @@ conflicts.
 classes =
     { activeMenuItem = "menu-item--active"
     , clickable = "clickable"
+    , fullSize = "full-size"
     , theme =
         { notSoHarsh = "theme--not-so-harsh"
         }
+    , logHud = "log-hud"
     , pageGrid =
         { agentInfo = "page-grid__agent-info"
         , container = "page-grid__container"
@@ -29,6 +31,9 @@ classes =
         { button = "parent-button"
         , text = "parent-button__text"
         , indicator = "parent-button__indicator"
+        }
+    , position =
+        { relative = "pos-relative"
         }
     , selectedTab = "page-grid__tabs__tab--selected"
     , tab = "page-grid__tabs__tab"

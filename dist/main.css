@@ -1,9 +1,10 @@
 :root, .theme--default {
     --color-bg: black;
-    --color-bg--almost: rgb(50, 50, 50);
-    --color-bg--mostly: rgb(118, 118, 118);
-    --color-fg: white;
-    --color-link-fg: rgb(138, 138, 255);
+    --color-bg--almost: hsl(0, 0%, 20%);
+    --color-bg--mostly: hsl(0, 0%, 46%);
+    --color-bg-transparent-overlay: hsla(0, 0%, 20%, 0.5);
+    --color-fg: hsl(0, 0%, 100%);
+    --color-link-fg: hsl(240, 100%, 77%);
 
     background-color: var(--color-bg);
     color: var(--color-fg);
@@ -11,20 +12,22 @@
 
 @media (prefers-color-scheme: light) {
     :root, .theme--default {
-        --color-bg: white;
-        --color-bg--almost: rgb(239, 239, 239);
-        --color-bg--mostly: rgb(118, 118, 118);
-        --color-fg: black;
-        --color-link-fg: rgb(0, 0, 238);
+        --color-bg: hsl(0, 0%, 100%);
+        --color-bg--almost: hsl(0, 0%, 94%);
+        --color-bg--mostly: hsl(0, 0%, 46%);
+        --color-bg-transparent-overlay: hsla(0, 0%, 80%, 0.5);
+        --color-fg: hsl(0, 0%, 0%);
+        --color-link-fg: hsl(240, 100%, 47%);
     }
 }
 
 .theme--not-so-harsh {
     --color-bg: hsla(0, 10%, 10%, 1);
-    --color-bg--almost: rgb(50, 50, 50);
-    --color-bg--mostly: rgb(118, 118, 118);
-    --color-fg: white;
-    --color-link-fg: rgb(0, 0, 238);
+    --color-bg--almost: hsl(0, 0%, 20%);
+    --color-bg--mostly: hsl(0, 0%, 46%);
+    --color-bg-transparent-overlay: hsla(0, 0%, 20%, 0.5);
+    --color-fg: hsl(0, 0%, 100%);
+    --color-link-fg: hsl(240, 100%, 47%);
     background-color: var(--color-bg);
     color: var(--color-fg);
 }
@@ -32,10 +35,11 @@
 @media (prefers-color-scheme: light) {
     .theme--not-so-harsh {
         --color-bg: hsl(0, 0%, 84%);
-        --color-bg--almost: rgb(228, 228, 228);
-        --color-bg--mostly: rgb(175, 175, 175);
-        --color-fg: #070707;
-        --color-link-fg: rgb(0, 0, 238);
+        --color-bg--almost: hsl(0, 0%, 89%);
+        --color-bg--mostly: hsl(0, 0%, 69%);
+        --color-bg-transparent-overlay: hsla(0, 0%, 80%, 0.5);
+        --color-fg: hsl(0, 0%, 3%);
+        --color-link-fg: hsl(240, 100%, 47%);
     }
 }
 
@@ -66,6 +70,15 @@ html, body, #main {
 
 a {
     color: var(--color-link-fg);
+}
+
+.full-size {
+    width: 100%;
+    height: 100%;
+}
+
+.pos-relative {
+    position: relative;
 }
 
 .zoom-svg > svg {
@@ -104,8 +117,9 @@ a {
 .page-grid__content {
     grid-area: content;
     overflow: hidden;
-    margin: 0.5em;
-    padding: 0.5em;
+    margin: 0;
+    padding: 0;
+    z-index: 1;
 }
 
 .page-grid__agent-info {
@@ -123,6 +137,7 @@ a {
     align-items: stretch;
     padding: 0.5em;
     position: relative;
+    z-index: 2;
 }
 
 .page-grid__menu > *,
@@ -218,4 +233,17 @@ a {
     flex-shrink: 0;
     flex-basis: 1em;
     padding: 0 0 0 0.2em;
+}
+
+.log-hud {
+    position: absolute;
+    width: 30em;
+    background-color: var(--color-bg-transparent-overlay);
+    padding: 0.5em;
+    height: auto;
+    max-width: 100%;
+    max-height: 100%;
+    left: 1em;
+    bottom: 1em;
+    pointer-events: none;
 }

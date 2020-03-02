@@ -129,7 +129,7 @@ view model =
                 , viewTabs model.tabs
                 , div
                     [ classes.pageGrid.content |> HA.class
-                    , classes.zoomSvg |> HA.class
+                    , classes.position.relative |> HA.class
                     , cypress.mainContent
                     ]
                     [ case model.tabs |> selected of
@@ -350,24 +350,28 @@ render2dResponsive boundingBox svgMsg =
 
 mainMap : Model -> Html.Html Msg
 mainMap model =
-    render2dResponsive bb
-        (g [ id "mainMap" ]
-            [ borderIndicator 200
-            , borderIndicator 300
-            , g [ id "agents" ]
-                (List.map renderAgent model.agents)
-            , g [ id "foods" ]
-                (List.map renderFood model.foods)
-            , g [ id "fires" ]
-                (List.map renderFire model.fires)
-            , g [ id "growables" ]
-                (List.map renderGrowable model.growables)
-            , g [ id "extinguishers" ]
-                (List.map renderExtinguisher model.extinguishers)
-            , g [ id "retardantProjectiles" ]
-                (List.map renderRetardantCloud model.retardants)
-            ]
-        )
+    div [ classes.fullSize |> HA.class, classes.zoomSvg |> HA.class ]
+        [ render2dResponsive bb
+            (g [ id "mainMap" ]
+                [ borderIndicator 200
+                , borderIndicator 300
+                , g [ id "agents" ]
+                    (List.map renderAgent model.agents)
+                , g [ id "foods" ]
+                    (List.map renderFood model.foods)
+                , g [ id "fires" ]
+                    (List.map renderFire model.fires)
+                , g [ id "growables" ]
+                    (List.map renderGrowable model.growables)
+                , g [ id "extinguishers" ]
+                    (List.map renderExtinguisher model.extinguishers)
+                , g [ id "retardantProjectiles" ]
+                    (List.map renderRetardantCloud model.retardants)
+                ]
+            )
+        , div [ classes.logHud |> HA.class ]
+            (model.log |> List.map (always (text "stuff...")))
+        ]
 
 
 borderIndicator : Float -> Svg Msg

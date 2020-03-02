@@ -8,6 +8,7 @@ module Types exposing
     , Consideration
     , ConsiderationInput(..)
     , CurrentSignal
+    , EntryKind(..)
     , Fire
     , FireExtinguisher
     , Food
@@ -18,11 +19,13 @@ module Types exposing
     , Holding(..)
     , InputFunction(..)
     , Layer(..)
+    , LogEntry
     , MenuItem
     , MenuItemLabel(..)
     , MenuItemType(..)
     , Model
     , Msg(..)
+    , PastTense(..)
     , Physical
     , PhysicalProperties
     , Portable(..)
@@ -61,6 +64,7 @@ type alias Model =
     , fires : List Fire
     , growables : List Growable
     , extinguishers : List FireExtinguisher
+    , log : List LogEntry
     , menu : Zipper (MenuItem Msg)
     , retardants : List Retardant
     , paused : Bool
@@ -362,3 +366,21 @@ close isExpanded =
 
         KeepExpanded ->
             Expanded
+
+
+type alias LogEntry =
+    { entry : EntryKind
+    , time : Posix
+    }
+
+
+type EntryKind
+    = AgentEntry PastTense Point2d
+    | SceneLoaded
+    | SceneSaved
+
+
+type PastTense
+    = CriedForHelp
+    | Died
+    | PickedUp Portable

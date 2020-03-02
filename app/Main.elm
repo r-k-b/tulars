@@ -25,6 +25,7 @@ import Types
         , Agent
         , Collision
         , CurrentSignal
+        , EntryKind(..)
         , Fire
         , FireExtinguisher
         , Food
@@ -32,6 +33,7 @@ import Types
         , GrowableState(..)
         , Hitpoints(..)
         , Holding(..)
+        , LogEntry
         , MenuItem
         , MenuItemLabel(..)
         , MenuItemType(..)
@@ -90,6 +92,7 @@ initialModelAt posixTime =
     , fires = []
     , growables = []
     , extinguishers = []
+    , log = []
     , menu = initialMenu
     , retardants = []
     , paused = False
@@ -281,7 +284,10 @@ updateHelp msg model =
             { model | agents = newAgents }
 
         LoadScene scene ->
-            model |> loadScene scene |> andCloseTheMenu
+            model
+                |> loadScene scene
+                |> log SceneLoaded
+                |> andCloseTheMenu
 
         ExportClicked ->
             -- todo
@@ -1449,3 +1455,15 @@ subscriptions model =
 andCloseTheMenu : Model -> Model
 andCloseTheMenu model =
     { model | menu = model.menu |> Zipper.root }
+
+
+log : EntryKind -> Model -> Model
+log entry model =
+    let
+        newEntry : LogEntry
+        newEntry =
+            { entry = entry
+            , time = model.time
+            }
+    in
+    { model | log = newEntry :: model.log }
