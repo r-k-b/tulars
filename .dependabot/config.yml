@@ -10,3 +10,8 @@ update_configs:
     update_schedule: "daily"
     default_reviewers:
       - "r-k-b"
+  - package_manager: "elm"
+    directory: "/review/"
+    update_schedule: "daily"
+    default_reviewers:
+      - "r-k-b"
