@@ -58,7 +58,6 @@ import UtilityFunctions
         , hpRawValue
         , isBeggingRelated
         , isMovementAction
-        , isReadyToPlant
         , mapRange
         , normaliseRange
         , onlyArrestMomentum
@@ -98,7 +97,7 @@ initialModelAt posixTime =
     , paused = False
     , tabs = SelectList.fromLists [] MainMap []
     }
-        |> loadScene sceneD
+        |> loadScene sceneA
 
 
 init : Int -> ( Model, Cmd Msg )
@@ -286,7 +285,6 @@ updateHelp msg model =
         LoadScene scene ->
             model
                 |> loadScene scene
-                |> log SceneLoaded
                 |> andCloseTheMenu
 
         ExportClicked ->
@@ -1455,15 +1453,3 @@ subscriptions model =
 andCloseTheMenu : Model -> Model
 andCloseTheMenu model =
     { model | menu = model.menu |> Zipper.root }
-
-
-log : EntryKind -> Model -> Model
-log entry model =
-    let
-        newEntry : LogEntry
-        newEntry =
-            { entry = entry
-            , time = model.time
-            }
-    in
-    { model | log = newEntry :: model.log }

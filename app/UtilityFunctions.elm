@@ -14,6 +14,7 @@ module UtilityFunctions exposing
     , isMovementAction
     , isReadyToPlant
     , linearTransform
+    , log
     , mapRange
     , normaliseRange
     , onlyArrestMomentum
@@ -29,7 +30,31 @@ import Maybe exposing (withDefault)
 import Point2d as Point2d
 import Set exposing (member)
 import Time exposing (Posix, posixToMillis)
-import Types exposing (Action, ActionGenerator, ActionOutcome(..), Agent, CarryableCheck(..), Consideration, ConsiderationInput(..), Fire, FireExtinguisher, Food, GeneratorType(..), Growable, GrowableState(..), Hitpoints(..), Holding(..), InputFunction(..), Model, Portable(..), Range(..), ReferenceToPortable(..))
+import Types
+    exposing
+        ( Action
+        , ActionGenerator
+        , ActionOutcome(..)
+        , Agent
+        , CarryableCheck(..)
+        , Consideration
+        , ConsiderationInput(..)
+        , EntryKind
+        , Fire
+        , FireExtinguisher
+        , Food
+        , GeneratorType(..)
+        , Growable
+        , GrowableState(..)
+        , Hitpoints(..)
+        , Holding(..)
+        , InputFunction(..)
+        , LogEntry
+        , Model
+        , Portable(..)
+        , Range(..)
+        , ReferenceToPortable(..)
+        )
 import Vector2d as Vector2d
 
 
@@ -1033,3 +1058,15 @@ stopAtFood model _ =
                 Dict.empty
     in
     List.map goalPerItem model.foods
+
+
+log : EntryKind -> Model -> Model
+log entry model =
+    let
+        newEntry : LogEntry
+        newEntry =
+            { entry = entry
+            , time = model.time
+            }
+    in
+    { model | log = newEntry :: model.log }

@@ -247,3 +247,21 @@ a {
     bottom: 1em;
     pointer-events: none;
 }
+
+.log-hud__line {
+    animation-name: hud-line-fadeout;
+    /* How to keep this in sync with the timing in [View.elm > `viewHud`] ?*/
+    animation-delay: 8s;
+    animation-duration: 2s;
+    animation-timing-function: ease-in;
+}
+
+@keyframes hud-line-fadeout {
+    from {
+        opacity: 1;
+    }
+
+    to {
+        opacity: 0.1;
+    }
+}

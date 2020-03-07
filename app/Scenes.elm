@@ -1,7 +1,8 @@
 module Scenes exposing (loadScene, sceneA, sceneB, sceneC, sceneD)
 
 import DefaultData as DD
-import Types exposing (Model, Scene)
+import Types exposing (EntryKind(..), Model, Scene)
+import UtilityFunctions exposing (log)
 
 
 loadScene : Scene -> Model -> Model
@@ -14,6 +15,7 @@ loadScene scene oldModel =
         , extinguishers = scene.extinguishers
         , retardants = scene.retardants
     }
+        |> log (SceneLoaded scene.name)
 
 
 sceneA : Scene
@@ -23,6 +25,7 @@ sceneA =
     , fires = DD.fires
     , growables = DD.growables
     , extinguishers = DD.extinguishers
+    , name = "The Gang Puts Out a Fire"
     , retardants = []
     }
 
@@ -34,6 +37,7 @@ sceneB =
     , fires = []
     , growables = DD.growables
     , extinguishers = []
+    , name = "Three Peeps and a Garden"
     , retardants = []
     }
 
@@ -45,6 +49,7 @@ sceneC =
     , fires = []
     , growables = []
     , extinguishers = []
+    , name = "Three Peeps and a Meal"
     , retardants = []
     }
 
@@ -56,5 +61,6 @@ sceneD =
     , fires = []
     , growables = DD.growables
     , extinguishers = []
+    , name = "Wolves and Rabbits"
     , retardants = []
     }

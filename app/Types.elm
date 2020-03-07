@@ -84,6 +84,7 @@ type alias Scene =
     , fires : List Fire
     , growables : List Growable
     , extinguishers : List FireExtinguisher
+    , name : String
     , retardants : List Retardant
     }
 
@@ -376,7 +377,7 @@ type alias LogEntry =
 
 type EntryKind
     = AgentEntry PastTense Point2d
-    | SceneLoaded
+    | SceneLoaded String
     | SceneSaved
 
 

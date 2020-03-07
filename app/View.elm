@@ -16,6 +16,7 @@ import Html
         , button
         , code
         , div
+        , em
         , h2
         , h3
         , h4
@@ -34,6 +35,8 @@ import Html.Attributes as HA exposing (href, style)
 import Html.Events exposing (onClick)
 import Json.Decode as JD
 import LineSegment2d
+import List exposing (take)
+import List.Extra exposing (takeWhile)
 import Menu
     exposing
         ( AnnotatedCrumb
@@ -68,7 +71,7 @@ import Svg.Attributes
         , y1
         , y2
         )
-import Time exposing (Posix)
+import Time exposing (Posix, millisToPosix, posixToMillis)
 import Tree.Zipper as Zipper exposing (Zipper)
 import Tuple exposing (first, second)
 import Types
@@ -87,6 +90,7 @@ import Types
         , Holding(..)
         , InputFunction(..)
         , Layer(..)
+        , LogEntry
         , MenuItem
         , MenuItemLabel(..)
         , MenuItemType(..)
@@ -369,9 +373,67 @@ mainMap model =
                     (List.map renderRetardantCloud model.retardants)
                 ]
             )
-        , div [ classes.logHud |> HA.class ]
-            (model.log |> List.map (always (text "stuff...")))
+        , viewHud model
         ]
+
+
+logEntryIsAfter : Posix -> LogEntry -> Bool
+logEntryIsAfter posix entry =
+    posixToMillis entry.time > posixToMillis posix
+
+
+{-| In milliseconds.
+-}
+secondInMillis : Int
+secondInMillis =
+    1000
+
+
+maxHudLinesToShowAtOnce : Int
+maxHudLinesToShowAtOnce =
+    20
+
+
+viewHud : Model -> Html.Html Msg
+viewHud model =
+    let
+        -- How to keep this in sync with the timing in [main.css > `.log-hud__line`]?
+        cutoff : Posix
+        cutoff =
+            model.time
+                |> posixToMillis
+                |> (\now -> now - (10 * secondInMillis))
+                |> millisToPosix
+
+        recentEntries =
+            model.log
+                |> take maxHudLinesToShowAtOnce
+                |> takeWhile (logEntryIsAfter cutoff)
+    in
+    case recentEntries of
+        [] ->
+            text ""
+
+        _ ->
+            div [ classes.logHud |> HA.class ]
+                (recentEntries |> List.map viewHudLine)
+
+
+viewHudLine : LogEntry -> Html Msg
+viewHudLine line =
+    (case line.entry of
+        Types.AgentEntry pastTense point2d ->
+            [ text "an agent did something" ]
+
+        Types.SceneLoaded name ->
+            [ text "Loaded Scene: "
+            , em [] [ text name ]
+            ]
+
+        Types.SceneSaved ->
+            [ text "Scene saved" ]
+    )
+        |> div [ classes.logHudLine |> HA.class ]
 
 
 borderIndicator : Float -> Svg Msg

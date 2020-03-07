@@ -19,6 +19,7 @@ classes =
         { notSoHarsh = "theme--not-so-harsh"
         }
     , logHud = "log-hud"
+    , logHudLine = "log-hud__line"
     , pageGrid =
         { agentInfo = "page-grid__agent-info"
         , container = "page-grid__container"
