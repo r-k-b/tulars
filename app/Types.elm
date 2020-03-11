@@ -11,6 +11,7 @@ module Types exposing
     , EntryKind(..)
     , Fire
     , FireExtinguisher
+    , Flags
     , Food
     , GeneratorType(..)
     , Growable
@@ -49,6 +50,12 @@ import Tree.Zipper exposing (Zipper)
 import Vector2d exposing (Vector2d)
 
 
+type alias Flags =
+    { gitHash : String
+    , posixMillis : Int
+    }
+
+
 type Hitpoints
     = Hitpoints Float Float -- current, max
 
@@ -62,6 +69,7 @@ type alias Model =
     , agents : List Agent
     , foods : List Food
     , fires : List Fire
+    , gitHash : String
     , growables : List Growable
     , extinguishers : List FireExtinguisher
     , log : List LogEntry

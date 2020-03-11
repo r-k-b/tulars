@@ -138,7 +138,7 @@ view model =
                     ]
                     [ case model.tabs |> selected of
                         About ->
-                            viewAboutPage
+                            viewAboutPage model.gitHash
 
                         MainMap ->
                             mainMap model
@@ -1251,8 +1251,8 @@ origin =
     Point2d.fromCoordinates ( 0, 0 )
 
 
-viewAboutPage : Html Msg
-viewAboutPage =
+viewAboutPage : String -> Html Msg
+viewAboutPage gitHash =
     div []
         [ p []
             [ text "\"Tulars\", an exploration of "
@@ -1263,7 +1263,13 @@ viewAboutPage =
         , p []
             [ text "Source available at "
             , a [ href "https://github.com/r-k-b/tulars" ] [ text "github.com" ]
-            , text ", under the GNU Affero General Public Licence 3.0."
+            , text ", under the GNU Affero General Public Licence 3.0. "
+            , text "This code built from "
+            , a [ href <| "https://github.com/r-k-b/tulars/commit/" ++ gitHash ]
+                [ text <| "commit "
+                , code [] [ text (gitHash |> String.left 8) ]
+                , text "."
+                ]
             ]
         , p []
             [ text "Created by "

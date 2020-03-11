@@ -11,10 +11,14 @@
 <body>
 <div id='main'></div>
 <script src='./main.js'></script>
+<script src='./context.js'></script>
 <script>
   // const node = document.getElementById('main')
   const app = Elm.Main.init({
-      flags: Date.now()
+      flags: {
+          gitHash: appContext.gitHash,
+          posixMillis: Date.now(),
+      },
   })
 </script>
 </body>

@@ -28,6 +28,7 @@ import Types
         , EntryKind(..)
         , Fire
         , FireExtinguisher
+        , Flags
         , Food
         , Growable
         , GrowableState(..)
@@ -69,7 +70,7 @@ import Vector2d as Vector2d exposing (Vector2d)
 import View exposing (view)
 
 
-main : Program Int Model Msg
+main : Program Flags Model Msg
 main =
     Browser.document
         { init = init
@@ -83,12 +84,13 @@ main =
 -- MODEL
 
 
-initialModelAt : Posix -> Model
-initialModelAt posixTime =
+initialModelAt : String -> Posix -> Model
+initialModelAt gitHash posixTime =
     { time = posixTime
     , agents = []
     , foods = []
     , fires = []
+    , gitHash = gitHash
     , growables = []
     , extinguishers = []
     , log = []
@@ -100,9 +102,11 @@ initialModelAt posixTime =
         |> loadScene sceneA
 
 
-init : Int -> ( Model, Cmd Msg )
-init posixMillis =
-    ( initialModelAt (Time.millisToPosix posixMillis)
+init : Flags -> ( Model, Cmd Msg )
+init flags =
+    ( initialModelAt
+        flags.gitHash
+        (flags.posixMillis |> Time.millisToPosix)
     , Cmd.none
     )
 
