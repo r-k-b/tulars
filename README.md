@@ -10,7 +10,7 @@ are robust to changing environments and dynamic goals?
 
 # building
 
-(requires git and [Elm] 0.19)
+(requires git, node.js 10+, and [Elm] 0.19)
 
 `git clone git@github.com:r-k-b/tulars.git`
 
