@@ -18,7 +18,7 @@ are robust to changing environments and dynamic goals?
 
 `npm install`
 
-Then, open one of these in a browser:
+Then, either run `npm run live`, or open one of these in a browser:
 
 - `dist/index.html`
 - `dist/debug.html`
@@ -34,7 +34,7 @@ Run `npm test`.
 
 Not part of the default `npm test`, yet.
 
-While the site is running on `localhost:8000`, run:
+While the site is running on `localhost:8000` (perhaps via `npm run live`), run:
 
     npm run cypress:open
 
