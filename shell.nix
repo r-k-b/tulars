@@ -6,7 +6,9 @@ in pkgs.mkShell rec {
   buildInputs = with pkgs; [
     elmPackages.elm
     elmPackages.elm-format
+    elmPackages.elm-json
     elmPackages.elm-live
+    elmPackages.elm-review
     elmPackages.elm-test
     nodejs
   ];
