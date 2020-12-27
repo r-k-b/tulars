@@ -1,12 +1,11 @@
 module View exposing (view)
 
-import BoundingBox2d as BoundingBox2d exposing (BoundingBox2d)
+import BoundingBox2d exposing (BoundingBox2d)
 import Browser exposing (Document)
-import Circle2d as Circle2d
+import Circle2d
 import CypressHandles exposing (cypress)
 import Dict
-import Direction2d as Direction2d
-import Frame2d as Frame2d exposing (Frame2d)
+import Frame2d exposing (Frame2d)
 import Geometry.Svg as Svg
 import Html
     exposing
@@ -34,7 +33,7 @@ import Html
 import Html.Attributes as HA exposing (href, style)
 import Html.Events exposing (onClick)
 import Json.Decode as JD
-import Length exposing (Length, Meters)
+import Length exposing (Meters)
 import LineSegment2d
 import List exposing (take)
 import List.Extra exposing (takeWhile)
@@ -46,7 +45,7 @@ import Menu
         , zipperToAnnotatedBreadcrumbs
         )
 import Pixels exposing (Pixels)
-import Point2d as Point2d exposing (Point2d, xCoordinate, yCoordinate)
+import Point2d exposing (Point2d, xCoordinate, yCoordinate)
 import Quantity exposing (Quantity)
 import Round
 import SelectList exposing (SelectList, selected)
@@ -122,7 +121,7 @@ import UtilityFunctions
         , normaliseRange
         , rangeCurrentValue
         )
-import Vector2d as Vector2d exposing (scaleBy)
+import Vector2d exposing (scaleBy)
 
 
 view : Model -> Document Msg
@@ -145,6 +144,9 @@ view model =
                     [ case model.tabs |> selected of
                         About ->
                             viewAboutPage model.gitHash
+
+                        AgentInfo ->
+                            agentsInfo model.time model.agents
 
                         MainMap ->
                             mainMap model
@@ -199,6 +201,9 @@ tabName route =
     case route of
         About ->
             "About Tulars"
+
+        AgentInfo ->
+            "Agent Info"
 
         MainMap ->
             "Main Map"
@@ -504,11 +509,6 @@ agentsInfo currentTime agents =
             []
             (List.map (renderAgentInfo currentTime) agents)
         ]
-
-
-inPx : Float -> String
-inPx number =
-    String.fromFloat number ++ "px"
 
 
 agentVelocityArrow : Agent -> Svg msg

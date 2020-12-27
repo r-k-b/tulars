@@ -29,7 +29,7 @@ import Dict
 import Direction2d exposing (Direction2d)
 import Length
 import Maybe exposing (withDefault)
-import Point2d as Point2d
+import Point2d
 import Quantity as Q
 import Set exposing (member)
 import Time exposing (Posix, posixToMillis)
@@ -59,7 +59,7 @@ import Types
         , ReferenceToPortable(..)
         , YDownCoords
         )
-import Vector2d as Vector2d
+import Vector2d
 
 
 computeUtility : Agent -> Posix -> Action -> Float

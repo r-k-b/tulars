@@ -29,6 +29,7 @@ import NoUnused.Exports
 import NoUnused.Modules
 import NoUnused.Parameters
 import NoUnused.Patterns
+import NoUnused.Variables
 import NoUselessSubscriptions
 import Review.Rule exposing (Rule)
 
@@ -55,5 +56,6 @@ config =
     , NoUnused.Modules.rule
     , NoUnused.Parameters.rule
     , NoUnused.Patterns.rule
+    , NoUnused.Variables.rule
     , NoUselessSubscriptions.rule
     ]

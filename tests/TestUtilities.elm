@@ -1,6 +1,6 @@
 module TestUtilities exposing (suite)
 
-import Expect exposing (Expectation, FloatingPointTolerance(..))
+import Expect exposing (FloatingPointTolerance(..))
 import Test exposing (Test, describe, test)
 import UtilityFunctions exposing (linearTransform)
 

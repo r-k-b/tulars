@@ -17,15 +17,13 @@ module DefaultData exposing
 
 import Angle
 import Dict
-import Direction2d as Direction2d
+import Direction2d
 import Length exposing (Length, Meters)
-import Maybe
-import Point2d as Point2d exposing (Point2d)
+import Point2d exposing (Point2d)
 import Set
 import Types
     exposing
         ( Action
-        , ActionGenerator
         , ActionOutcome(..)
         , Agent
         , Consideration
@@ -39,14 +37,13 @@ import Types
         , Hitpoints(..)
         , Holding(..)
         , InputFunction(..)
-        , Model
         , Portable(..)
         , Range(..)
         , ReferenceToPortable(..)
         , Signal(..)
         , YDownCoords
         )
-import Vector2d as Vector2d
+import Vector2d
 
 
 foods : List Food

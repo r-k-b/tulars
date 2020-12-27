@@ -1,13 +1,13 @@
 module TestPhysics exposing (suite)
 
 import Direction2d exposing (positiveX)
-import Expect exposing (Expectation, FloatingPointTolerance(..))
+import Expect exposing (FloatingPointTolerance(..))
 import Length
 import Physics exposing (collide)
-import Point2d as Point2d
+import Point2d
 import Test exposing (Test, describe, test)
 import Types exposing (Collision, Physical, PhysicalProperties)
-import Vector2d exposing (Vector2d, zero)
+import Vector2d exposing (zero)
 
 
 defaultPhysics : PhysicalProperties

@@ -6,7 +6,7 @@ import Browser.Events exposing (onAnimationFrame)
 import CypressHandles exposing (cypress)
 import DefaultData exposing (armsReach, retardantRadius, unseeded)
 import Dict exposing (Dict)
-import Direction2d as Direction2d exposing (Direction2d)
+import Direction2d exposing (Direction2d)
 import Html
 import Length exposing (Meters)
 import List exposing (map)
@@ -15,8 +15,8 @@ import MapAccumulate exposing (mapAccumL)
 import Maybe exposing (withDefault)
 import Maybe.Extra as ME
 import Physics exposing (collide)
-import Point2d as Point2d exposing (Point2d)
-import Quantity as Q exposing (Unitless)
+import Point2d exposing (Point2d)
+import Quantity as Q
 import Scenes exposing (loadScene, sceneA, sceneB, sceneC, sceneD)
 import SelectList exposing (SelectList, selected)
 import Set exposing (Set, insert)
@@ -40,7 +40,6 @@ import Types
         , GrowableState(..)
         , Hitpoints(..)
         , Holding(..)
-        , LogEntry
         , MenuItem
         , MenuItemLabel(..)
         , MenuItemType(..)
@@ -76,7 +75,7 @@ import UtilityFunctions
         , setHitpoints
         , updateRange
         )
-import Vector2d as Vector2d exposing (Vector2d)
+import Vector2d exposing (Vector2d)
 import View exposing (view)
 
 
@@ -195,6 +194,8 @@ initialMenu =
         , labelledS PauseLabel TogglePaused
         , s "Export JSON" ExportClicked
         , s "Variants" (Variants |> TabOpenerClicked)
+        , s "Agent Info" (AgentInfo |> TabOpenerClicked)
+            |> cyHandle cypress.mainMenu.agentInfo
         , s "About" (About |> TabOpenerClicked)
             |> cyHandle cypress.mainMenu.about
         , p "Deeper Tree example 2"

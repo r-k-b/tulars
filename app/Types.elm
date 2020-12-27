@@ -86,6 +86,7 @@ type alias Model =
 
 type Route
     = About
+    | AgentInfo
     | MainMap
     | Variants
 
@@ -289,10 +290,6 @@ type alias Retardant =
     { physics : PhysicalProperties
     , expiry : Posix
     }
-
-
-type alias Name =
-    String
 
 
 type alias ActionGenerator =
