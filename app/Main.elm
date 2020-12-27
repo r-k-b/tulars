@@ -1,17 +1,20 @@
 module Main exposing (closeTabAt, main, pickUpFood)
 
+import Angle
 import Browser
 import Browser.Events exposing (onAnimationFrame)
 import CypressHandles exposing (cypress)
 import DefaultData exposing (armsReach, retardantRadius, unseeded)
 import Dict exposing (Dict)
 import Direction2d as Direction2d
+import Length exposing (Meters)
 import List exposing (map)
 import MapAccumulate exposing (mapAccumL)
 import Maybe exposing (withDefault)
-import Maybe.Extra
+import Maybe.Extra as ME
 import Physics exposing (collide)
 import Point2d as Point2d
+import Quantity as Q exposing (Unitless)
 import Scenes exposing (loadScene, sceneA, sceneB, sceneC, sceneD)
 import SelectList exposing (SelectList, selected)
 import Set exposing (insert)
@@ -48,6 +51,7 @@ import Types
         , Retardant
         , Route(..)
         , Signal(..)
+        , YDownCoords
         )
 import UtilityFunctions
     exposing
@@ -327,7 +331,7 @@ openTabFor targetRoute tabs =
         tabs
 
     else
-        Maybe.Extra.orList
+        ME.orList
             [ tabs |> SelectList.selectBeforeIf ((==) targetRoute)
             , tabs |> SelectList.selectAfterIf ((==) targetRoute)
             ]
@@ -392,7 +396,7 @@ doPhysics deltaTime x =
             Point2d.translateBy dV p.position
 
         newVelocity =
-            Vector2d.sum p.velocity p.acceleration
+            Vector2d.plus p.velocity p.acceleration
 
         updatedPhysics =
             { position = newPosition
@@ -414,11 +418,12 @@ moveAgent currentTime dT agent =
         newPosition =
             Point2d.translateBy dV agent.physics.position
 
+        newVelocity : Vector2d Meters Types.YDownCoords
         newVelocity =
             -- how do we adjust for large/small dT?
             agent.physics.velocity
                 |> applyFriction
-                |> Vector2d.sum deltaAcceleration
+                |> Vector2d.plus deltaAcceleration
 
         deltaAcceleration =
             Vector2d.scaleBy (toFloat dT / 1000) agent.physics.acceleration
@@ -440,11 +445,14 @@ moveAgent currentTime dT agent =
                 Nothing ->
                     List.filterMap (getMovementVector currentTime dT agent) (getActions agent)
 
+        newAcceleration : Vector2d Meters YDownCoords
         newAcceleration =
-            List.foldl Vector2d.sum Vector2d.zero movementVectors
+            movementVectors
+                |> Vector2d.sum
                 |> deadzone
-                |> Vector2d.normalize
-                |> Vector2d.scaleBy 64
+                |> Vector2d.direction
+                |> ME.unwrap Vector2d.zero
+                    (Vector2d.withLength (Length.meters 64))
 
         newFacing =
             Vector2d.direction newAcceleration
@@ -563,25 +571,28 @@ updateCurrentSignal time currentSignal maybeNewSignal =
                         Just { signal = newSignal, started = time }
 
 
-deadzone : Vector2d -> Vector2d
+deadzone : Vector2d Meters coords -> Vector2d Meters coords
 deadzone v =
-    if Vector2d.length v > 0.005 then
+    if Vector2d.length v |> Q.greaterThan (Length.centimeters 5) then
         v
 
     else
         Vector2d.zero
 
 
-getMovementVector : Posix -> Int -> Agent -> Action -> Maybe Vector2d
+getMovementVector : Posix -> Int -> Agent -> Action -> Maybe (Vector2d Meters YDownCoords)
 getMovementVector currentTime deltaTime agent action =
     case action.outcome of
         MoveTo _ point ->
             let
+                weighted : Vector2d Meters YDownCoords
                 weighted =
                     Vector2d.from agent.physics.position point
-                        |> Vector2d.normalize
-                        |> Vector2d.scaleBy weighting
+                        |> Vector2d.direction
+                        |> ME.unwrap Vector2d.zero
+                            (Vector2d.withLength <| Length.meters weighting)
 
+                weighting : Float
                 weighting =
                     computeUtility agent currentTime action
             in
@@ -589,11 +600,14 @@ getMovementVector currentTime deltaTime agent action =
 
         MoveAwayFrom _ point ->
             let
+                weighted : Vector2d Meters YDownCoords
                 weighted =
                     Vector2d.from point agent.physics.position
-                        |> Vector2d.normalize
-                        |> Vector2d.scaleBy weighting
+                        |> Vector2d.direction
+                        |> ME.unwrap Vector2d.zero
+                            (Vector2d.withLength <| Length.meters weighting)
 
+                weighting : Float
                 weighting =
                     computeUtility agent currentTime action
             in
@@ -601,6 +615,7 @@ getMovementVector currentTime deltaTime agent action =
 
         ArrestMomentum ->
             let
+                weighting : Float
                 weighting =
                     computeUtility agent currentTime action
             in
@@ -612,14 +627,16 @@ getMovementVector currentTime deltaTime agent action =
                     Just
                         (agent.physics.velocity
                             |> Vector2d.reverse
-                            |> Vector2d.normalize
-                            |> Vector2d.scaleBy weighting
+                            |> Vector2d.direction
+                            |> ME.unwrap Vector2d.zero
+                                (Vector2d.withLength <| Length.meters weighting)
                         )
 
         Wander ->
             agent.physics.facing
-                |> Direction2d.toVector
-                |> Vector2d.rotateBy (degrees 10 * (toFloat deltaTime / 1000))
+                |> Vector2d.withLength (Length.meters 1)
+                |> Vector2d.rotateBy
+                    (Angle.degrees 10 |> Q.multiplyBy (toFloat deltaTime / 1000))
                 |> Just
 
         DoNothing ->
@@ -652,11 +669,12 @@ getMovementVector currentTime deltaTime agent action =
 
 {-| Scales a vector, representing how much speed is lost to friction.
 -}
-applyFriction : Vector2d -> Vector2d
+applyFriction : Vector2d Meters coords -> Vector2d Meters coords
 applyFriction velocity =
     let
+        speed : Float
         speed =
-            Vector2d.length velocity
+            Vector2d.length velocity |> Length.inMeters
 
         t =
             1.1
@@ -798,9 +816,8 @@ createRetardantProjectiles currentTime agent acc =
                         , position = agent.physics.position
                         , velocity =
                             direction
-                                |> Direction2d.toVector
-                                |> Vector2d.scaleBy 100
-                                |> Vector2d.rotateBy (currentTime |> angleFuzz 0.8)
+                                |> Vector2d.withLength (Length.meters 100)
+                                |> Vector2d.rotateBy (currentTime |> angleFuzz 0.8 |> Angle.radians)
                         , acceleration = Vector2d.zero
                         , radius = retardantRadius
                         }
@@ -996,9 +1013,11 @@ pickUpFood agent foodID foods =
     let
         targetIsAvailable : Food -> Bool
         targetIsAvailable food =
-            food.id
-                == foodID
-                && ((food.physics.position |> Point2d.distanceFrom agent.physics.position) |> (>) armsReach)
+            (food.id == foodID)
+                && (food.physics.position
+                        |> Point2d.distanceFrom agent.physics.position
+                        |> Q.lessThan armsReach
+                   )
 
         foodAvailable : Bool
         foodAvailable =
@@ -1045,9 +1064,11 @@ plantGrowable dT agent growableID growables =
     let
         targetIsAvailable : Growable -> Bool
         targetIsAvailable growable =
-            growable.id
-                == growableID
-                && (agent.physics.position |> Point2d.distanceFrom growable.physics.position |> (>) armsReach)
+            (growable.id == growableID)
+                && (agent.physics.position
+                        |> Point2d.distanceFrom growable.physics.position
+                        |> Q.lessThan armsReach
+                   )
 
         tend : Growable -> Growable
         tend growable =
@@ -1106,7 +1127,7 @@ collideRetardantAndFire fire mretardant =
                 collisionResult =
                     collide retardant fire
             in
-            if collisionResult.penetration > 0 then
+            if (collisionResult.penetration |> Length.inMeters) > 0 then
                 let
                     updatedHP =
                         (fire.hp |> hpRawValue) - 0.3
@@ -1365,7 +1386,7 @@ outcomeToString outcome =
             "BeggingForFood(" ++ boolString bool ++ ")"
 
         ShootExtinguisher direction ->
-            "ShootExtinguisher(" ++ (direction |> Direction2d.toAngle |> String.fromFloat) ++ ")"
+            "ShootExtinguisher(" ++ (direction |> Direction2d.toAngle |> Angle.inDegrees |> String.fromFloat) ++ ")"
 
         PlantSeed growableID ->
             "PlantSeed(" ++ (growableID |> String.fromInt) ++ ")"
@@ -1438,7 +1459,7 @@ angleFuzz spreadInRadians time =
 
 justSomethings : ( List (Maybe a), b ) -> ( List a, b )
 justSomethings =
-    \( list, b ) -> ( list |> Maybe.Extra.values, b )
+    \( list, b ) -> ( list |> ME.values, b )
 
 
 

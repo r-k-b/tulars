@@ -1,5 +1,6 @@
 module TestMain exposing (suite)
 
+import Angle
 import DefaultData exposing (agentRadius, foodRadius)
 import Dict
 import Direction2d
@@ -17,8 +18,8 @@ agent : Agent
 agent =
     { name = "Alf"
     , physics =
-        { facing = Direction2d.fromAngle (degrees 70)
-        , position = Point2d.fromCoordinates ( 0, 0 )
+        { facing = Direction2d.fromAngle (Angle.degrees 70)
+        , position = Point2d.origin
         , velocity = Vector2d.zero
         , acceleration = Vector2d.zero
         , radius = agentRadius
@@ -43,8 +44,8 @@ food1 : Food
 food1 =
     { id = 1
     , physics =
-        { facing = Direction2d.fromAngle (degrees 0)
-        , position = Point2d.fromCoordinates ( 0, 10 )
+        { facing = Direction2d.fromAngle (Angle.degrees 0)
+        , position = Point2d.fromMeters { x = 0, y = 10 }
         , velocity = Vector2d.zero
         , acceleration = Vector2d.zero
         , radius = foodRadius
@@ -57,8 +58,8 @@ food2 : Food
 food2 =
     { id = 2
     , physics =
-        { facing = Direction2d.fromAngle (degrees 0)
-        , position = Point2d.fromCoordinates ( 10, 0 )
+        { facing = Direction2d.fromAngle (Angle.degrees 0)
+        , position = Point2d.fromMeters { x = 10, y = 0 }
         , velocity = Vector2d.zero
         , acceleration = Vector2d.zero
         , radius = foodRadius
@@ -71,8 +72,8 @@ food3OutOfReach : Food
 food3OutOfReach =
     { id = 3
     , physics =
-        { facing = Direction2d.fromAngle (degrees 0)
-        , position = Point2d.fromCoordinates ( 100, 100 )
+        { facing = Direction2d.fromAngle (Angle.degrees 0)
+        , position = Point2d.fromMeters { x = 100, y = 100 }
         , velocity = Vector2d.zero
         , acceleration = Vector2d.zero
         , radius = foodRadius

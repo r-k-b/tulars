@@ -15,10 +15,12 @@ module DefaultData exposing
     , wolves
     )
 
+import Angle
 import Dict
 import Direction2d as Direction2d
+import Length exposing (Length, Meters)
 import Maybe
-import Point2d as Point2d
+import Point2d as Point2d exposing (Point2d)
 import Set
 import Types
     exposing
@@ -42,6 +44,7 @@ import Types
         , Range(..)
         , ReferenceToPortable(..)
         , Signal(..)
+        , YDownCoords
         )
 import Vector2d as Vector2d
 
@@ -50,8 +53,8 @@ foods : List Food
 foods =
     [ { id = 1
       , physics =
-            { facing = Direction2d.fromAngle (degrees 0)
-            , position = Point2d.fromCoordinates ( -100, 100 )
+            { facing = Direction2d.fromAngle (Angle.degrees 0)
+            , position = Point2d.fromMeters { x = -100, y = 100 }
             , velocity = Vector2d.zero
             , acceleration = Vector2d.zero
             , radius = foodRadius
@@ -60,8 +63,8 @@ foods =
       }
     , { id = 2
       , physics =
-            { facing = Direction2d.fromAngle (degrees 0)
-            , position = Point2d.fromCoordinates ( 100, 100 )
+            { facing = Direction2d.fromAngle (Angle.degrees 0)
+            , position = Point2d.fromMeters { x = 100, y = 100 }
             , velocity = Vector2d.zero
             , acceleration = Vector2d.zero
             , radius = foodRadius
@@ -75,9 +78,9 @@ fires : List Fire
 fires =
     [ { id = 1
       , physics =
-            { facing = Direction2d.fromAngle (degrees 0)
-            , position = Point2d.fromCoordinates ( 100, -100 )
-            , velocity = Vector2d.fromComponents ( 0, 0 )
+            { facing = Direction2d.fromAngle (Angle.degrees 0)
+            , position = Point2d.fromMeters { x = -100, y = -100 }
+            , velocity = Vector2d.fromMeters { x = 0, y = 0 }
             , acceleration = Vector2d.zero
             , radius = fireRadius
             }
@@ -88,18 +91,18 @@ fires =
 
 growables : List Growable
 growables =
-    [ FertileSoil { plantedProgress = unseeded } |> basicGrowableAt ( -80, -70 ) 1
-    , FertileSoil { plantedProgress = unseeded } |> basicGrowableAt ( -80, -50 ) 2
-    , FertileSoil { plantedProgress = unseeded } |> basicGrowableAt ( -80, -30 ) 3
-    , GrowingPlant { growth = plantGrowth 0, hp = Hitpoints 1 50 } |> basicGrowableAt ( -60, -70 ) 4
-    , GrowingPlant { growth = plantGrowth 10, hp = Hitpoints 30 50 } |> basicGrowableAt ( -60, -50 ) 5
-    , GrowingPlant { growth = plantGrowth 30, hp = Hitpoints 50 50 } |> basicGrowableAt ( -60, -30 ) 6
-    , GrownPlant { hp = Hitpoints 1 50 } |> basicGrowableAt ( -40, -70 ) 7
-    , GrownPlant { hp = Hitpoints 20 50 } |> basicGrowableAt ( -40, -50 ) 8
-    , GrownPlant { hp = Hitpoints 50 50 } |> basicGrowableAt ( -40, -30 ) 9
-    , DeadPlant { hp = Hitpoints 1 50 } |> basicGrowableAt ( -20, -90 ) 10
-    , DeadPlant { hp = Hitpoints 30 50 } |> basicGrowableAt ( -20, -50 ) 11
-    , DeadPlant { hp = Hitpoints 50 50 } |> basicGrowableAt ( -20, -30 ) 12
+    [ FertileSoil { plantedProgress = unseeded } |> basicGrowableAt (Point2d.fromMeters { x = -80, y = -70 }) 1
+    , FertileSoil { plantedProgress = unseeded } |> basicGrowableAt (Point2d.fromMeters { x = -80, y = -50 }) 2
+    , FertileSoil { plantedProgress = unseeded } |> basicGrowableAt (Point2d.fromMeters { x = -80, y = -30 }) 3
+    , GrowingPlant { growth = plantGrowth 0, hp = Hitpoints 1 50 } |> basicGrowableAt (Point2d.fromMeters { x = -60, y = -70 }) 4
+    , GrowingPlant { growth = plantGrowth 10, hp = Hitpoints 30 50 } |> basicGrowableAt (Point2d.fromMeters { x = -60, y = -50 }) 5
+    , GrowingPlant { growth = plantGrowth 30, hp = Hitpoints 50 50 } |> basicGrowableAt (Point2d.fromMeters { x = -60, y = -30 }) 6
+    , GrownPlant { hp = Hitpoints 1 50 } |> basicGrowableAt (Point2d.fromMeters { x = -40, y = -70 }) 7
+    , GrownPlant { hp = Hitpoints 20 50 } |> basicGrowableAt (Point2d.fromMeters { x = -40, y = -50 }) 8
+    , GrownPlant { hp = Hitpoints 50 50 } |> basicGrowableAt (Point2d.fromMeters { x = -40, y = -30 }) 9
+    , DeadPlant { hp = Hitpoints 1 50 } |> basicGrowableAt (Point2d.fromMeters { x = -20, y = -90 }) 10
+    , DeadPlant { hp = Hitpoints 30 50 } |> basicGrowableAt (Point2d.fromMeters { x = -20, y = -50 }) 11
+    , DeadPlant { hp = Hitpoints 50 50 } |> basicGrowableAt (Point2d.fromMeters { x = -20, y = -30 }) 12
     ]
 
 
@@ -113,13 +116,13 @@ unseeded =
     Range { min = 0, max = 30, value = 0 }
 
 
-basicGrowableAt : ( Float, Float ) -> Int -> GrowableState -> Growable
-basicGrowableAt coords id state =
+basicGrowableAt : Point2d Meters YDownCoords -> Int -> GrowableState -> Growable
+basicGrowableAt position id state =
     { id = id
     , physics =
-        { facing = Direction2d.fromAngle (degrees 0)
-        , position = Point2d.fromCoordinates coords
-        , velocity = Vector2d.fromComponents ( 0, 0 )
+        { facing = Direction2d.fromAngle (Angle.degrees 0)
+        , position = position
+        , velocity = Vector2d.fromMeters { x = 0, y = 0 }
         , acceleration = Vector2d.zero
         , radius = growableRadius
         }
@@ -131,9 +134,9 @@ extinguishers : List FireExtinguisher
 extinguishers =
     [ { id = 1
       , physics =
-            { facing = Direction2d.fromAngle (degrees 0)
-            , position = Point2d.fromCoordinates ( -20, -300 )
-            , velocity = Vector2d.fromComponents ( 0, 0 )
+            { facing = Direction2d.fromAngle (Angle.degrees 0)
+            , position = Point2d.fromMeters { x = -20, y = -300 }
+            , velocity = Vector2d.fromMeters { x = 0, y = 0 }
             , acceleration = Vector2d.zero
             , radius = extinguisherRadius
             }
@@ -147,9 +150,9 @@ humans : List Agent
 humans =
     [ { name = "Alf"
       , physics =
-            { facing = Direction2d.fromAngle (degrees 70)
-            , position = Point2d.fromCoordinates ( 200, 150 )
-            , velocity = Vector2d.fromComponents ( -1, -10 )
+            { facing = Direction2d.fromAngle (Angle.degrees 70)
+            , position = Point2d.fromMeters { x = 200, y = 150 }
+            , velocity = Vector2d.fromMeters { x = -1, y = -10 }
             , acceleration = Vector2d.zero
             , radius = agentRadius
             }
@@ -185,10 +188,10 @@ humans =
       }
     , { name = "Bob"
       , physics =
-            { facing = Direction2d.fromAngle (degrees 200)
-            , position = Point2d.fromCoordinates ( 100, 250 )
-            , velocity = Vector2d.fromComponents ( -10, -20 )
-            , acceleration = Vector2d.fromComponents ( -2, -1 )
+            { facing = Direction2d.fromAngle (Angle.degrees 200)
+            , position = Point2d.fromMeters { x = 100, y = 250 }
+            , velocity = Vector2d.fromMeters { x = -10, y = -20 }
+            , acceleration = Vector2d.fromMeters { x = -2, y = -1 }
             , radius = agentRadius
             }
       , actionGenerators =
@@ -223,10 +226,10 @@ humans =
       }
     , { name = "Charlie"
       , physics =
-            { facing = Direction2d.fromAngle (degrees 150)
-            , position = Point2d.fromCoordinates ( -120, -120 )
-            , velocity = Vector2d.fromComponents ( 0, 0 )
-            , acceleration = Vector2d.fromComponents ( 0, 0 )
+            { facing = Direction2d.fromAngle (Angle.degrees 150)
+            , position = Point2d.fromMeters { x = -120, y = -120 }
+            , velocity = Vector2d.fromMeters { x = 0, y = 0 }
+            , acceleration = Vector2d.fromMeters { x = 0, y = 0 }
             , radius = agentRadius
             }
       , actionGenerators =
@@ -260,9 +263,9 @@ humans =
       }
     , { name = "Dead Don"
       , physics =
-            { facing = Direction2d.fromAngle (degrees 70)
-            , position = Point2d.fromCoordinates ( 200, 150 )
-            , velocity = Vector2d.fromComponents ( -1, -10 )
+            { facing = Direction2d.fromAngle (Angle.degrees 70)
+            , position = Point2d.fromMeters { x = 200, y = 150 }
+            , velocity = Vector2d.fromMeters { x = -1, y = -10 }
             , acceleration = Vector2d.zero
             , radius = agentRadius
             }
@@ -286,33 +289,33 @@ humans =
 rabbits : List Agent
 rabbits =
     -- TODO: add a distinguishing property like human / rabbit / wolf
-    [ (standardRabbitAt <| Point2d.fromCoordinates ( 200, 150 )) <| "Rabbit 1"
-    , (standardRabbitAt <| Point2d.fromCoordinates ( 200, 160 )) <| "Rabbit 2"
-    , (standardRabbitAt <| Point2d.fromCoordinates ( 200, 170 )) <| "Rabbit 3"
-    , (standardRabbitAt <| Point2d.fromCoordinates ( 200, 180 )) <| "Rabbit 4"
-    , (standardRabbitAt <| Point2d.fromCoordinates ( 200, 190 )) <| "Rabbit 5"
-    , (standardRabbitAt <| Point2d.fromCoordinates ( 200, 200 )) <| "Rabbit 6"
-    , (standardRabbitAt <| Point2d.fromCoordinates ( 200, 210 )) <| "Rabbit 7"
-    , (standardRabbitAt <| Point2d.fromCoordinates ( 200, 220 )) <| "Rabbit 8"
-    , (standardRabbitAt <| Point2d.fromCoordinates ( 200, 230 )) <| "Rabbit 9"
-    , (standardRabbitAt <| Point2d.fromCoordinates ( 200, 240 )) <| "Rabbit 10"
-    , (standardRabbitAt <| Point2d.fromCoordinates ( 200, 250 )) <| "Rabbit 11"
-    , (standardRabbitAt <| Point2d.fromCoordinates ( 200, 260 )) <| "Rabbit 12"
-    , (standardRabbitAt <| Point2d.fromCoordinates ( 200, 270 )) <| "Rabbit 13"
-    , (standardRabbitAt <| Point2d.fromCoordinates ( 200, 280 )) <| "Rabbit 14"
-    , (standardRabbitAt <| Point2d.fromCoordinates ( 200, 290 )) <| "Rabbit 15"
-    , (standardRabbitAt <| Point2d.fromCoordinates ( 200, 300 )) <| "Rabbit 16"
+    [ (standardRabbitAt <| Point2d.fromMeters { x = 200, y = 150 }) <| "Rabbit 1"
+    , (standardRabbitAt <| Point2d.fromMeters { x = 200, y = 160 }) <| "Rabbit 2"
+    , (standardRabbitAt <| Point2d.fromMeters { x = 200, y = 170 }) <| "Rabbit 3"
+    , (standardRabbitAt <| Point2d.fromMeters { x = 200, y = 180 }) <| "Rabbit 4"
+    , (standardRabbitAt <| Point2d.fromMeters { x = 200, y = 190 }) <| "Rabbit 5"
+    , (standardRabbitAt <| Point2d.fromMeters { x = 200, y = 200 }) <| "Rabbit 6"
+    , (standardRabbitAt <| Point2d.fromMeters { x = 200, y = 210 }) <| "Rabbit 7"
+    , (standardRabbitAt <| Point2d.fromMeters { x = 200, y = 220 }) <| "Rabbit 8"
+    , (standardRabbitAt <| Point2d.fromMeters { x = 200, y = 230 }) <| "Rabbit 9"
+    , (standardRabbitAt <| Point2d.fromMeters { x = 200, y = 240 }) <| "Rabbit 10"
+    , (standardRabbitAt <| Point2d.fromMeters { x = 200, y = 250 }) <| "Rabbit 11"
+    , (standardRabbitAt <| Point2d.fromMeters { x = 200, y = 260 }) <| "Rabbit 12"
+    , (standardRabbitAt <| Point2d.fromMeters { x = 200, y = 270 }) <| "Rabbit 13"
+    , (standardRabbitAt <| Point2d.fromMeters { x = 200, y = 280 }) <| "Rabbit 14"
+    , (standardRabbitAt <| Point2d.fromMeters { x = 200, y = 290 }) <| "Rabbit 15"
+    , (standardRabbitAt <| Point2d.fromMeters { x = 200, y = 300 }) <| "Rabbit 16"
     ]
 
 
-standardRabbitAt : Point2d.Point2d -> String -> Agent
+standardRabbitAt : Point2d.Point2d Meters YDownCoords -> String -> Agent
 standardRabbitAt position name =
     -- TODO: add a distinguishing property like human / rabbit / wolf
     { name = name
     , physics =
-        { facing = Direction2d.fromAngle (degrees 70)
+        { facing = Direction2d.fromAngle (Angle.degrees 70)
         , position = position
-        , velocity = Vector2d.fromComponents ( 0, 0 )
+        , velocity = Vector2d.fromMeters { x = 0, y = 0 }
         , acceleration = Vector2d.zero
         , radius = agentRadius
         }
@@ -334,33 +337,33 @@ standardRabbitAt position name =
 
 wolves : List Agent
 wolves =
-    [ (standardWolfAt <| Point2d.fromCoordinates ( -200, 150 )) <| "Wolf 1"
-    , (standardWolfAt <| Point2d.fromCoordinates ( -200, 160 )) <| "Wolf 2"
-    , (standardWolfAt <| Point2d.fromCoordinates ( -200, 170 )) <| "Wolf 3"
-    , (standardWolfAt <| Point2d.fromCoordinates ( -200, 180 )) <| "Wolf 4"
-    , (standardWolfAt <| Point2d.fromCoordinates ( -200, 190 )) <| "Wolf 5"
-    , (standardWolfAt <| Point2d.fromCoordinates ( -200, 200 )) <| "Wolf 6"
-    , (standardWolfAt <| Point2d.fromCoordinates ( -200, 210 )) <| "Wolf 7"
-    , (standardWolfAt <| Point2d.fromCoordinates ( -200, 220 )) <| "Wolf 8"
-    , (standardWolfAt <| Point2d.fromCoordinates ( -200, 230 )) <| "Wolf 9"
-    , (standardWolfAt <| Point2d.fromCoordinates ( -200, 240 )) <| "Wolf 10"
-    , (standardWolfAt <| Point2d.fromCoordinates ( -200, 250 )) <| "Wolf 11"
-    , (standardWolfAt <| Point2d.fromCoordinates ( -200, 260 )) <| "Wolf 12"
-    , (standardWolfAt <| Point2d.fromCoordinates ( -200, 270 )) <| "Wolf 13"
-    , (standardWolfAt <| Point2d.fromCoordinates ( -200, 280 )) <| "Wolf 14"
-    , (standardWolfAt <| Point2d.fromCoordinates ( -200, 290 )) <| "Wolf 15"
-    , (standardWolfAt <| Point2d.fromCoordinates ( -200, 300 )) <| "Wolf 16"
+    [ (standardWolfAt <| Point2d.fromMeters { x = -200, y = 150 }) <| "Wolf 1"
+    , (standardWolfAt <| Point2d.fromMeters { x = -200, y = 160 }) <| "Wolf 2"
+    , (standardWolfAt <| Point2d.fromMeters { x = -200, y = 170 }) <| "Wolf 3"
+    , (standardWolfAt <| Point2d.fromMeters { x = -200, y = 180 }) <| "Wolf 4"
+    , (standardWolfAt <| Point2d.fromMeters { x = -200, y = 190 }) <| "Wolf 5"
+    , (standardWolfAt <| Point2d.fromMeters { x = -200, y = 200 }) <| "Wolf 6"
+    , (standardWolfAt <| Point2d.fromMeters { x = -200, y = 210 }) <| "Wolf 7"
+    , (standardWolfAt <| Point2d.fromMeters { x = -200, y = 220 }) <| "Wolf 8"
+    , (standardWolfAt <| Point2d.fromMeters { x = -200, y = 230 }) <| "Wolf 9"
+    , (standardWolfAt <| Point2d.fromMeters { x = -200, y = 240 }) <| "Wolf 10"
+    , (standardWolfAt <| Point2d.fromMeters { x = -200, y = 250 }) <| "Wolf 11"
+    , (standardWolfAt <| Point2d.fromMeters { x = -200, y = 260 }) <| "Wolf 12"
+    , (standardWolfAt <| Point2d.fromMeters { x = -200, y = 270 }) <| "Wolf 13"
+    , (standardWolfAt <| Point2d.fromMeters { x = -200, y = 280 }) <| "Wolf 14"
+    , (standardWolfAt <| Point2d.fromMeters { x = -200, y = 290 }) <| "Wolf 15"
+    , (standardWolfAt <| Point2d.fromMeters { x = -200, y = 300 }) <| "Wolf 16"
     ]
 
 
-standardWolfAt : Point2d.Point2d -> String -> Agent
+standardWolfAt : Point2d.Point2d Meters YDownCoords -> String -> Agent
 standardWolfAt position name =
     -- TODO: add a distinguishing property like human / rabbit / wolf
     { name = name
     , physics =
-        { facing = Direction2d.fromAngle (degrees 70)
+        { facing = Direction2d.fromAngle (Angle.degrees 70)
         , position = position
-        , velocity = Vector2d.fromComponents ( 0, 0 )
+        , velocity = Vector2d.fromMeters { x = 0, y = 0 }
         , acceleration = Vector2d.zero
         , radius = agentRadius
         }
@@ -421,7 +424,7 @@ stayNearOrigin =
         (MoveTo "origin" Point2d.origin)
         [ { name = "distance from origin"
           , function = Linear 1 0
-          , input = DistanceToTargetPoint Point2d.origin
+          , input = MetersToTargetPoint Point2d.origin
           , inputMin = 200
           , inputMax = 300
           , weighting = 0.1
@@ -500,36 +503,36 @@ withSuffix id s =
     s ++ " (#" ++ String.fromInt id ++ ")"
 
 
-agentRadius : Float
+agentRadius : Length
 agentRadius =
-    10
+    Length.meters 10
 
 
-armsReach : Float
+armsReach : Length
 armsReach =
-    20
+    Length.meters 20
 
 
-extinguisherRadius : Float
+extinguisherRadius : Length
 extinguisherRadius =
-    10
+    Length.meters 10
 
 
-retardantRadius : Float
+retardantRadius : Length
 retardantRadius =
-    3
+    Length.meters 3
 
 
-fireRadius : Float
+fireRadius : Length
 fireRadius =
-    6
+    Length.meters 6
 
 
-growableRadius : Float
+growableRadius : Length
 growableRadius =
-    5
+    Length.meters 5
 
 
-foodRadius : Float
+foodRadius : Length
 foodRadius =
-    10
+    Length.meters 10

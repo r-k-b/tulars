@@ -23,11 +23,14 @@ module UtilityFunctions exposing
     , updateRange
     )
 
+import Angle
 import DefaultData exposing (armsReach, defaultHysteresis, withSuffix)
 import Dict
 import Direction2d
+import Length
 import Maybe exposing (withDefault)
 import Point2d as Point2d
+import Quantity as Q
 import Set exposing (member)
 import Time exposing (Posix, posixToMillis)
 import Types
@@ -159,15 +162,19 @@ getConsiderationRawValue agent currentTime action consideration =
         Hunger ->
             agent.hunger |> rangeCurrentValue
 
-        DistanceToTargetPoint point ->
-            point |> Point2d.distanceFrom agent.physics.position
+        MetersToTargetPoint point ->
+            point
+                |> Point2d.distanceFrom agent.physics.position
+                |> Length.inMeters
 
         Constant f ->
             f
 
-        CurrentSpeed ->
+        CurrentSpeedInMetersPerSecond ->
+            -- does this seem right?
             agent.physics.velocity
                 |> Vector2d.length
+                |> Length.inMeters
 
         TimeSinceLastShoutedFeedMe ->
             case Dict.get "CallOut(FeedMe)" agent.topActionLastStartTimes of
@@ -482,7 +489,7 @@ avoidFire model _ =
                 (MoveAwayFrom ("fire" |> withSuffix fire.id) fire.physics.position)
                 [ { name = "too close to fire"
                   , function = Linear 1 0
-                  , input = DistanceToTargetPoint fire.physics.position
+                  , input = MetersToTargetPoint fire.physics.position
                   , inputMin = 100
                   , inputMax = 10
                   , weighting = 3
@@ -520,7 +527,7 @@ dropFoodForBeggar model agent_ =
                   }
                 , { name = "beggar is nearby"
                   , function = Linear 1 0
-                  , input = DistanceToTargetPoint agent.physics.position
+                  , input = MetersToTargetPoint agent.physics.position
                   , inputMin = 40
                   , inputMax = 10
                   , weighting = 1
@@ -596,14 +603,14 @@ fightFires model agent_ =
             let
                 direction =
                     Direction2d.from agent.physics.position fire.physics.position
-                        |> withDefault (Direction2d.fromAngle 0)
+                        |> withDefault (Direction2d.fromAngle <| Angle.degrees 0)
             in
             Action
                 ("use extinguisher on fire" |> withSuffix fire.id)
                 (ShootExtinguisher direction)
                 [ { name = "within range"
                   , function = Linear 1 0
-                  , input = DistanceToTargetPoint fire.physics.position
+                  , input = MetersToTargetPoint fire.physics.position
                   , inputMin = 60
                   , inputMax = 55
                   , weighting = 3
@@ -627,7 +634,7 @@ fightFires model agent_ =
                 (MoveTo ("fire" |> withSuffix fire.id) fire.physics.position)
                 [ { name = "close enough"
                   , function = Asymmetric 0.3 10 0.5 0.8 0.97 -1000 0.5 1
-                  , input = DistanceToTargetPoint fire.physics.position
+                  , input = MetersToTargetPoint fire.physics.position
                   , inputMin = 400
                   , inputMax = 30
                   , weighting = 3
@@ -651,7 +658,7 @@ fightFires model agent_ =
                 (PickUp <| ExtinguisherID extinguisher.id)
                 [ { name = "in pickup range"
                   , function = Exponential 0.01
-                  , input = DistanceToTargetPoint extinguisher.physics.position
+                  , input = MetersToTargetPoint extinguisher.physics.position
                   , inputMin = 26
                   , inputMax = 25
                   , weighting = 2
@@ -667,7 +674,7 @@ fightFires model agent_ =
                 (MoveTo ("fire extinguisher" |> withSuffix extinguisher.id) extinguisher.physics.position)
                 [ { name = "get close enough to pick it up"
                   , function = Linear 1 0
-                  , input = DistanceToTargetPoint extinguisher.physics.position
+                  , input = MetersToTargetPoint extinguisher.physics.position
                   , inputMin = 10
                   , inputMax = 20
                   , weighting = 1
@@ -704,9 +711,9 @@ hoverNear targetAgentName model _ =
                 (MoveTo otherAgent.name otherAgent.physics.position)
                 [ { name = "close, but not close enough"
                   , function = Normal 2.6 0.5 10
-                  , input = DistanceToTargetPoint otherAgent.physics.position
-                  , inputMin = armsReach
-                  , inputMax = armsReach * 3
+                  , input = MetersToTargetPoint otherAgent.physics.position
+                  , inputMin = armsReach |> Length.inMeters
+                  , inputMax = armsReach |> Q.multiplyBy 3 |> Length.inMeters
                   , weighting = 0.6
                   , offset = 0
                   }
@@ -728,7 +735,7 @@ maintainPersonalSpace model agent =
                 (MoveAwayFrom otherAgent.name otherAgent.physics.position)
                 [ { name = "space invaded"
                   , function = Linear 1 0
-                  , input = DistanceToTargetPoint otherAgent.physics.position
+                  , input = MetersToTargetPoint otherAgent.physics.position
                   , inputMin = 15
                   , inputMax = 5
                   , weighting = 1
@@ -760,17 +767,17 @@ moveToFood model _ =
                   }
                 , { name = "too far from food item"
                   , function = Exponential 2
-                  , input = DistanceToTargetPoint food.physics.position
+                  , input = MetersToTargetPoint food.physics.position
                   , inputMin = 3000
-                  , inputMax = armsReach
+                  , inputMax = armsReach |> Length.inMeters
                   , weighting = 1
                   , offset = 0
                   }
                 , { name = "in range of food item"
                   , function = Exponential 0.01
-                  , input = DistanceToTargetPoint food.physics.position
-                  , inputMin = armsReach * 0.9
-                  , inputMax = armsReach
+                  , input = MetersToTargetPoint food.physics.position
+                  , inputMin = armsReach |> Q.multiplyBy 0.9 |> Length.inMeters
+                  , inputMax = armsReach |> Length.inMeters
                   , weighting = 1
                   , offset = 0
                   }
@@ -815,7 +822,7 @@ moveToGiveFoodToBeggar model _ =
                   }
                 , { name = "beggar is reasonably close"
                   , function = Linear 1 0
-                  , input = DistanceToTargetPoint agent.physics.position
+                  , input = MetersToTargetPoint agent.physics.position
                   , inputMin = 500
                   , inputMax = 0
                   , weighting = 1
@@ -847,9 +854,9 @@ pickUpFoodToEat model _ =
                 inPickupRange =
                     { name = "in pickup range"
                     , function = Exponential 0.01
-                    , input = DistanceToTargetPoint food.physics.position
-                    , inputMin = armsReach
-                    , inputMax = armsReach * 0.9
+                    , input = MetersToTargetPoint food.physics.position
+                    , inputMin = armsReach |> Length.inMeters
+                    , inputMax = armsReach |> Q.multiplyBy 0.9 |> Length.inMeters
                     , weighting = 2
                     , offset = 0
                     }
@@ -925,9 +932,9 @@ plantGrowables model agent =
                 (MoveTo ("growable" |> withSuffix growable.id) growable.physics.position)
                 [ { name = "distance to fertile soil"
                   , function = Linear 1 0
-                  , input = DistanceToTargetPoint growable.physics.position
-                  , inputMin = armsReach * 0.9
-                  , inputMax = armsReach
+                  , input = MetersToTargetPoint growable.physics.position
+                  , inputMin = armsReach |> Q.multiplyBy 0.9 |> Length.inMeters
+                  , inputMax = armsReach |> Length.inMeters
                   , weighting = 0.2
                   , offset = 0
                   }
@@ -941,9 +948,9 @@ plantGrowables model agent =
                 (PlantSeed growable.id)
                 [ { name = "close enough to plant the seed"
                   , function = Linear 1 0
-                  , input = DistanceToTargetPoint growable.physics.position
-                  , inputMin = armsReach
-                  , inputMax = armsReach * 0.9
+                  , input = MetersToTargetPoint growable.physics.position
+                  , inputMin = armsReach |> Length.inMeters
+                  , inputMax = armsReach |> Q.multiplyBy 0.9 |> Length.inMeters
                   , weighting = 1
                   , offset = 0
                   }
@@ -957,9 +964,9 @@ plantGrowables model agent =
                 ArrestMomentum
                 [ { name = "in range of fertile growable"
                   , function = Linear 1 0
-                  , input = DistanceToTargetPoint growable.physics.position
-                  , inputMin = armsReach
-                  , inputMax = armsReach * 0.9
+                  , input = MetersToTargetPoint growable.physics.position
+                  , inputMin = armsReach |> Length.inMeters
+                  , inputMax = armsReach |> Q.multiplyBy 0.9 |> Length.inMeters
                   , weighting = 0.4
                   , offset = 0
                   }
@@ -971,7 +978,8 @@ plantGrowables model agent =
         targets =
             model.growables
                 |> List.filter isReadyToPlant
-                |> List.sortBy (.physics >> .position >> Point2d.distanceFrom agent.physics.position)
+                -- Does this do unnecessary work? What about mapping to distances, then LE.minimumBy?
+                |> List.sortBy (.physics >> .position >> Point2d.distanceFrom agent.physics.position >> Length.inMeters)
                 |> List.take 1
     in
     (targets |> List.map getInSeedPlantingRange)
@@ -1031,15 +1039,15 @@ stopAtFood model _ =
                 ArrestMomentum
                 [ { name = "in range of food item"
                   , function = Exponential 0.01
-                  , input = DistanceToTargetPoint food.physics.position
-                  , inputMin = armsReach
-                  , inputMax = armsReach * 0.9
+                  , input = MetersToTargetPoint food.physics.position
+                  , inputMin = armsReach |> Length.inMeters
+                  , inputMax = armsReach |> Q.multiplyBy 0.9 |> Length.inMeters
                   , weighting = 1
                   , offset = 0
                   }
                 , { name = "still moving"
                   , function = Sigmoid 10 0.5
-                  , input = CurrentSpeed
+                  , input = CurrentSpeedInMetersPerSecond
                   , inputMin = 3
                   , inputMax = 6
                   , weighting = 1

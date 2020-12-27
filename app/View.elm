@@ -34,6 +34,7 @@ import Html
 import Html.Attributes as HA exposing (href, style)
 import Html.Events exposing (onClick)
 import Json.Decode as JD
+import Length exposing (Meters)
 import LineSegment2d
 import List exposing (take)
 import List.Extra exposing (takeWhile)
@@ -43,7 +44,9 @@ import Menu
         , AnnotatedCrumbChildren(..)
         , zipperToAnnotatedBreadcrumbs
         )
+import Pixels exposing (Pixels)
 import Point2d as Point2d exposing (xCoordinate, yCoordinate)
+import Quantity exposing (Quantity)
 import Round
 import SelectList exposing (SelectList, selected)
 import StylingClasses exposing (classes, svgClass)
@@ -101,6 +104,7 @@ import Types
         , Retardant
         , Route(..)
         , Signal(..)
+        , YDownCoords
         )
 import UtilityFunctions
     exposing
@@ -313,40 +317,44 @@ viewMenuItem isPaused item =
                 ]
 
 
-bb : BoundingBox2d
+bb : BoundingBox2d Meters YDownCoords
 bb =
     BoundingBox2d.fromExtrema
-        { minX = -300
-        , maxX = 300
-        , minY = -300
-        , maxY = 300
+        { minX = Length.meters -300
+        , maxX = Length.meters 300
+        , minY = Length.meters -300
+        , maxY = Length.meters 300
         }
 
 
-render2dResponsive : BoundingBox2d -> Svg msg -> Html msg
+render2dResponsive : BoundingBox2d Meters YDownCoords -> Svg msg -> Html msg
 render2dResponsive boundingBox svgMsg =
     let
         { minX, maxY } =
             BoundingBox2d.extrema boundingBox
 
         topLeftFrame =
-            Frame2d.atPoint (Point2d.fromCoordinates ( minX, maxY ))
+            -- this seems clunky... is there a neater way?
+            Frame2d.atPoint
+                (Point2d.fromMeters
+                    { x = minX |> Length.inMeters, y = maxY |> Length.inMeters }
+                )
 
         ( bbWidth, bbHeight ) =
             BoundingBox2d.dimensions boundingBox
 
         coords =
             [ 0
-            , -bbHeight
-            , bbWidth
-            , bbHeight
+            , -(bbHeight |> Length.inMeters)
+            , bbWidth |> Length.inMeters
+            , bbHeight |> Length.inMeters
             ]
                 |> List.map String.fromFloat
                 |> String.join " "
     in
     Svg.svg
-        [ Svg.Attributes.width (String.fromFloat bbWidth)
-        , Svg.Attributes.height (String.fromFloat bbHeight)
+        [ Svg.Attributes.width (String.fromFloat <| Length.inMeters <| bbWidth)
+        , Svg.Attributes.height (String.fromFloat <| Length.inMeters <| bbHeight)
         , viewBox coords
         ]
         [ Svg.relativeTo topLeftFrame svgMsg ]
@@ -357,8 +365,8 @@ mainMap model =
     div [ classes.fullSize |> HA.class, classes.zoomSvg |> HA.class ]
         [ render2dResponsive bb
             (g [ id "mainMap" ]
-                [ borderIndicator 200
-                , borderIndicator 300
+                [ borderIndicator (Pixels.pixels 200)
+                , borderIndicator (Pixels.pixels 300)
                 , g [ id "agents" ]
                     (List.map renderAgent model.agents)
                 , g [ id "foods" ]
@@ -383,6 +391,9 @@ logEntryIsAfter posix entry =
 
 
 {-| In milliseconds.
+
+TODO: Replace with a Duration?
+
 -}
 secondInMillis : Int
 secondInMillis =
@@ -436,7 +447,7 @@ viewHudLine line =
         |> div [ classes.logHudLine |> HA.class ]
 
 
-borderIndicator : Float -> Svg Msg
+borderIndicator : Quantity Float Pixels -> Svg Msg
 borderIndicator radius =
     Svg.circle2d
         [ Svg.Attributes.fillOpacity "0"
@@ -486,7 +497,7 @@ facingArrow =
 agentVelocityArrow : Agent -> Svg msg
 agentVelocityArrow agent =
     let
-        exaggerated : Vector2d.Vector2d
+        exaggerated : Vector2d.Vector2d Meters YDownCoords
         exaggerated =
             scaleBy 2 agent.physics.velocity
 
@@ -533,7 +544,7 @@ renderAgent agent =
                             ]
 
         bothHands =
-            Point2d.fromCoordinates ( 0, 6 )
+            Point2d.fromMeters { x = 0, y = 6 }
 
         held =
             case agent.holding of
@@ -544,8 +555,17 @@ renderAgent agent =
                     [ renderPortable p bothHands ]
     in
     g [ id <| "agent " ++ agent.name ]
-        ([ Svg.circle2d [ Svg.Attributes.fill "var(--color-fg)" ] (Circle2d.withRadius 3 origin)
-         , Svg.lineSegment2d [] (LineSegment2d.fromEndpoints ( origin, origin |> Point2d.translateBy (Direction2d.toVector agent.physics.facing) ))
+        ([ Svg.circle2d [ Svg.Attributes.fill "var(--color-fg)" ] (Circle2d.withRadius (Length.meters 3) origin)
+         , Svg.lineSegment2d []
+            (LineSegment2d.fromEndpoints
+                ( origin
+                , origin
+                    |> Point2d.translateBy
+                        (Vector2d.withLength (Length.meters 1)
+                            agent.physics.facing
+                        )
+                )
+            )
          , agentVelocityArrow agent
          , renderName agent
             |> Svg.scaleAbout origin 0.6
@@ -557,7 +577,7 @@ renderAgent agent =
         |> Svg.translateBy (Vector2d.from Point2d.origin agent.physics.position)
 
 
-renderPortable : Portable -> Point2d.Point2d -> Svg Msg
+renderPortable : Portable -> Point2d.Point2d Meters YDownCoords -> Svg Msg
 renderPortable p pOffset =
     Svg.scaleAbout pOffset 0.6 <|
         case p of
@@ -763,13 +783,13 @@ renderConsiderationChart agent currentTime action con =
         sampleCount =
             64
 
-        chartBB : BoundingBox2d
+        chartBB : BoundingBox2d Meters YDownCoords
         chartBB =
             BoundingBox2d.fromExtrema
-                { minX = -20
-                , maxX = 120
-                , minY = -20
-                , maxY = 120
+                { minX = Length.meters -20
+                , maxX = Length.meters 120
+                , minY = Length.meters -20
+                , maxY = Length.meters 120
                 }
 
         chartYMin : Float
@@ -934,16 +954,17 @@ renderCI currentTime agent action ci =
         Hunger ->
             "Hunger"
 
-        DistanceToTargetPoint p ->
+        MetersToTargetPoint p ->
             "Distance to point " ++ prettyPoint2d p
 
         Constant p ->
             "Constant " ++ Round.round 2 p
 
-        CurrentSpeed ->
+        CurrentSpeedInMetersPerSecond ->
             "Current Speed "
                 ++ (agent.physics.velocity
                         |> Vector2d.length
+                        |> Length.inMeters
                         |> Round.round 2
                    )
 
@@ -1000,9 +1021,13 @@ describeCarryCheck carryableCheck =
             "food"
 
 
-prettyPoint2d : Point2d.Point2d -> String
+prettyPoint2d : Point2d.Point2d Meters YDownCoords -> String
 prettyPoint2d p =
-    "(" ++ (Round.round 1 <| xCoordinate p) ++ ", " ++ (Round.round 1 <| yCoordinate p) ++ ")"
+    "("
+        ++ (Round.round 1 <| Length.inMeters <| xCoordinate p)
+        ++ ", "
+        ++ (Round.round 1 <| Length.inMeters <| yCoordinate p)
+        ++ ")"
 
 
 prettyFloatHtml : Int -> Float -> Html Msg
@@ -1016,7 +1041,7 @@ codeText s =
     code [ style "white-space" "pre-wrap" ] [ text s ]
 
 
-renderEmoji : String -> Point2d.Point2d -> Html Msg
+renderEmoji : String -> Point2d.Point2d Meters YDownCoords -> Html Msg
 renderEmoji emoji point =
     Svg.text_
         [ Svg.Attributes.textAnchor "middle"
@@ -1246,9 +1271,9 @@ renderProgressBar range =
         )
 
 
-origin : Point2d.Point2d
+origin : Point2d.Point2d Meters YDownCoords
 origin =
-    Point2d.fromCoordinates ( 0, 0 )
+    Point2d.origin
 
 
 viewAboutPage : String -> Html Msg

@@ -36,12 +36,14 @@ module Types exposing
     , Route(..)
     , Scene
     , Signal(..)
+    , YDownCoords(..)
     , close
     )
 
 import Dict exposing (Dict)
 import Direction2d exposing (Direction2d)
 import Html
+import Length exposing (Length, Meters)
 import Point2d exposing (Point2d)
 import SelectList exposing (SelectList)
 import Set exposing (Set)
@@ -156,8 +158,8 @@ type GeneratorType
 
 type ActionOutcome
     = DoNothing
-    | MoveTo String Point2d
-    | MoveAwayFrom String Point2d
+    | MoveTo String (Point2d Meters YDownCoords)
+    | MoveAwayFrom String (Point2d Meters YDownCoords)
     | ArrestMomentum
     | CallOut Signal Float
     | Wander
@@ -166,7 +168,7 @@ type ActionOutcome
     | DropHeldFood
     | DropHeldThing
     | BeggingForFood Bool
-    | ShootExtinguisher Direction2d
+    | ShootExtinguisher (Direction2d YDownCoords)
     | PlantSeed Int
 
 
@@ -183,6 +185,12 @@ type alias CurrentSignal =
     }
 
 
+{-| Used as a Phantom Type, so we're less likely to mix up coordinate systems.
+-}
+type YDownCoords
+    = YDownCoords
+
+
 type alias Consideration =
     { name : String
     , function : InputFunction
@@ -196,9 +204,9 @@ type alias Consideration =
 
 type ConsiderationInput
     = Hunger {- Hunger increases over time -}
-    | DistanceToTargetPoint Point2d
+    | MetersToTargetPoint (Point2d Meters YDownCoords)
     | Constant Float
-    | CurrentSpeed
+    | CurrentSpeedInMetersPerSecond
     | TimeSinceLastShoutedFeedMe
     | CurrentlyCallingOut
     | IsCurrentAction
@@ -214,11 +222,11 @@ type CarryableCheck
 
 
 type alias PhysicalProperties =
-    { position : Point2d
-    , facing : Direction2d
-    , velocity : Vector2d
-    , acceleration : Vector2d
-    , radius : Float
+    { position : Point2d Meters YDownCoords
+    , facing : Direction2d YDownCoords
+    , velocity : Vector2d Meters YDownCoords
+    , acceleration : Vector2d Meters YDownCoords
+    , radius : Length
     }
 
 
@@ -227,8 +235,8 @@ type alias Physical a =
 
 
 type alias Collision =
-    { normal : Maybe Direction2d
-    , penetration : Float -- scale-dependent units
+    { normal : Maybe (Direction2d YDownCoords)
+    , penetration : Length -- scale-dependent units
     }
 
 
@@ -384,7 +392,7 @@ type alias LogEntry =
 
 
 type EntryKind
-    = AgentEntry PastTense Point2d
+    = AgentEntry PastTense (Point2d Meters YDownCoords)
     | SceneLoaded String
     | SceneSaved
 
