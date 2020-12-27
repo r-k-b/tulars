@@ -26,6 +26,7 @@ import NoUnused.CustomTypeConstructorArgs
 import NoUnused.CustomTypeConstructors
 import NoUnused.Dependencies
 import NoUnused.Exports
+import NoUnused.Modules
 import NoUselessSubscriptions
 import Review.Rule exposing (Rule)
 
@@ -49,5 +50,6 @@ config =
         ]
     , NoUnused.Dependencies.rule
     , NoUnused.Exports.rule
+    , NoUnused.Modules.rule
     , NoUselessSubscriptions.rule
     ]
