@@ -1,7 +1,6 @@
-let pkgs = import <nixpkgs> { };
-
-in pkgs.mkShell rec {
-  name = "webdev";
+{ pkgs ? import <nixpkgs> { } }:
+pkgs.mkShell {
+  name = "tulars";
 
   buildInputs = with pkgs; [
     elmPackages.elm
