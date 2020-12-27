@@ -859,10 +859,10 @@ foldOverPickedItems currentTime agent ( agentAcc, foodAcc, extinguisherAcc ) =
                             in
                             ( Tuple.first modified, Tuple.second modified, extinguisherAcc )
 
-                        PickUp (ExtinguisherID fextID) ->
+                        PickUp (ExtinguisherID extinguisherID) ->
                             let
                                 modified =
-                                    pickUpExtinguisher agent fextID extinguisherAcc
+                                    pickUpExtinguisher agent extinguisherID extinguisherAcc
                             in
                             ( Tuple.first modified, foodAcc, Tuple.second modified )
 
@@ -1112,12 +1112,12 @@ plantGrowable dT agent growableID growables =
 
 
 collideRetardantAndFire : Fire -> Maybe Retardant -> ( Maybe Fire, Maybe Retardant )
-collideRetardantAndFire fire mretardant =
+collideRetardantAndFire fire maybeRetardant =
     let
         noChange =
-            ( Just fire, mretardant )
+            ( Just fire, maybeRetardant )
     in
-    case mretardant of
+    case maybeRetardant of
         Nothing ->
             noChange
 
@@ -1171,11 +1171,11 @@ collideRetardantsAndFires retardant ( retardantAcc, fires ) =
 
 
 pickUpExtinguisher : Agent -> Int -> List FireExtinguisher -> ( Agent, List FireExtinguisher )
-pickUpExtinguisher agent fextID extinguishers =
+pickUpExtinguisher agent extinguisherID extinguishers =
     let
         targetIsAvailable : FireExtinguisher -> Bool
-        targetIsAvailable fext =
-            fext.id == fextID
+        targetIsAvailable extinguisher =
+            extinguisher.id == extinguisherID
 
         targetAvailable : Bool
         targetAvailable =
@@ -1191,12 +1191,12 @@ pickUpExtinguisher agent fextID extinguishers =
                     False
 
         pickup : FireExtinguisher -> Maybe FireExtinguisher
-        pickup fext =
-            if (fext |> targetIsAvailable) && agentIsAvailable then
+        pickup extinguisher =
+            if (extinguisher |> targetIsAvailable) && agentIsAvailable then
                 Nothing
 
             else
-                Just fext
+                Just extinguisher
 
         newTargets =
             List.filterMap pickup extinguishers
@@ -1208,8 +1208,8 @@ pickUpExtinguisher agent fextID extinguishers =
                     Nothing ->
                         agent
 
-                    Just fext ->
-                        { agent | holding = BothHands (Extinguisher fext) }
+                    Just extinguisher ->
+                        { agent | holding = BothHands (Extinguisher extinguisher) }
 
             else
                 agent
@@ -1448,13 +1448,13 @@ hugeFloatGoldenRatio =
 angleFuzz : Float -> Posix -> Float
 angleFuzz spreadInRadians time =
     let
-        mult =
+        factor =
             (Time.posixToMillis time * hugeInt)
                 |> modBy (floor hugeFloatGoldenRatio)
                 |> toFloat
                 |> (\x -> x / hugeFloatGoldenRatio - 0.5)
     in
-    mult * spreadInRadians
+    factor * spreadInRadians
 
 
 justSomethings : ( List (Maybe a), b ) -> ( List a, b )

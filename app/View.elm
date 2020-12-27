@@ -924,17 +924,17 @@ renderUF f =
 
         Normal tightness center squareness ->
             let
-                vals =
+                values =
                     [ "tightness = " ++ String.fromFloat tightness
                     , "center = " ++ String.fromFloat center
                     , "squareness = " ++ String.fromFloat squareness
                     ]
             in
-            "Normal (" ++ String.join ", " vals ++ ")"
+            "Normal (" ++ String.join ", " values ++ ")"
 
         Asymmetric centerA bendA offsetA squarenessA centerB bendB offsetB squarenessB ->
             let
-                vals =
+                values =
                     [ "centerA=" ++ Round.round 1 centerA
                     , "bendA=" ++ Round.round 1 bendA
                     , "offsetA=" ++ Round.round 1 offsetA
@@ -945,7 +945,7 @@ renderUF f =
                     , "squarenessB=" ++ Round.round 1 squarenessB
                     ]
             in
-            "Asymmetric (" ++ String.join ", " vals ++ ")"
+            "Asymmetric (" ++ String.join ", " values ++ ")"
 
 
 renderCI : Posix -> Agent -> Action -> ConsiderationInput -> String
