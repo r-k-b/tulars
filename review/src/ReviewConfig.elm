@@ -12,6 +12,8 @@ when inside the directory containing this file.
 -}
 
 import NoBooleanCase
+import NoDebug.Log
+import NoDebug.TodoOrToString
 import NoLongImportLines
 import Review.Rule exposing (Rule)
 
@@ -19,5 +21,7 @@ import Review.Rule exposing (Rule)
 config : List Rule
 config =
     [ NoBooleanCase.rule
+    , NoDebug.Log.rule
+    , NoDebug.TodoOrToString.rule
     , NoLongImportLines.rule
     ]

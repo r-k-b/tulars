@@ -2,6 +2,7 @@ module TestMenu exposing (suite)
 
 import Expect exposing (Expectation, FloatingPointTolerance(..))
 import Maybe exposing (andThen)
+import Maybe.Extra as ME
 import Menu
     exposing
         ( AnnotatedCrumb
@@ -49,9 +50,6 @@ suite =
         , test "should be able to extract an annotated breadcrumb trail" <|
             \_ ->
                 let
-                    dammit =
-                        dammitAll "extract-annotated-trail"
-
                     initialTree : Zipper Char
                     initialTree =
                         tree 'a'
@@ -82,46 +80,61 @@ suite =
                     a =
                         initialTree
 
-                    b : Zipper Char
+                    b : Maybe (Zipper Char)
                     b =
-                        a |> firstChild |> dammit "b"
+                        a |> firstChild
 
-                    c : Zipper Char
+                    c : Maybe (Zipper Char)
                     c =
-                        b |> nextSibling |> dammit "c"
+                        b |> Maybe.andThen nextSibling
 
-                    d : Zipper Char
+                    d : Maybe (Zipper Char)
                     d =
-                        c |> nextSibling |> dammit "d"
+                        c |> Maybe.andThen nextSibling
 
                     {- There's a builtin `e` already. -}
-                    ee : Zipper Char
+                    ee : Maybe (Zipper Char)
                     ee =
-                        b |> firstChild |> dammit "e"
+                        b |> Maybe.andThen firstChild
 
-                    g : Zipper Char
+                    g : Maybe (Zipper Char)
                     g =
-                        ee |> firstChild |> dammit "g"
+                        ee |> Maybe.andThen firstChild
 
-                    expected : AnnotatedCrumb Char
+                    expected : Maybe (AnnotatedCrumb Char)
                     expected =
+                        Just expectedHelper
+                            |> ME.andMap b
+                            |> ME.andMap c
+                            |> ME.andMap d
+                            |> ME.andMap ee
+                            |> ME.andMap g
+
+                    expectedHelper :
+                        Zipper Char
+                        -> Zipper Char
+                        -> Zipper Char
+                        -> Zipper Char
+                        -> Zipper Char
+                        -> AnnotatedCrumb Char
+                    expectedHelper b_ c_ d_ ee_ g_ =
                         { focus = a
                         , siblingsBefore = []
                         , siblingsAfter = []
                         , directChildren =
                             CrumbTrailContinues
                                 []
-                                { focus = b
+                                { focus = b_
                                 , siblingsBefore = []
-                                , siblingsAfter = [ c, d ]
+                                , siblingsAfter = [ c_, d_ ]
                                 , directChildren =
                                     CrumbTrailContinues
                                         []
-                                        { focus = ee
+                                        { focus = ee_
                                         , siblingsBefore = []
                                         , siblingsAfter = []
                                         , directChildren =
-                                            NoMoreCrumbs [ g ]
+                                            NoMoreCrumbs [ g_ ]
                                         }
                                         []
                                 }
@@ -130,22 +143,19 @@ suite =
                 in
                 Maybe.map zipperToAnnotatedBreadcrumbs input
                     |> Expect.all
-                        [ Expect.equal (Just expected)
+                        [ Expect.equal expected
 
                         -- sanity checks on helpers
                         , checkHelperLabel 'a' a
-                        , checkHelperLabel 'b' b
-                        , checkHelperLabel 'c' c
-                        , checkHelperLabel 'd' d
-                        , checkHelperLabel 'e' ee
-                        , checkHelperLabel 'g' g
+                        , checkHelperLabel 'b' (b |> orBadData)
+                        , checkHelperLabel 'c' (c |> orBadData)
+                        , checkHelperLabel 'd' (d |> orBadData)
+                        , checkHelperLabel 'e' (ee |> orBadData)
+                        , checkHelperLabel 'g' (g |> orBadData)
                         ]
         , test "should be able to extract an annotated breadcrumb trail with 'before' siblings" <|
             \_ ->
                 let
-                    dammit =
-                        dammitAll "with-before-sibs"
-
                     initialTree : Zipper Char
                     initialTree =
                         tree 'a'
@@ -177,45 +187,60 @@ suite =
                     a =
                         initialTree
 
-                    b : Zipper Char
+                    b : Maybe (Zipper Char)
                     b =
-                        a |> firstChild |> andThen nextSibling |> dammit "b"
+                        a |> firstChild |> andThen nextSibling
 
-                    c : Zipper Char
+                    c : Maybe (Zipper Char)
                     c =
-                        a |> firstChild |> dammit "c"
+                        a |> firstChild
 
-                    d : Zipper Char
+                    d : Maybe (Zipper Char)
                     d =
-                        b |> nextSibling |> dammit "d"
+                        b |> Maybe.andThen nextSibling
 
-                    ee : Zipper Char
+                    ee : Maybe (Zipper Char)
                     ee =
-                        b |> firstChild |> dammit "e"
+                        b |> Maybe.andThen firstChild
 
-                    g : Zipper Char
+                    g : Maybe (Zipper Char)
                     g =
-                        ee |> firstChild |> dammit "g"
+                        ee |> Maybe.andThen firstChild
 
-                    expected : AnnotatedCrumb Char
+                    expected : Maybe (AnnotatedCrumb Char)
                     expected =
+                        Just expectedHelper
+                            |> ME.andMap b
+                            |> ME.andMap c
+                            |> ME.andMap d
+                            |> ME.andMap ee
+                            |> ME.andMap g
+
+                    expectedHelper :
+                        Zipper Char
+                        -> Zipper Char
+                        -> Zipper Char
+                        -> Zipper Char
+                        -> Zipper Char
+                        -> AnnotatedCrumb Char
+                    expectedHelper b_ c_ d_ ee_ g_ =
                         { focus = a
                         , siblingsBefore = []
                         , siblingsAfter = []
                         , directChildren =
                             CrumbTrailContinues
                                 []
-                                { focus = b
-                                , siblingsBefore = [ c ]
-                                , siblingsAfter = [ d ]
+                                { focus = b_
+                                , siblingsBefore = [ c_ ]
+                                , siblingsAfter = [ d_ ]
                                 , directChildren =
                                     CrumbTrailContinues
                                         []
-                                        { focus = ee
+                                        { focus = ee_
                                         , siblingsBefore = []
                                         , siblingsAfter = []
                                         , directChildren =
-                                            NoMoreCrumbs [ g ]
+                                            NoMoreCrumbs [ g_ ]
                                         }
                                         []
                                 }
@@ -224,45 +249,24 @@ suite =
                 in
                 Maybe.map zipperToAnnotatedBreadcrumbs input
                     |> Expect.all
-                        [ Expect.equal (Just expected)
+                        [ Expect.equal expected
 
                         -- sanity checks on helpers
                         , checkHelperLabel 'a' a
-                        , checkHelperLabel 'b' b
-                        , checkHelperLabel 'c' c
-                        , checkHelperLabel 'd' d
-                        , checkHelperLabel 'e' ee
-                        , checkHelperLabel 'g' g
+                        , checkHelperLabel 'b' (b |> orBadData)
+                        , checkHelperLabel 'c' (c |> orBadData)
+                        , checkHelperLabel 'd' (d |> orBadData)
+                        , checkHelperLabel 'e' (ee |> orBadData)
+                        , checkHelperLabel 'g' (g |> orBadData)
                         ]
         ]
 
 
-{-| Unwraps `Maybe`s, at the cost of extra boilerplate and fragility.
-
-Only suitable for test code.
-
--}
-dammitAll : String -> String -> Maybe.Maybe a -> a
-dammitAll testName partOfTest maybeA =
-    (maybeA
-        |> Maybe.map always
-        |> Maybe.withDefault
-            (\() ->
-                [ "Somebody done had mistaken assumptions about the test data:\n"
-                , "    test: '"
-                , testName
-                , "'\n"
-                , "    part: '"
-                , partOfTest
-                , "'"
-                ]
-                    |> String.join ""
-                    |> Debug.todo
-            )
-    )
-        ()
+orBadData : Maybe (Zipper Char) -> Zipper Char
+orBadData =
+    Maybe.withDefault (tree 'Z' [] |> Zipper.fromTree)
 
 
 checkHelperLabel : Char -> Zipper Char -> (a -> Expectation)
-checkHelperLabel char helper a =
+checkHelperLabel char helper _ =
     Expect.equal char (helper |> label)
