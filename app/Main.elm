@@ -67,6 +67,7 @@ import UtilityFunctions
         , hpRawValue
         , isBeggingRelated
         , isMovementAction
+        , log
         , logAll
         , mapRange
         , normaliseRange
@@ -332,7 +333,7 @@ updateHelp msg model =
 
         SaveClicked ->
             -- todo
-            model
+            model |> log SceneSaved
 
         TabClicked relativeIndex ->
             { model | tabs = model.tabs |> selectTabAt relativeIndex }
@@ -1557,12 +1558,6 @@ signalToString signal =
     case signal of
         FeedMe ->
             "FeedMe"
-
-        GoAway ->
-            "GoAway"
-
-        Eating ->
-            "Eating"
 
         Bored ->
             "Bored"

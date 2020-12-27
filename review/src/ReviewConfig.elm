@@ -23,6 +23,7 @@ import NoMissingTypeAnnotationInLetIn
 import NoMissingTypeExpose
 import NoRecursiveUpdate
 import NoUnused.CustomTypeConstructorArgs
+import NoUnused.CustomTypeConstructors
 import NoUselessSubscriptions
 import Review.Rule exposing (Rule)
 
@@ -41,5 +42,8 @@ config =
     , NoMissingTypeExpose.rule
     , NoRecursiveUpdate.rule
     , NoUnused.CustomTypeConstructorArgs.rule
+    , NoUnused.CustomTypeConstructors.rule
+        [ { moduleName = "Point2d", typeName = "Point2d", index = 1 }
+        ]
     , NoUselessSubscriptions.rule
     ]

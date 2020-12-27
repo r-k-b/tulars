@@ -196,14 +196,6 @@ getConsiderationRawValue agent currentTime action consideration =
                 Just time ->
                     posixToMillis currentTime - posixToMillis time |> toFloat
 
-        CurrentlyCallingOut ->
-            case agent.callingOut of
-                Nothing ->
-                    0
-
-                Just _ ->
-                    1
-
         IsCurrentAction ->
             agent.currentAction
                 == action.name

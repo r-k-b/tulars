@@ -547,12 +547,6 @@ renderAgent agent =
                                 |> Svg.scaleAbout origin 2
                             ]
 
-                        GoAway ->
-                            [ renderEmoji "😣" origin ]
-
-                        Eating ->
-                            [ renderEmoji "🍖" origin ]
-
                         Bored ->
                             [ renderEmoji "😑" origin
                                 |> Svg.scaleAbout origin 0.7
@@ -1015,17 +1009,6 @@ renderCI currentTime agent action ci =
             "Time since last shouted \"Feed Me!\" "
                 ++ val
 
-        CurrentlyCallingOut ->
-            "Currently calling out "
-                ++ (String.fromInt <|
-                        case agent.callingOut of
-                            Nothing ->
-                                0
-
-                            Just _ ->
-                                1
-                   )
-
         IsCurrentAction ->
             "Is action the current one? " ++ (action.name == agent.currentAction |> boolString)
 
@@ -1101,9 +1084,6 @@ layer l =
     case l of
         Names ->
             svgClass.layer.names
-
-        StatusBars ->
-            svgClass.layer.statusBars
 
 
 renderFood : Food -> Svg Msg

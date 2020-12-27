@@ -19,7 +19,6 @@ module Types exposing
     , Hitpoints(..)
     , Holding(..)
     , InputFunction(..)
-    , IsExpanded(..)
     , Layer(..)
     , LogEntry
     , MenuItem
@@ -37,8 +36,7 @@ module Types exposing
     , Route(..)
     , Scene
     , Signal(..)
-    , YDownCoords(..)
-    , close
+    , YDownCoords
     )
 
 import Dict exposing (Dict)
@@ -176,8 +174,6 @@ type ActionOutcome
 
 type Signal
     = FeedMe
-    | GoAway
-    | Eating
     | Bored
 
 
@@ -210,7 +206,6 @@ type ConsiderationInput
     | Constant Float
     | CurrentSpeedInMetersPerSecond
     | TimeSinceLastShoutedFeedMe
-    | CurrentlyCallingOut
     | IsCurrentAction
     | IAmBeggingForFood
     | Held CarryableCheck
@@ -326,7 +321,6 @@ type alias FireExtinguisher =
 
 type Layer
     = Names
-    | StatusBars
 
 
 {-| Be sure to use CypressHandles.cypress.\* rather than inline strings and
@@ -347,25 +341,6 @@ type MenuItemLabel
 type MenuItemType msg
     = SimpleItem msg
     | ParentItem
-
-
-type IsExpanded
-    = NotExpanded
-    | Expanded
-    | KeepExpanded
-
-
-close : IsExpanded -> IsExpanded
-close isExpanded =
-    case isExpanded of
-        NotExpanded ->
-            NotExpanded
-
-        Expanded ->
-            NotExpanded
-
-        KeepExpanded ->
-            Expanded
 
 
 type alias LogEntry =
