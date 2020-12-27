@@ -12,7 +12,6 @@ module UtilityFunctions exposing
     , isBeggingRelated
     , isHolding
     , isMovementAction
-    , isReadyToPlant
     , linearTransform
     , log
     , logAll

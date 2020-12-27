@@ -25,6 +25,7 @@ import NoRecursiveUpdate
 import NoUnused.CustomTypeConstructorArgs
 import NoUnused.CustomTypeConstructors
 import NoUnused.Dependencies
+import NoUnused.Exports
 import NoUselessSubscriptions
 import Review.Rule exposing (Rule)
 
@@ -47,5 +48,6 @@ config =
         [ { moduleName = "Point2d", typeName = "Point2d", index = 1 }
         ]
     , NoUnused.Dependencies.rule
+    , NoUnused.Exports.rule
     , NoUselessSubscriptions.rule
     ]
