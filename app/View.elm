@@ -38,6 +38,7 @@ import Length exposing (Length, Meters)
 import LineSegment2d
 import List exposing (take)
 import List.Extra exposing (takeWhile)
+import Maybe.Extra as ME
 import Menu
     exposing
         ( AnnotatedCrumb
@@ -438,19 +439,50 @@ viewHud model =
 
 viewHudLine : LogEntry -> Html Msg
 viewHudLine line =
-    (case line.entry of
-        Types.AgentEntry pastTense point2d ->
-            [ text "an agent did something" ]
+    let
+        ( lineHtml, location ) =
+            case line.entry of
+                Types.AgentEntry { agentName } pastTense eventLocation ->
+                    let
+                        didSomething : String
+                        didSomething =
+                            case pastTense of
+                                Types.CriedForHelp ->
+                                    " cried for help"
 
-        Types.SceneLoaded name ->
-            [ text "Loaded Scene: "
-            , em [] [ text name ]
-            ]
+                                Types.Died ->
+                                    " died!"
 
-        Types.SceneSaved ->
-            [ text "Scene saved" ]
-    )
-        |> div [ classes.logHudLine |> HA.class ]
+                                Types.PickedUp portable ->
+                                    " picked up "
+                                        ++ (case portable of
+                                                Extinguisher _ ->
+                                                    "a fire extinguisher"
+
+                                                Edible _ ->
+                                                    "some food"
+                                           )
+                    in
+                    ( [ text <| agentName ++ didSomething ], Just eventLocation )
+
+                Types.SceneLoaded name ->
+                    ( [ text "Loaded Scene: "
+                      , em [] [ text name ]
+                      ]
+                    , Nothing
+                    )
+
+                Types.SceneSaved ->
+                    ( [ text "Scene saved" ], Nothing )
+    in
+    div
+        ([ classes.logHudLine |> HA.class |> Just
+         , location |> Maybe.map (FocusLocation >> onClick)
+         , location |> Maybe.map (HA.style "cursor" "pointer" |> always)
+         ]
+            |> ME.values
+        )
+        lineHtml
 
 
 borderIndicator : Quantity Float Pixels -> Svg Msg

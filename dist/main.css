@@ -245,7 +245,6 @@ a {
     max-height: 100%;
     left: 1em;
     bottom: 1em;
-    pointer-events: none;
 }
 
 .log-hud__line {

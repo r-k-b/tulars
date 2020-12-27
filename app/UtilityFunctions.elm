@@ -15,6 +15,7 @@ module UtilityFunctions exposing
     , isReadyToPlant
     , linearTransform
     , log
+    , logAll
     , mapRange
     , normaliseRange
     , onlyArrestMomentum
@@ -1102,3 +1103,8 @@ log entry model =
             }
     in
     { model | log = newEntry :: model.log }
+
+
+logAll : List EntryKind -> Model -> Model
+logAll entries model =
+    List.foldl log model entries

@@ -1,3 +1,3 @@
 <component name="DependencyValidationManager">
-  <scope name="tulars" pattern="file[tulars]:app//*||file[tulars]:cypress//*||file[tulars]:tests//*||file[tulars]:review//*||file[tulars]:*" />
+  <scope name="tulars" pattern="file[tulars]:app//*||file[tulars]:cypress//*||file[tulars]:tests//*||file[tulars]:review//*||file[tulars]:*||file:dist/index.html||file:dist/main.css" />
 </component>

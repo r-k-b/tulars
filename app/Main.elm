@@ -10,6 +10,7 @@ import Direction2d as Direction2d exposing (Direction2d)
 import Html
 import Length exposing (Meters)
 import List exposing (map)
+import List.Extra as LE
 import MapAccumulate exposing (mapAccumL)
 import Maybe exposing (withDefault)
 import Maybe.Extra as ME
@@ -22,6 +23,7 @@ import Set exposing (Set, insert)
 import Time exposing (Posix)
 import Tree exposing (Tree, tree)
 import Tree.Zipper as Zipper exposing (Zipper)
+import Tuple3
 import Types
     exposing
         ( Action
@@ -44,6 +46,7 @@ import Types
         , MenuItemType(..)
         , Model
         , Msg(..)
+        , PastTense(..)
         , Physical
         , PhysicalProperties
         , Portable(..)
@@ -64,6 +67,7 @@ import UtilityFunctions
         , hpRawValue
         , isBeggingRelated
         , isMovementAction
+        , logAll
         , mapRange
         , normaliseRange
         , onlyArrestMomentum
@@ -224,6 +228,10 @@ update msg model =
 updateHelp : Msg -> Model -> Model
 updateHelp msg model =
     case msg of
+        FocusLocation point ->
+            -- TODO[camera]: pan to that location
+            model
+
         TabOpenerClicked route ->
             { model | tabs = model.tabs |> openTabFor route }
                 |> andCloseTheMenu
@@ -433,7 +441,7 @@ doPhysics deltaTime x =
     { x | physics = updatedPhysics }
 
 
-moveAgent : Posix -> Int -> Agent -> Agent
+moveAgent : Posix -> Int -> Agent -> ( Agent, Maybe EntryKind )
 moveAgent currentTime dT agent =
     let
         dV : Vector2d Meters YDownCoords
@@ -490,9 +498,7 @@ moveAgent currentTime dT agent =
 
         topAction : Maybe Action
         topAction =
-            getActions agent
-                |> List.sortBy (computeUtility agent currentTime >> (*) -1)
-                |> List.head
+            getActions agent |> LE.maximumBy (computeUtility agent currentTime)
 
         newOutcome : String
         newOutcome =
@@ -510,11 +516,14 @@ moveAgent currentTime dT agent =
                 agent.topActionLastStartTimes
                     |> Dict.insert newOutcome currentTime
 
-        newCall : Maybe CurrentSignal
-        newCall =
+        newCallAndEntry : ( Maybe CurrentSignal, Maybe EntryKind )
+        newCallAndEntry =
             topAction
                 |> Maybe.andThen extractCallouts
-                |> updateCurrentSignal currentTime agent.callingOut
+                |> updateCurrentSignal agent currentTime agent.callingOut
+
+        ( newCall, callEntry ) =
+            newCallAndEntry
 
         increasedHunger : Range
         increasedHunger =
@@ -562,7 +571,7 @@ moveAgent currentTime dT agent =
             else
                 ( increasedHunger, agent.holding )
     in
-    { agent
+    ( { agent
         | physics = newPhysics
         , topActionLastStartTimes = newTopActionLastStartTimes
         , callingOut = newCall
@@ -572,7 +581,9 @@ moveAgent currentTime dT agent =
         , holding = newHolding
         , beggingForFood = beggingForFood
         , hp = hitpointsAfterStarvation
-    }
+      }
+    , callEntry
+    )
 
 
 extractCallouts : Action -> Maybe Signal
@@ -587,23 +598,38 @@ extractCallouts action =
 
 {-| If the signal type is unchanged, preserve the original time.
 -}
-updateCurrentSignal : Posix -> Maybe CurrentSignal -> Maybe Signal -> Maybe CurrentSignal
-updateCurrentSignal time currentSignal maybeNewSignal =
+updateCurrentSignal :
+    Agent
+    -> Posix
+    -> Maybe CurrentSignal
+    -> Maybe Signal
+    -> ( Maybe CurrentSignal, Maybe EntryKind )
+updateCurrentSignal agent time currentSignal maybeNewSignal =
     case maybeNewSignal of
         Nothing ->
-            Nothing
+            ( Nothing, Nothing )
 
         Just newSignal ->
             case currentSignal of
                 Nothing ->
-                    Just { signal = newSignal, started = time }
+                    ( Just { signal = newSignal, started = time }
+                    , Just <|
+                        AgentEntry { agentName = agent.name }
+                            CriedForHelp
+                            agent.physics.position
+                    )
 
                 Just priorSignal ->
                     if priorSignal.signal == newSignal then
-                        Just priorSignal
+                        ( Just priorSignal, Nothing )
 
                     else
-                        Just { signal = newSignal, started = time }
+                        ( Just { signal = newSignal, started = time }
+                        , Just <|
+                            AgentEntry { agentName = agent.name }
+                                CriedForHelp
+                                agent.physics.position
+                        )
 
 
 deadzone : Vector2d Meters coords -> Vector2d Meters coords
@@ -774,15 +800,30 @@ moveWorld newTime model =
             (Time.posixToMillis newTime - Time.posixToMillis model.time)
                 |> min 50
 
-        survivingAgents : List Agent
-        survivingAgents =
+        survivingAgentsAndDeathEntries : ( List Agent, List EntryKind )
+        survivingAgentsAndDeathEntries =
             model.agents
-                |> List.filter (.hp >> hpAsFloat >> (<) 0)
+                |> List.partition (.hp >> hpAsFloat >> (<) 0)
+                |> Tuple.mapSecond (List.map toDeathEntry)
+
+        ( survivingAgents, deathEntries ) =
+            survivingAgentsAndDeathEntries
+
+        movedAgentsAndEntries : List ( Agent, Maybe EntryKind )
+        movedAgentsAndEntries =
+            survivingAgents
+                |> map
+                    (moveAgent newTime deltaT
+                        >> Tuple.mapFirst (regenerateVariableActions model)
+                    )
 
         movedAgents : List Agent
         movedAgents =
-            survivingAgents
-                |> map (moveAgent newTime deltaT >> regenerateVariableActions model)
+            movedAgentsAndEntries |> List.map Tuple.first
+
+        movementEntries : List EntryKind
+        movementEntries =
+            movedAgentsAndEntries |> List.filterMap Tuple.second
 
         newRetardants : List Retardant
         newRetardants =
@@ -809,17 +850,32 @@ moveWorld newTime model =
             model.foods
                 |> List.filterMap (rotFood deltaT)
 
-        ( agentsAfterPickingUpFood, pickedFood, pickedExtinguishers ) =
+        changesAfterPickedItems : PickedItems
+        changesAfterPickedItems =
             List.foldr
                 (foldOverPickedItems newTime)
-                ( [], foodsAfterDecay, model.extinguishers )
+                { agentAcc = []
+                , foodAcc = foodsAfterDecay
+                , extinguisherAcc = model.extinguishers
+                , logEntryAcc = []
+                }
                 movedAgents
+
+        { agentAcc, foodAcc, extinguisherAcc, logEntryAcc } =
+            changesAfterPickedItems
+
+        {- Is there a better way to indicate we've not missed a property from
+           changesAfterPickedItems?
+        -}
+        pickupEntries : List EntryKind
+        pickupEntries =
+            logEntryAcc
 
         ( agentsAfterDroppingFood, includingDroppedFood ) =
             List.foldr
                 (foldOverDroppedFood newTime)
-                ( [], pickedFood )
-                agentsAfterPickingUpFood
+                ( [], foodAcc )
+                agentAcc
 
         updatedGrowables : List Growable
         updatedGrowables =
@@ -832,11 +888,19 @@ moveWorld newTime model =
         | time = newTime
         , foods = includingDroppedFood
         , agents = agentsAfterDroppingFood
-        , extinguishers = pickedExtinguishers
+        , extinguishers = extinguisherAcc
         , retardants = retardantsAfterCollisionWithFire
         , fires = firesAfterCollisionWithRetardants
         , growables = updatedGrowables
     }
+        |> logAll deathEntries
+        |> logAll movementEntries
+        |> logAll pickupEntries
+
+
+toDeathEntry : Agent -> EntryKind
+toDeathEntry agent =
+    AgentEntry { agentName = agent.name } Died agent.physics.position
 
 
 createRetardantProjectiles : Posix -> Agent -> List Retardant -> List Retardant
@@ -873,12 +937,24 @@ createRetardantProjectiles currentTime agent acc =
                     acc
 
 
-foldOverPickedItems :
-    Posix
-    -> Agent
-    -> ( List Agent, List Food, List FireExtinguisher )
-    -> ( List Agent, List Food, List FireExtinguisher )
-foldOverPickedItems currentTime agent ( agentAcc, foodAcc, extinguisherAcc ) =
+type alias PickedItems =
+    { agentAcc : List Agent
+    , foodAcc : List Food
+    , extinguisherAcc : List FireExtinguisher
+    , logEntryAcc : List EntryKind
+    }
+
+
+type alias PickedItemsHelper =
+    { updatedAgent : Agent
+    , updatedFoods : List Food
+    , updatedExtinguishers : List FireExtinguisher
+    , newEntries : List EntryKind
+    }
+
+
+foldOverPickedItems : Posix -> Agent -> PickedItems -> PickedItems
+foldOverPickedItems currentTime agent { agentAcc, foodAcc, extinguisherAcc, logEntryAcc } =
     let
         topAction : Maybe Action
         topAction =
@@ -886,11 +962,15 @@ foldOverPickedItems currentTime agent ( agentAcc, foodAcc, extinguisherAcc ) =
                 |> List.sortBy (computeUtility agent currentTime >> (*) -1)
                 |> List.head
 
-        ( updatedAgent, updatedFoods, updatedExtinguishers ) =
+        { updatedAgent, updatedFoods, updatedExtinguishers, newEntries } =
             let
-                noChange : ( Agent, List Food, List FireExtinguisher )
+                noChange : PickedItemsHelper
                 noChange =
-                    ( agent, foodAcc, extinguisherAcc )
+                    { updatedAgent = agent
+                    , updatedFoods = foodAcc
+                    , updatedExtinguishers = extinguisherAcc
+                    , newEntries = []
+                    }
             in
             case topAction of
                 Nothing ->
@@ -904,15 +984,27 @@ foldOverPickedItems currentTime agent ( agentAcc, foodAcc, extinguisherAcc ) =
                                 modified =
                                     pickUpFood agent foodID foodAcc
                             in
-                            ( Tuple.first modified, Tuple.second modified, extinguisherAcc )
+                            { updatedAgent = Tuple.first modified
+                            , updatedFoods = Tuple.second modified
+                            , updatedExtinguishers = extinguisherAcc
+                            , newEntries = []
+                            }
 
                         PickUp (ExtinguisherID extinguisherID) ->
                             let
-                                modified : ( Agent, List FireExtinguisher )
+                                modified :
+                                    ( Agent
+                                    , List FireExtinguisher
+                                    , List EntryKind
+                                    )
                                 modified =
                                     pickUpExtinguisher agent extinguisherID extinguisherAcc
                             in
-                            ( Tuple.first modified, foodAcc, Tuple.second modified )
+                            { updatedAgent = Tuple3.first modified
+                            , updatedFoods = foodAcc
+                            , updatedExtinguishers = Tuple3.second modified
+                            , newEntries = Tuple3.third modified
+                            }
 
                         DoNothing ->
                             noChange
@@ -950,7 +1042,11 @@ foldOverPickedItems currentTime agent ( agentAcc, foodAcc, extinguisherAcc ) =
                         PlantSeed _ ->
                             noChange
     in
-    ( updatedAgent :: agentAcc, updatedFoods, updatedExtinguishers )
+    { agentAcc = updatedAgent :: agentAcc
+    , foodAcc = updatedFoods
+    , extinguisherAcc = updatedExtinguishers
+    , logEntryAcc = List.append newEntries logEntryAcc
+    }
 
 
 foldOverDroppedFood : Posix -> Agent -> ( List Agent, List Food ) -> ( List Agent, List Food )
@@ -1223,7 +1319,11 @@ collideRetardantsAndFires retardant ( retardantAcc, fires ) =
             ( retardantAcc, updatedFires )
 
 
-pickUpExtinguisher : Agent -> Int -> List FireExtinguisher -> ( Agent, List FireExtinguisher )
+pickUpExtinguisher :
+    Agent
+    -> Int
+    -> List FireExtinguisher
+    -> ( Agent, List FireExtinguisher, List EntryKind )
 pickUpExtinguisher agent extinguisherID extinguishers =
     let
         targetIsAvailable : FireExtinguisher -> Bool
@@ -1255,20 +1355,25 @@ pickUpExtinguisher agent extinguisherID extinguishers =
         newTargets =
             List.filterMap pickup extinguishers
 
-        carry : Agent
-        carry =
+        carryAndEntry : ( Agent, List EntryKind )
+        carryAndEntry =
             if agentIsAvailable && targetAvailable then
                 case extinguishers |> List.head of
                     Nothing ->
-                        agent
+                        ( agent, [] )
 
                     Just extinguisher ->
-                        { agent | holding = BothHands (Extinguisher extinguisher) }
+                        ( { agent | holding = BothHands (Extinguisher extinguisher) }
+                        , [ AgentEntry { agentName = agent.name }
+                                (PickedUp <| Extinguisher extinguisher)
+                                extinguisher.physics.position
+                          ]
+                        )
 
             else
-                agent
+                ( agent, [] )
     in
-    ( carry, newTargets )
+    ( Tuple.first carryAndEntry, newTargets, Tuple.second carryAndEntry )
 
 
 dropFood : Agent -> List Food -> ( Agent, List Food )

@@ -6,6 +6,7 @@
     "elm-version": "0.19.1",
     "dependencies": {
         "direct": {
+            "TSFoster/elm-tuple-extra": "2.0.0",
             "elm/browser": "1.0.2",
             "elm/core": "1.0.5",
             "elm/html": "1.0.0",
@@ -25,12 +26,16 @@
             "zwilias/elm-rosetree": "1.5.0"
         },
         "indirect": {
+            "elm/http": "1.0.0",
             "elm/parser": "1.1.0",
             "elm/project-metadata-utils": "1.0.1",
             "elm/random": "1.0.0",
+            "elm/regex": "1.0.0",
             "elm/url": "1.0.0",
             "elm/virtual-dom": "1.0.2",
             "elm-community/json-extra": "4.3.0",
+            "elm-explorations/test": "1.2.2",
+            "etaque/elm-response": "3.1.0",
             "ianmackenzie/elm-1d-parameter": "1.0.1",
             "ianmackenzie/elm-float-extra": "1.1.0",
             "ianmackenzie/elm-interval": "2.0.0",

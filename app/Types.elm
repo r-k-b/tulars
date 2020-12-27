@@ -102,6 +102,7 @@ type alias Scene =
 
 type Msg
     = ExportClicked
+    | FocusLocation (Point2d Meters YDownCoords)
     | LoadClicked
     | LoadScene Scene
     | RAFTick Posix
@@ -374,7 +375,7 @@ type alias LogEntry =
 
 
 type EntryKind
-    = AgentEntry PastTense (Point2d Meters YDownCoords)
+    = AgentEntry { agentName : String } PastTense (Point2d Meters YDownCoords)
     | SceneLoaded String
     | SceneSaved
 
