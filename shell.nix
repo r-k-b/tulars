@@ -9,6 +9,7 @@ pkgs.mkShell {
     elmPackages.elm-live
     elmPackages.elm-review
     elmPackages.elm-test
+    nixfmt
     nodejs
   ];
 }
