@@ -439,7 +439,7 @@ shoutFeedMe : Action
 shoutFeedMe =
     Action
         "shout \"feed me!\" "
-        (CallOut FeedMe 1.0)
+        (CallOut FeedMe)
         [ { name = "hunger"
           , function = Sigmoid { bend = 15, center = 0.5 }
           , input = Hunger
@@ -483,7 +483,7 @@ emoteBored : Action
 emoteBored =
     Action
         "emote 'bored...'"
-        (CallOut Bored 1.0)
+        (CallOut Bored)
         [ { name = "always 0.03"
           , function = Linear { slope = 1, offset = 0 }
           , input = Constant 0.03

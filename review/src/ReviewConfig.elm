@@ -22,6 +22,7 @@ import NoMissingTypeAnnotation
 import NoMissingTypeAnnotationInLetIn
 import NoMissingTypeExpose
 import NoRecursiveUpdate
+import NoUnused.CustomTypeConstructorArgs
 import NoUselessSubscriptions
 import Review.Rule exposing (Rule)
 
@@ -39,5 +40,6 @@ config =
     , NoMissingTypeAnnotationInLetIn.rule
     , NoMissingTypeExpose.rule
     , NoRecursiveUpdate.rule
+    , NoUnused.CustomTypeConstructorArgs.rule
     , NoUselessSubscriptions.rule
     ]

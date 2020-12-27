@@ -315,7 +315,7 @@ isMovementAction action =
         DoNothing ->
             False
 
-        CallOut _ _ ->
+        CallOut _ ->
             False
 
         PickUp _ ->

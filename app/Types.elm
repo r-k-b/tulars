@@ -162,7 +162,7 @@ type ActionOutcome
     | MoveTo String (Point2d Meters YDownCoords)
     | MoveAwayFrom String (Point2d Meters YDownCoords)
     | ArrestMomentum
-    | CallOut Signal Float
+    | CallOut Signal
     | Wander
     | PickUp ReferenceToPortable
     | EatHeldFood

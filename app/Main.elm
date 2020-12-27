@@ -578,7 +578,7 @@ moveAgent currentTime dT agent =
 extractCallouts : Action -> Maybe Signal
 extractCallouts action =
     case action.outcome of
-        CallOut x _ ->
+        CallOut x ->
             Just x
 
         _ ->
@@ -676,7 +676,7 @@ getMovementVector currentTime deltaTime agent action =
         DoNothing ->
             Nothing
 
-        CallOut _ _ ->
+        CallOut _ ->
             Nothing
 
         PickUp _ ->
@@ -926,7 +926,7 @@ foldOverPickedItems currentTime agent ( agentAcc, foodAcc, extinguisherAcc ) =
                         ArrestMomentum ->
                             noChange
 
-                        CallOut _ _ ->
+                        CallOut _ ->
                             noChange
 
                         Wander ->
@@ -1416,7 +1416,7 @@ outcomeToString outcome =
         ArrestMomentum ->
             "ArrestMomentum"
 
-        CallOut signal _ ->
+        CallOut signal ->
             "CallOut(" ++ signalToString signal ++ ")"
 
         Wander ->
