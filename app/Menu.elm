@@ -1,4 +1,9 @@
-module Menu exposing (..)
+module Menu exposing
+    ( AnnotatedCrumb
+    , AnnotatedCrumbChildren(..)
+    , zipperToAnnotatedBreadcrumbs
+    , zipperToBreadcrumbs
+    )
 
 import Maybe exposing (withDefault)
 import Tree.Zipper as Zipper exposing (Zipper)

@@ -14,6 +14,8 @@ when inside the directory containing this file.
 import NoBooleanCase
 import NoDebug.Log
 import NoDebug.TodoOrToString
+import NoExposingEverything
+import NoImportingEverything
 import NoLongImportLines
 import Review.Rule exposing (Rule)
 
@@ -23,5 +25,7 @@ config =
     [ NoBooleanCase.rule
     , NoDebug.Log.rule
     , NoDebug.TodoOrToString.rule
+    , NoExposingEverything.rule
+    , NoImportingEverything.rule []
     , NoLongImportLines.rule
     ]
