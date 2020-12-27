@@ -5,10 +5,12 @@ import Test exposing (Test, describe, test)
 import UtilityFunctions exposing (linearTransform)
 
 
+standardTransform : Float -> Float
 standardTransform =
     linearTransform 0 100 0 1
 
 
+epsilon : FloatingPointTolerance
 epsilon =
     Absolute 0.000000001
 

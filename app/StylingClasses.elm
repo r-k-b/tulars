@@ -1,5 +1,6 @@
 module StylingClasses exposing (classes, svgClass)
 
+import Svg
 import Svg.Attributes
 
 
@@ -11,6 +12,29 @@ Pro tip: Keeping all the keys sorted alphabetically will cut down on merge
 conflicts.
 
 -}
+classes :
+    { activeMenuItem : String
+    , clickable : String
+    , fullSize : String
+    , theme : { notSoHarsh : String }
+    , logHud : String
+    , logHudLine : String
+    , pageGrid :
+        { agentInfo : String
+        , container : String
+        , content : String
+        , menu : String
+        , subMenu : String
+        , tabs : String
+        }
+    , parentButton : { button : String, text : String, indicator : String }
+    , position : { relative : String }
+    , selectedTab : String
+    , tab : String
+    , tabCloser : String
+    , tabText : String
+    , zoomSvg : String
+    }
 classes =
     { activeMenuItem = "menu-item--active"
     , clickable = "clickable"
@@ -44,6 +68,16 @@ classes =
     }
 
 
+svgClass :
+    { borders : Svg.Attribute msg
+    , considerationChart : Svg.Attribute a
+    , currentValue : Svg.Attribute b
+    , healthBar : Svg.Attribute c
+    , held : Svg.Attribute d
+    , layer : { names : Svg.Attribute e, statusBars : Svg.Attribute f }
+    , progressBar : Svg.Attribute g
+    , ticks : Svg.Attribute h
+    }
 svgClass =
     { borders = Svg.Attributes.class "borders"
     , considerationChart = Svg.Attributes.class "consideration-chart"

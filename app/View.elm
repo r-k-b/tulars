@@ -473,27 +473,6 @@ inPx number =
     String.fromFloat number ++ "px"
 
 
-agentPoint =
-    { radius = 3
-    , attributes =
-        [ Svg.Attributes.stroke "blue"
-        , Svg.Attributes.fill "orange"
-        ]
-    }
-
-
-facingArrow =
-    { length = 20
-    , tipLength = 5
-    , tipWidth = 5
-    , stemAttributes = []
-    , tipAttributes =
-        [ Svg.Attributes.fill "orange" ]
-    , groupAttributes =
-        [ Svg.Attributes.stroke "blue" ]
-    }
-
-
 agentVelocityArrow : Agent -> Svg msg
 agentVelocityArrow agent =
     let

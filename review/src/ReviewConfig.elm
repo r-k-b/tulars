@@ -18,6 +18,7 @@ import NoExposingEverything
 import NoImportingEverything
 import NoLongImportLines
 import NoMissingSubscriptionsCall
+import NoMissingTypeAnnotation
 import NoMissingTypeExpose
 import NoRecursiveUpdate
 import NoUselessSubscriptions
@@ -33,6 +34,7 @@ config =
     , NoImportingEverything.rule []
     , NoLongImportLines.rule
     , NoMissingSubscriptionsCall.rule
+    , NoMissingTypeAnnotation.rule
     , NoMissingTypeExpose.rule
     , NoRecursiveUpdate.rule
     , NoUselessSubscriptions.rule

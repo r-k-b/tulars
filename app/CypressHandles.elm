@@ -23,6 +23,11 @@ object.
 How can we automatically keep these in sync with `cypress/support/index.js`?
 
 -}
+cypress :
+    { mainContent : Html.Attribute msg
+    , mainMenu : { about : Html.Attribute a, loadScene : Html.Attribute b }
+    , tabs : { bar : Html.Attribute c, tab : Html.Attribute d }
+    }
 cypress =
     { mainContent = att "main-content"
     , mainMenu =
