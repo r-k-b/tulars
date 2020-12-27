@@ -134,12 +134,11 @@ computeConsideration agent currentTime forced action consideration =
 
 nansToZero : Float -> Float
 nansToZero n =
-    case isNaN n of
-        True ->
-            0
+    if isNaN n then
+        0
 
-        False ->
-            n
+    else
+        n
 
 
 {-| Take x and map it from the `x1` - `x2` range into the `y1` - `y2` range.

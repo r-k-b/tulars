@@ -11,10 +11,13 @@ when inside the directory containing this file.
 
 -}
 
+import NoBooleanCase
 import NoLongImportLines
 import Review.Rule exposing (Rule)
 
 
 config : List Rule
 config =
-    [ NoLongImportLines.rule ]
+    [ NoBooleanCase.rule
+    , NoLongImportLines.rule
+    ]

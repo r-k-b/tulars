@@ -619,18 +619,17 @@ getMovementVector currentTime deltaTime agent action =
                 weighting =
                     computeUtility agent currentTime action
             in
-            case weighting < 0.1 of
-                True ->
-                    Nothing
+            if weighting < 0.1 then
+                Nothing
 
-                False ->
-                    Just
-                        (agent.physics.velocity
-                            |> Vector2d.reverse
-                            |> Vector2d.direction
-                            |> ME.unwrap Vector2d.zero
-                                (Vector2d.withLength <| Length.meters weighting)
-                        )
+            else
+                Just
+                    (agent.physics.velocity
+                        |> Vector2d.reverse
+                        |> Vector2d.direction
+                        |> ME.unwrap Vector2d.zero
+                            (Vector2d.withLength <| Length.meters weighting)
+                    )
 
         Wander ->
             agent.physics.facing
@@ -693,12 +692,11 @@ applyFriction velocity =
         factor =
             1 / (e ^ (k * (speed - n)) + t) + u
     in
-    case speed < 0.1 of
-        True ->
-            Vector2d.zero
+    if speed < 0.1 then
+        Vector2d.zero
 
-        False ->
-            velocity |> Vector2d.scaleBy factor
+    else
+        velocity |> Vector2d.scaleBy factor
 
 
 regenerateVariableActions : Model -> Agent -> Agent
