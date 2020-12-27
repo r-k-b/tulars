@@ -6,7 +6,7 @@ import Circle2d as Circle2d
 import CypressHandles exposing (cypress)
 import Dict
 import Direction2d as Direction2d
-import Frame2d as Frame2d
+import Frame2d as Frame2d exposing (Frame2d)
 import Geometry.Svg as Svg
 import Html
     exposing
@@ -34,7 +34,7 @@ import Html
 import Html.Attributes as HA exposing (href, style)
 import Html.Events exposing (onClick)
 import Json.Decode as JD
-import Length exposing (Meters)
+import Length exposing (Length, Meters)
 import LineSegment2d
 import List exposing (take)
 import List.Extra exposing (takeWhile)
@@ -45,7 +45,7 @@ import Menu
         , zipperToAnnotatedBreadcrumbs
         )
 import Pixels exposing (Pixels)
-import Point2d as Point2d exposing (xCoordinate, yCoordinate)
+import Point2d as Point2d exposing (Point2d, xCoordinate, yCoordinate)
 import Quantity exposing (Quantity)
 import Round
 import SelectList exposing (SelectList, selected)
@@ -127,6 +127,7 @@ import Vector2d as Vector2d exposing (scaleBy)
 view : Model -> Document Msg
 view model =
     let
+        body : Html Msg
         body =
             div [ classes.pageGrid.container |> HA.class ]
                 [ viewMenu model.paused model.menu
@@ -246,6 +247,7 @@ viewExpandedMenuItem :
     -> List (Html Msg)
 viewExpandedMenuItem isPaused menuItem children =
     let
+        focus : MenuItem Msg
         focus =
             menuItem |> Zipper.label
     in
@@ -280,6 +282,7 @@ viewExpandedMenuItem isPaused menuItem children =
 viewMenuItem : Bool -> Zipper (MenuItem Msg) -> List (Html Msg)
 viewMenuItem isPaused item =
     let
+        focus : MenuItem Msg
         focus =
             item |> Zipper.label
     in
@@ -333,6 +336,7 @@ render2dResponsive boundingBox svgMsg =
         { minX, maxY } =
             BoundingBox2d.extrema boundingBox
 
+        topLeftFrame : Frame2d Meters coordinates defines
         topLeftFrame =
             -- this seems clunky... is there a neater way?
             Frame2d.atPoint
@@ -343,6 +347,7 @@ render2dResponsive boundingBox svgMsg =
         ( bbWidth, bbHeight ) =
             BoundingBox2d.dimensions boundingBox
 
+        coords : String
         coords =
             [ 0
             , -(bbHeight |> Length.inMeters)
@@ -416,6 +421,7 @@ viewHud model =
                 |> (\now -> now - (10 * secondInMillis))
                 |> millisToPosix
 
+        recentEntries : List LogEntry
         recentEntries =
             model.log
                 |> take maxHudLinesToShowAtOnce
@@ -479,9 +485,6 @@ agentVelocityArrow agent =
         exaggerated : Vector2d.Vector2d Meters YDownCoords
         exaggerated =
             scaleBy 2 agent.physics.velocity
-
-        exaggeratedLength =
-            Vector2d.length exaggerated
     in
     --    todo: restore the "arrow" representation
     Svg.lineSegment2d
@@ -499,6 +502,7 @@ agentVelocityArrow agent =
 renderAgent : Agent -> Html Msg
 renderAgent agent =
     let
+        call : List (Svg Msg)
         call =
             case agent.callingOut of
                 Nothing ->
@@ -522,9 +526,11 @@ renderAgent agent =
                                 |> Svg.scaleAbout origin 0.7
                             ]
 
+        bothHands : Point2d Meters coordinates
         bothHands =
             Point2d.fromMeters { x = 0, y = 6 }
 
+        held : List (Svg Msg)
         held =
             case agent.holding of
                 EmptyHanded ->
@@ -597,6 +603,7 @@ agentStats agent =
             , ( "current action", agent.currentAction )
             ]
 
+        cell : (List (Attribute msg) -> List (Html a) -> c) -> String -> c
         cell elem =
             text >> List.singleton >> elem [ style "padding-right" "1em" ]
     in
@@ -649,10 +656,12 @@ indentWithLine =
 renderAction : Agent -> Posix -> Action -> Html Msg
 renderAction agent currentTime action =
     let
+        isExpanded : Bool
         isExpanded =
             Dict.get action.name agent.visibleActions
                 |> Maybe.withDefault False
 
+        considerations : List (Html Msg)
         considerations =
             if isExpanded then
                 [ div
@@ -664,6 +673,7 @@ renderAction agent currentTime action =
             else
                 []
 
+        containerStyle : List (Attribute msg)
         containerStyle =
             if isExpanded then
                 [ style "background-color" "var(--color-bg--almost)"
@@ -673,6 +683,7 @@ renderAction agent currentTime action =
             else
                 [ style "padding" "0.6em" ]
 
+        utility : Float
         utility =
             computeUtility agent currentTime action
     in
@@ -697,16 +708,20 @@ renderAction agent currentTime action =
 renderConsideration : Agent -> Action -> Posix -> Consideration -> Html Msg
 renderConsideration agent action currentTime con =
     let
+        considerationValue : Float
         considerationValue =
             computeConsideration agent currentTime Nothing action con
 
+        rawValue : Float
         rawValue =
             getConsiderationRawValue agent currentTime action con
 
+        isExpanded : Bool
         isExpanded =
             Dict.get con.name action.visibleConsiderations
                 |> Maybe.withDefault False
 
+        details : List (Html Msg)
         details =
             if isExpanded then
                 [ ul []
@@ -737,6 +752,7 @@ renderConsideration agent action currentTime con =
             else
                 []
 
+        main : List (Html Msg)
         main =
             [ h5
                 [ onClick <| ToggleConditionDetailsVisibility agent.name action.name con.name
@@ -781,15 +797,18 @@ renderConsiderationChart agent currentTime action con =
             max 0 (con.weighting + con.offset)
                 |> max con.offset
 
+        samplePoints : List ( Float, Float )
         samplePoints =
             List.range 0 sampleCount
                 |> List.map toFloat
                 |> List.map
                     (\nthSample ->
                         let
+                            x : Float
                             x =
                                 linearTransform 0 100 0 (toFloat sampleCount) nthSample
 
+                            forcedValue : Float
                             forcedValue =
                                 nthSample
                                     |> linearTransform
@@ -798,6 +817,7 @@ renderConsiderationChart agent currentTime action con =
                                         0
                                         (toFloat sampleCount)
 
+                            y : Float
                             y =
                                 computeConsideration
                                     agent
@@ -903,6 +923,7 @@ renderUF f =
 
         Normal { tightness, center, squareness } ->
             let
+                values : List String
                 values =
                     [ "tightness = " ++ String.fromFloat tightness
                     , "center = " ++ String.fromFloat center
@@ -913,6 +934,7 @@ renderUF f =
 
         Asymmetric { centerA, bendA, offsetA, squarenessA, centerB, bendB, offsetB, squarenessB } ->
             let
+                values : List String
                 values =
                     [ "centerA=" ++ Round.round 1 centerA
                     , "bendA=" ++ Round.round 1 bendA
@@ -949,6 +971,7 @@ renderCI currentTime agent action ci =
 
         TimeSinceLastShoutedFeedMe ->
             let
+                val : String
                 val =
                     case Dict.get "CallOut FeedMe" agent.topActionLastStartTimes of
                         Nothing ->
@@ -1071,6 +1094,7 @@ renderRetardantCloud retardant =
 renderFire : Fire -> Svg Msg
 renderFire fire =
     let
+        gradient : Svg Msg
         gradient =
             Svg.radialGradient
                 [ id "fireRednessGradient"
@@ -1093,6 +1117,7 @@ renderFire fire =
                     []
                 ]
 
+        redness : Svg msg
         redness =
             Svg.circle
                 [ cx "0"
@@ -1102,6 +1127,7 @@ renderFire fire =
                 ]
                 []
 
+        healthFactor : Float
         healthFactor =
             hpAsFloat fire.hp
     in
@@ -1118,6 +1144,7 @@ renderFire fire =
 renderGrowable : Growable -> Svg Msg
 renderGrowable growable =
     let
+        emoji : String
         emoji =
             case growable.state of
                 FertileSoil _ ->

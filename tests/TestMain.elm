@@ -7,7 +7,7 @@ import Direction2d
 import Expect exposing (Expectation, FloatingPointTolerance(..))
 import Main exposing (closeTabAt, pickUpFood)
 import Point2d
-import SelectList
+import SelectList exposing (SelectList)
 import Set
 import Test exposing (Test, describe, test)
 import Types exposing (Agent, Food, Hitpoints(..), Holding(..), Portable(..), Range(..))
@@ -127,6 +127,7 @@ suite =
                 ]
             ]
         , let
+            sl : List a -> a -> List a -> SelectList a
             sl =
                 SelectList.fromLists
           in

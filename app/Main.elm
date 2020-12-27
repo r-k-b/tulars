@@ -6,18 +6,19 @@ import Browser.Events exposing (onAnimationFrame)
 import CypressHandles exposing (cypress)
 import DefaultData exposing (armsReach, retardantRadius, unseeded)
 import Dict exposing (Dict)
-import Direction2d as Direction2d
+import Direction2d as Direction2d exposing (Direction2d)
+import Html
 import Length exposing (Meters)
 import List exposing (map)
 import MapAccumulate exposing (mapAccumL)
 import Maybe exposing (withDefault)
 import Maybe.Extra as ME
 import Physics exposing (collide)
-import Point2d as Point2d
+import Point2d as Point2d exposing (Point2d)
 import Quantity as Q exposing (Unitless)
 import Scenes exposing (loadScene, sceneA, sceneB, sceneC, sceneD)
 import SelectList exposing (SelectList, selected)
-import Set exposing (insert)
+import Set exposing (Set, insert)
 import Time exposing (Posix)
 import Tree exposing (Tree, tree)
 import Tree.Zipper as Zipper exposing (Zipper)
@@ -118,6 +119,7 @@ init flags =
 initialMenu : Zipper (MenuItem Msg)
 initialMenu =
     let
+        s : String -> Msg -> Tree (MenuItem Msg)
         s name msg =
             tree
                 { name = TextLabel name
@@ -126,6 +128,15 @@ initialMenu =
                 }
                 []
 
+        labelledS :
+            MenuItemLabel
+            -> Msg
+            ->
+                Tree
+                    { name : MenuItemLabel
+                    , menuItemType : MenuItemType Msg
+                    , cypressHandle : Maybe (Html.Attribute Msg)
+                    }
         labelledS name msg =
             tree
                 { name = name
@@ -134,6 +145,7 @@ initialMenu =
                 }
                 []
 
+        p : String -> List (Tree (MenuItem Msg)) -> Tree (MenuItem Msg)
         p name =
             tree
                 { name = TextLabel name
@@ -141,6 +153,7 @@ initialMenu =
                 , cypressHandle = Nothing
                 }
 
+        cyHandle : Html.Attribute Msg -> Tree (MenuItem Msg) -> Tree (MenuItem Msg)
         cyHandle attr =
             Tree.mapLabel
                 (\label ->
@@ -228,14 +241,17 @@ updateHelp msg model =
 
         ToggleConditionsVisibility agentName actionName ->
             let
+                updateActionVisibility : Dict String Bool -> Dict String Bool
                 updateActionVisibility viz =
                     let
+                        prior : Bool
                         prior =
                             Dict.get actionName viz
                                 |> withDefault False
                     in
                     Dict.insert actionName (not prior) viz
 
+                newAgents : List Agent
                 newAgents =
                     map
                         (\agent ->
@@ -251,8 +267,10 @@ updateHelp msg model =
 
         ToggleConditionDetailsVisibility agentName actionName considerationName ->
             let
+                updateConsiderationVisibility : Dict String Bool -> Dict String Bool
                 updateConsiderationVisibility viz =
                     let
+                        prior : Bool
                         prior =
                             Dict.get considerationName viz
                                 |> withDefault False
@@ -274,6 +292,7 @@ updateHelp msg model =
                         )
                         list
 
+                newAgents : List Agent
                 newAgents =
                     map
                         (\agent ->
@@ -386,18 +405,23 @@ moveProjectiles dTime projectiles =
 doPhysics : Int -> Physical a -> Physical a
 doPhysics deltaTime x =
     let
+        p : PhysicalProperties
         p =
             x.physics
 
+        dV : Vector2d Meters YDownCoords
         dV =
             Vector2d.scaleBy (toFloat deltaTime / 1000) p.velocity
 
+        newPosition : Point2d Meters YDownCoords
         newPosition =
             Point2d.translateBy dV p.position
 
+        newVelocity : Vector2d Meters YDownCoords
         newVelocity =
             Vector2d.plus p.velocity p.acceleration
 
+        updatedPhysics : PhysicalProperties
         updatedPhysics =
             { position = newPosition
             , facing = p.facing
@@ -412,22 +436,26 @@ doPhysics deltaTime x =
 moveAgent : Posix -> Int -> Agent -> Agent
 moveAgent currentTime dT agent =
     let
+        dV : Vector2d Meters YDownCoords
         dV =
             Vector2d.scaleBy ((toFloat dT |> min 1000) / 1000) agent.physics.velocity
 
+        newPosition : Point2d Meters YDownCoords
         newPosition =
             Point2d.translateBy dV agent.physics.position
 
-        newVelocity : Vector2d Meters Types.YDownCoords
+        newVelocity : Vector2d Meters YDownCoords
         newVelocity =
             -- how do we adjust for large/small dT?
             agent.physics.velocity
                 |> applyFriction
                 |> Vector2d.plus deltaAcceleration
 
+        deltaAcceleration : Vector2d Meters YDownCoords
         deltaAcceleration =
             Vector2d.scaleBy (toFloat dT / 1000) agent.physics.acceleration
 
+        topMovementActionIsArrestMomentum : Maybe Action
         topMovementActionIsArrestMomentum =
             getActions agent
                 |> List.filter isMovementAction
@@ -435,6 +463,7 @@ moveAgent currentTime dT agent =
                 |> List.head
                 |> Maybe.andThen onlyArrestMomentum
 
+        movementVectors : List (Vector2d Meters YDownCoords)
         movementVectors =
             case topMovementActionIsArrestMomentum of
                 Just arrestMomentumAction ->
@@ -454,6 +483,7 @@ moveAgent currentTime dT agent =
                 |> ME.unwrap Vector2d.zero
                     (Vector2d.withLength (Length.meters 64))
 
+        newFacing : Direction2d YDownCoords
         newFacing =
             Vector2d.direction newAcceleration
                 |> withDefault agent.physics.facing
@@ -464,6 +494,7 @@ moveAgent currentTime dT agent =
                 |> List.sortBy (computeUtility agent currentTime >> (*) -1)
                 |> List.head
 
+        newOutcome : String
         newOutcome =
             topAction
                 |> Maybe.map .outcome
@@ -490,6 +521,7 @@ moveAgent currentTime dT agent =
             agent.hunger
                 |> mapRange (\hunger -> hunger + 0.000003 * toFloat dT)
 
+        hitpointsAfterStarvation : Hitpoints
         hitpointsAfterStarvation =
             case agent.hp of
                 Hitpoints current max ->
@@ -499,8 +531,10 @@ moveAgent currentTime dT agent =
                     else
                         Hitpoints current max
 
+        newPhysics : PhysicalProperties
         newPhysics =
             let
+                p : PhysicalProperties
                 p =
                     agent.physics
             in
@@ -511,6 +545,7 @@ moveAgent currentTime dT agent =
                 , facing = newFacing
             }
 
+        beggingForFood : Bool
         beggingForFood =
             topAction
                 |> Maybe.andThen isBeggingRelated
@@ -675,20 +710,25 @@ applyFriction velocity =
         speed =
             Vector2d.length velocity |> Length.inMeters
 
+        t : Float
         t =
             1.1
 
+        u : Float
         u =
             0.088
 
+        n : number
         n =
             30
 
+        k : Float
         k =
             0.26
 
         -- \frac{1}{e^{k\left(x-n\right)}+t}+u\ \left\{0\le x\right\}
         -- see https://www.desmos.com/calculator/7i2gwxpej1
+        factor : Float
         factor =
             1 / (e ^ (k * (speed - n)) + t) + u
     in
@@ -702,6 +742,7 @@ applyFriction velocity =
 regenerateVariableActions : Model -> Agent -> Agent
 regenerateVariableActions model agent =
     let
+        newActions : List Action
         newActions =
             computeVariableActions model agent
                 |> map preserveProperties
@@ -715,6 +756,7 @@ regenerateVariableActions model agent =
         preserveProperties : Action -> Action
         preserveProperties action =
             let
+                oldVCs : Dict String Bool
                 oldVCs =
                     Dict.get action.name preservableProperties
                         |> withDefault Dict.empty
@@ -727,14 +769,17 @@ regenerateVariableActions model agent =
 moveWorld : Posix -> Model -> Model
 moveWorld newTime model =
     let
+        deltaT : Int
         deltaT =
             (Time.posixToMillis newTime - Time.posixToMillis model.time)
                 |> min 50
 
+        survivingAgents : List Agent
         survivingAgents =
             model.agents
                 |> List.filter (.hp >> hpAsFloat >> (<) 0)
 
+        movedAgents : List Agent
         movedAgents =
             survivingAgents
                 |> map (moveAgent newTime deltaT >> regenerateVariableActions model)
@@ -759,6 +804,7 @@ moveWorld newTime model =
                 ( [], model.fires )
                 retardantsWithDecay
 
+        foodsAfterDecay : List Food
         foodsAfterDecay =
             model.foods
                 |> List.filterMap (rotFood deltaT)
@@ -775,6 +821,7 @@ moveWorld newTime model =
                 ( [], pickedFood )
                 agentsAfterPickingUpFood
 
+        updatedGrowables : List Growable
         updatedGrowables =
             List.foldr
                 (foldOverAgentsAndGrowables newTime deltaT)
@@ -841,6 +888,7 @@ foldOverPickedItems currentTime agent ( agentAcc, foodAcc, extinguisherAcc ) =
 
         ( updatedAgent, updatedFoods, updatedExtinguishers ) =
             let
+                noChange : ( Agent, List Food, List FireExtinguisher )
                 noChange =
                     ( agent, foodAcc, extinguisherAcc )
             in
@@ -852,6 +900,7 @@ foldOverPickedItems currentTime agent ( agentAcc, foodAcc, extinguisherAcc ) =
                     case action.outcome of
                         PickUp (EdibleID foodID) ->
                             let
+                                modified : ( Agent, List Food )
                                 modified =
                                     pickUpFood agent foodID foodAcc
                             in
@@ -859,6 +908,7 @@ foldOverPickedItems currentTime agent ( agentAcc, foodAcc, extinguisherAcc ) =
 
                         PickUp (ExtinguisherID extinguisherID) ->
                             let
+                                modified : ( Agent, List FireExtinguisher )
                                 modified =
                                     pickUpExtinguisher agent extinguisherID extinguisherAcc
                             in
@@ -942,6 +992,7 @@ foldOverAgentsAndGrowables currentTime deltaTMilliseconds agent growables =
             growables
                 |> List.map (growNaturally deltaTMilliseconds)
 
+        updatedGrowables : List Growable
         updatedGrowables =
             case topAction of
                 Nothing ->
@@ -1038,6 +1089,7 @@ pickUpFood agent foodID foods =
             else
                 Just food
 
+        newFoods : List Food
         newFoods =
             List.filterMap pickup foods
 
@@ -1112,6 +1164,7 @@ plantGrowable dT agent growableID growables =
 collideRetardantAndFire : Fire -> Maybe Retardant -> ( Maybe Fire, Maybe Retardant )
 collideRetardantAndFire fire maybeRetardant =
     let
+        noChange : ( Maybe Fire, Maybe Retardant )
         noChange =
             ( Just fire, maybeRetardant )
     in
@@ -1127,9 +1180,11 @@ collideRetardantAndFire fire maybeRetardant =
             in
             if (collisionResult.penetration |> Length.inMeters) > 0 then
                 let
+                    updatedHP : Float
                     updatedHP =
                         (fire.hp |> hpRawValue) - 0.3
 
+                    updatedFire : Maybe Fire
                     updatedFire =
                         if updatedHP < 0 then
                             Nothing
@@ -1196,6 +1251,7 @@ pickUpExtinguisher agent extinguisherID extinguishers =
             else
                 Just extinguisher
 
+        newTargets : List FireExtinguisher
         newTargets =
             List.filterMap pickup extinguishers
 
@@ -1231,6 +1287,7 @@ dropFood agent extantFoods =
                     BothHands _ ->
                         []
 
+        foodsGivenAway : Set Int
         foodsGivenAway =
             case droppedFoods of
                 [ food ] ->
@@ -1446,6 +1503,7 @@ hugeFloatGoldenRatio =
 angleFuzz : Float -> Posix -> Float
 angleFuzz spreadInRadians time =
     let
+        factor : Float
         factor =
             (Time.posixToMillis time * hugeInt)
                 |> modBy (floor hugeFloatGoldenRatio)

@@ -26,7 +26,7 @@ module UtilityFunctions exposing
 import Angle
 import DefaultData exposing (armsReach, defaultHysteresis, withSuffix)
 import Dict
-import Direction2d
+import Direction2d exposing (Direction2d)
 import Length
 import Maybe exposing (withDefault)
 import Point2d as Point2d
@@ -57,6 +57,7 @@ import Types
         , Portable(..)
         , Range(..)
         , ReferenceToPortable(..)
+        , YDownCoords
         )
 import Vector2d as Vector2d
 
@@ -64,10 +65,12 @@ import Vector2d as Vector2d
 computeUtility : Agent -> Posix -> Action -> Float
 computeUtility agent currentTime action =
     let
+        tiny : Float
         tiny =
             List.map (computeConsideration agent currentTime Nothing action) action.considerations
                 |> List.foldl (*) 1
 
+        undoTiny : Float
         undoTiny =
             List.length action.considerations
                 |> toFloat
@@ -86,6 +89,7 @@ Note that the output will always be between (consideration.offset) and (consider
 computeConsideration : Agent -> Posix -> Maybe Float -> Action -> Consideration -> Float
 computeConsideration agent currentTime forced action consideration =
     let
+        inputOrForced : Float
         inputOrForced =
             case forced of
                 Nothing ->
@@ -95,9 +99,11 @@ computeConsideration agent currentTime forced action consideration =
                 Just x ->
                     x
 
+        mappedInput : Float
         mappedInput =
             linearTransform 0 1 consideration.inputMin consideration.inputMax inputOrForced
 
+        output : Float
         output =
             -- see also: https://www.desmos.com/calculator/ubiswoml1r
             case consideration.function of
@@ -115,17 +121,21 @@ computeConsideration agent currentTime forced action consideration =
 
                 Asymmetric { centerA, bendA, offsetA, squarenessA, centerB, bendB, offsetB, squarenessB } ->
                     let
+                        f : Float -> Float -> Float -> Float -> Float -> Float
                         f ctr bend offset squareness x =
                             atan (bend * (x - ctr)) / (squareness * pi) + offset
 
+                        a : Float
                         a =
                             f centerA bendA offsetA squarenessA mappedInput
 
+                        b : Float
                         b =
                             f centerB bendB offsetB squarenessB mappedInput
                     in
                     a * b
 
+        normalizedOutput : Float
         normalizedOutput =
             output |> nansToZero |> clamp 0 1
     in
@@ -146,9 +156,11 @@ nansToZero n =
 linearTransform : Float -> Float -> Float -> Float -> Float -> Float
 linearTransform y1 y2 x1 x2 x =
     let
+        scale : Float
         scale =
             (y2 - y1) / (x2 - x1)
 
+        offset : Float
         offset =
             y1 - (scale * x1)
     in
@@ -250,9 +262,11 @@ isHolding check held =
 clampTo : Consideration -> Float -> Float
 clampTo con x =
     let
+        inputMin : Float
         inputMin =
             min con.inputMin con.inputMax
 
+        inputMax : Float
         inputMax =
             max con.inputMin con.inputMax
     in
@@ -600,6 +614,7 @@ fightFires model agent_ =
         shootExtinguisher : Agent -> Fire -> Action
         shootExtinguisher agent fire =
             let
+                direction : Direction2d YDownCoords
                 direction =
                     Direction2d.from agent.physics.position fire.physics.position
                         |> withDefault (Direction2d.fromAngle <| Angle.degrees 0)
