@@ -101,19 +101,19 @@ computeConsideration agent currentTime forced action consideration =
         output =
             -- see also: https://www.desmos.com/calculator/ubiswoml1r
             case consideration.function of
-                Linear m b ->
-                    m * mappedInput + b
+                Linear { slope, offset } ->
+                    slope * mappedInput + offset
 
-                Exponential exponent ->
+                Exponential { exponent } ->
                     mappedInput ^ exponent
 
-                Sigmoid bend center ->
+                Sigmoid { bend, center } ->
                     1 / (1 + e ^ (-bend * (mappedInput - center)))
 
-                Normal tightness center squareness ->
+                Normal { tightness, center, squareness } ->
                     e ^ (-(tightness ^ squareness) * abs (mappedInput - center) ^ squareness)
 
-                Asymmetric centerA bendA offsetA squarenessA centerB bendB offsetB squarenessB ->
+                Asymmetric { centerA, bendA, offsetA, squarenessA, centerB, bendB, offsetB, squarenessB } ->
                     let
                         f ctr bend offset squareness x =
                             atan (bend * (x - ctr)) / (squareness * pi) + offset
@@ -487,7 +487,7 @@ avoidFire model _ =
                 ("get away from the fire" |> withSuffix fire.id)
                 (MoveAwayFrom ("fire" |> withSuffix fire.id) fire.physics.position)
                 [ { name = "too close to fire"
-                  , function = Linear 1 0
+                  , function = Linear { slope = 1, offset = 0 }
                   , input = MetersToTargetPoint fire.physics.position
                   , inputMin = 100
                   , inputMax = 10
@@ -495,7 +495,7 @@ avoidFire model _ =
                   , offset = 0
                   }
                 , { name = "unless I've got an extinguisher"
-                  , function = Linear 1 0
+                  , function = Linear { slope = 1, offset = 0 }
                   , input = Held IsAFireExtinguisher
                   , inputMin = 1
                   , inputMax = 0
@@ -517,7 +517,7 @@ dropFoodForBeggar model agent_ =
                 ("drop food for beggar (" ++ agent.name ++ ")")
                 DropHeldFood
                 [ { name = "I am carrying some food"
-                  , function = Linear 1 0
+                  , function = Linear { slope = 1, offset = 0 }
                   , input = Held IsFood
                   , inputMin = 0
                   , inputMax = 1
@@ -525,7 +525,7 @@ dropFoodForBeggar model agent_ =
                   , offset = 0
                   }
                 , { name = "beggar is nearby"
-                  , function = Linear 1 0
+                  , function = Linear { slope = 1, offset = 0 }
                   , input = MetersToTargetPoint agent.physics.position
                   , inputMin = 40
                   , inputMax = 10
@@ -533,7 +533,7 @@ dropFoodForBeggar model agent_ =
                   , offset = 0
                   }
                 , { name = "I don't want to eat the food"
-                  , function = Linear 1 0
+                  , function = Linear { slope = 1, offset = 0 }
                   , input = Hunger
                   , inputMin = 1
                   , inputMax = 0.5
@@ -562,7 +562,7 @@ eatCarriedFood _ agent =
                 "eat carried meal"
                 EatHeldFood
                 [ { name = "currently carrying food"
-                  , function = Linear 1 0
+                  , function = Linear { slope = 1, offset = 0 }
                   , input = Held IsFood
                   , inputMin = 0
                   , inputMax = 1
@@ -570,7 +570,7 @@ eatCarriedFood _ agent =
                   , offset = 0
                   }
                 , { name = "hunger"
-                  , function = Linear 1 0
+                  , function = Linear { slope = 1, offset = 0 }
                   , input = Hunger
                   , inputMin = 0
                   , inputMax = 1
@@ -608,7 +608,7 @@ fightFires model agent_ =
                 ("use extinguisher on fire" |> withSuffix fire.id)
                 (ShootExtinguisher direction)
                 [ { name = "within range"
-                  , function = Linear 1 0
+                  , function = Linear { slope = 1, offset = 0 }
                   , input = MetersToTargetPoint fire.physics.position
                   , inputMin = 60
                   , inputMax = 55
@@ -616,7 +616,7 @@ fightFires model agent_ =
                   , offset = 0
                   }
                 , { name = "carrying an extinguisher"
-                  , function = Linear 1 0
+                  , function = Linear { slope = 1, offset = 0 }
                   , input = Held IsAFireExtinguisher
                   , inputMin = 0
                   , inputMax = 1
@@ -632,7 +632,17 @@ fightFires model agent_ =
                 ("get within range" |> withSuffix fire.id)
                 (MoveTo ("fire" |> withSuffix fire.id) fire.physics.position)
                 [ { name = "close enough"
-                  , function = Asymmetric 0.3 10 0.5 0.8 0.97 -1000 0.5 1
+                  , function =
+                        Asymmetric
+                            { centerA = 0.3
+                            , bendA = 10
+                            , offsetA = 0.5
+                            , squarenessA = 0.8
+                            , centerB = 0.97
+                            , bendB = -1000
+                            , offsetB = 0.5
+                            , squarenessB = 1
+                            }
                   , input = MetersToTargetPoint fire.physics.position
                   , inputMin = 400
                   , inputMax = 30
@@ -640,7 +650,7 @@ fightFires model agent_ =
                   , offset = 0
                   }
                 , { name = "carrying an extinguisher"
-                  , function = Linear 1 0
+                  , function = Linear { slope = 1, offset = 0 }
                   , input = Held IsAFireExtinguisher
                   , inputMin = 0
                   , inputMax = 1
@@ -656,7 +666,7 @@ fightFires model agent_ =
                 ("pick up a nearby fire extinguisher" |> withSuffix extinguisher.id)
                 (PickUp <| ExtinguisherID extinguisher.id)
                 [ { name = "in pickup range"
-                  , function = Exponential 0.01
+                  , function = Exponential { exponent = 0.01 }
                   , input = MetersToTargetPoint extinguisher.physics.position
                   , inputMin = 26
                   , inputMax = 25
@@ -672,7 +682,7 @@ fightFires model agent_ =
                 ("move to get an extinguisher" |> withSuffix extinguisher.id)
                 (MoveTo ("fire extinguisher" |> withSuffix extinguisher.id) extinguisher.physics.position)
                 [ { name = "get close enough to pick it up"
-                  , function = Linear 1 0
+                  , function = Linear { slope = 1, offset = 0 }
                   , input = MetersToTargetPoint extinguisher.physics.position
                   , inputMin = 10
                   , inputMax = 20
@@ -680,7 +690,7 @@ fightFires model agent_ =
                   , offset = 0
                   }
                 , { name = "not already carrying an extinguisher"
-                  , function = Linear 1 0
+                  , function = Linear { slope = 1, offset = 0 }
                   , input = Held IsAFireExtinguisher
                   , inputMin = 1
                   , inputMax = 0
@@ -709,7 +719,7 @@ hoverNear targetAgentName model _ =
                 ("hang around " ++ targetAgentName)
                 (MoveTo otherAgent.name otherAgent.physics.position)
                 [ { name = "close, but not close enough"
-                  , function = Normal 2.6 0.5 10
+                  , function = Normal { tightness = 2.6, center = 0.5, squareness = 10 }
                   , input = MetersToTargetPoint otherAgent.physics.position
                   , inputMin = armsReach |> Length.inMeters
                   , inputMax = armsReach |> Q.multiplyBy 3 |> Length.inMeters
@@ -733,7 +743,7 @@ maintainPersonalSpace model agent =
                 ("maintain personal space from " ++ otherAgent.name)
                 (MoveAwayFrom otherAgent.name otherAgent.physics.position)
                 [ { name = "space invaded"
-                  , function = Linear 1 0
+                  , function = Linear { slope = 1, offset = 0 }
                   , input = MetersToTargetPoint otherAgent.physics.position
                   , inputMin = 15
                   , inputMax = 5
@@ -757,7 +767,7 @@ moveToFood model _ =
                 ("move toward edible food" |> withSuffix food.id)
                 (MoveTo ("food" |> withSuffix food.id) food.physics.position)
                 [ { name = "hunger"
-                  , function = Linear 1 0
+                  , function = Linear { slope = 1, offset = 0 }
                   , input = Hunger
                   , inputMin = 0
                   , inputMax = 1
@@ -765,7 +775,7 @@ moveToFood model _ =
                   , offset = 0
                   }
                 , { name = "too far from food item"
-                  , function = Exponential 2
+                  , function = Exponential { exponent = 2 }
                   , input = MetersToTargetPoint food.physics.position
                   , inputMin = 3000
                   , inputMax = armsReach |> Length.inMeters
@@ -773,7 +783,7 @@ moveToFood model _ =
                   , offset = 0
                   }
                 , { name = "in range of food item"
-                  , function = Exponential 0.01
+                  , function = Exponential { exponent = 0.01 }
                   , input = MetersToTargetPoint food.physics.position
                   , inputMin = armsReach |> Q.multiplyBy 0.9 |> Length.inMeters
                   , inputMax = armsReach |> Length.inMeters
@@ -781,7 +791,7 @@ moveToFood model _ =
                   , offset = 0
                   }
                 , { name = "not already carrying food"
-                  , function = Linear 1 0
+                  , function = Linear { slope = 1, offset = 0 }
                   , input = Held IsFood
                   , inputMin = 1
                   , inputMax = 0
@@ -789,7 +799,7 @@ moveToFood model _ =
                   , offset = 0
                   }
                 , { name = "haven't given this away before"
-                  , function = Linear 1 0
+                  , function = Linear { slope = 1, offset = 0 }
                   , input = FoodWasGivenAway food.id
                   , inputMin = 0
                   , inputMax = 1
@@ -812,7 +822,7 @@ moveToGiveFoodToBeggar model _ =
                 ("move to give food to beggar (" ++ agent.name ++ ")")
                 (MoveTo ("giveFoodTo(" ++ agent.name ++ ")") agent.physics.position)
                 [ { name = "I am carrying some food"
-                  , function = Linear 1 0
+                  , function = Linear { slope = 1, offset = 0 }
                   , input = Held IsFood
                   , inputMin = 0
                   , inputMax = 1
@@ -820,7 +830,7 @@ moveToGiveFoodToBeggar model _ =
                   , offset = 0
                   }
                 , { name = "beggar is reasonably close"
-                  , function = Linear 1 0
+                  , function = Linear { slope = 1, offset = 0 }
                   , input = MetersToTargetPoint agent.physics.position
                   , inputMin = 500
                   , inputMax = 0
@@ -828,7 +838,7 @@ moveToGiveFoodToBeggar model _ =
                   , offset = 0
                   }
                 , { name = "I don't want to eat the food"
-                  , function = Linear 1 0
+                  , function = Linear { slope = 1, offset = 0 }
                   , input = Hunger
                   , inputMin = 1
                   , inputMax = 0.5
@@ -852,7 +862,7 @@ pickUpFoodToEat model _ =
                 inPickupRange : Consideration
                 inPickupRange =
                     { name = "in pickup range"
-                    , function = Exponential 0.01
+                    , function = Exponential { exponent = 0.01 }
                     , input = MetersToTargetPoint food.physics.position
                     , inputMin = armsReach |> Length.inMeters
                     , inputMax = armsReach |> Q.multiplyBy 0.9 |> Length.inMeters
@@ -863,7 +873,7 @@ pickUpFoodToEat model _ =
                 hungry : Consideration
                 hungry =
                     { name = "hungry"
-                    , function = Linear 1 0
+                    , function = Linear { slope = 1, offset = 0 }
                     , input = Hunger
                     , inputMin = 0
                     , inputMax = 1
@@ -874,7 +884,7 @@ pickUpFoodToEat model _ =
                 haventGivenAwayBefore : Consideration
                 haventGivenAwayBefore =
                     { name = "haven't given this away before"
-                    , function = Linear 1 0
+                    , function = Linear { slope = 1, offset = 0 }
                     , input = FoodWasGivenAway food.id
                     , inputMin = 0
                     , inputMax = 1
@@ -885,7 +895,7 @@ pickUpFoodToEat model _ =
                 handsAreFree : Consideration
                 handsAreFree =
                     { name = "hands are free"
-                    , function = Linear 1 0
+                    , function = Linear { slope = 1, offset = 0 }
                     , input = Held IsAnything
                     , inputMin = 1
                     , inputMax = 0
@@ -930,7 +940,7 @@ plantGrowables model agent =
                 ("get in seed planting range of closest growable" |> withSuffix growable.id)
                 (MoveTo ("growable" |> withSuffix growable.id) growable.physics.position)
                 [ { name = "distance to fertile soil"
-                  , function = Linear 1 0
+                  , function = Linear { slope = 1, offset = 0 }
                   , input = MetersToTargetPoint growable.physics.position
                   , inputMin = armsReach |> Q.multiplyBy 0.9 |> Length.inMeters
                   , inputMax = armsReach |> Length.inMeters
@@ -946,7 +956,7 @@ plantGrowables model agent =
                 ("plant seed in growable" |> withSuffix growable.id)
                 (PlantSeed growable.id)
                 [ { name = "close enough to plant the seed"
-                  , function = Linear 1 0
+                  , function = Linear { slope = 1, offset = 0 }
                   , input = MetersToTargetPoint growable.physics.position
                   , inputMin = armsReach |> Length.inMeters
                   , inputMax = armsReach |> Q.multiplyBy 0.9 |> Length.inMeters
@@ -962,7 +972,7 @@ plantGrowables model agent =
                 ("stop when in range of fertile growable" |> withSuffix growable.id)
                 ArrestMomentum
                 [ { name = "in range of fertile growable"
-                  , function = Linear 1 0
+                  , function = Linear { slope = 1, offset = 0 }
                   , input = MetersToTargetPoint growable.physics.position
                   , inputMin = armsReach |> Length.inMeters
                   , inputMax = armsReach |> Q.multiplyBy 0.9 |> Length.inMeters
@@ -995,7 +1005,7 @@ setBeggingState _ agent =
                 "quit begging"
                 (BeggingForFood False)
                 [ { name = "I'm no longer hungry"
-                  , function = Linear 1 0
+                  , function = Linear { slope = 1, offset = 0 }
                   , input = Hunger
                   , inputMin = 0.4
                   , inputMax = 0.3
@@ -1011,7 +1021,7 @@ setBeggingState _ agent =
                 "start begging"
                 (BeggingForFood True)
                 [ { name = "I'm hungry"
-                  , function = Linear 1 0
+                  , function = Linear { slope = 1, offset = 0 }
                   , input = Hunger
                   , inputMin = 0.7
                   , inputMax = 1
@@ -1037,7 +1047,7 @@ stopAtFood model _ =
                 ("stop when in range of edible food" |> withSuffix food.id)
                 ArrestMomentum
                 [ { name = "in range of food item"
-                  , function = Exponential 0.01
+                  , function = Exponential { exponent = 0.01 }
                   , input = MetersToTargetPoint food.physics.position
                   , inputMin = armsReach |> Length.inMeters
                   , inputMax = armsReach |> Q.multiplyBy 0.9 |> Length.inMeters
@@ -1045,7 +1055,7 @@ stopAtFood model _ =
                   , offset = 0
                   }
                 , { name = "still moving"
-                  , function = Sigmoid 10 0.5
+                  , function = Sigmoid { bend = 10, center = 0.5 }
                   , input = CurrentSpeedInMetersPerSecond
                   , inputMin = 3
                   , inputMax = 6
@@ -1053,7 +1063,7 @@ stopAtFood model _ =
                   , offset = 0
                   }
                 , { name = "haven't given this away before"
-                  , function = Linear 1 0
+                  , function = Linear { slope = 1, offset = 0 }
                   , input = FoodWasGivenAway food.id
                   , inputMin = 0
                   , inputMax = 1

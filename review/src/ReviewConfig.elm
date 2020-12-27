@@ -17,6 +17,7 @@ import NoDebug.TodoOrToString
 import NoExposingEverything
 import NoImportingEverything
 import NoLongImportLines
+import NoMissingTypeExpose
 import Review.Rule exposing (Rule)
 
 
@@ -28,4 +29,5 @@ config =
     , NoExposingEverything.rule
     , NoImportingEverything.rule []
     , NoLongImportLines.rule
+    , NoMissingTypeExpose.rule
     ]

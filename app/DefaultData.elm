@@ -389,7 +389,7 @@ justChill =
         "just chill"
         DoNothing
         [ { name = "always 0.02"
-          , function = Linear 1 0
+          , function = Linear { slope = 1, offset = 0 }
           , input = Constant 0.02
           , inputMin = 0
           , inputMax = 1
@@ -406,7 +406,7 @@ wander =
         "wander"
         Wander
         [ { name = "always 0.04"
-          , function = Linear 1 0
+          , function = Linear { slope = 1, offset = 0 }
           , input = Constant 0.04
           , inputMin = 0
           , inputMax = 1
@@ -423,7 +423,7 @@ stayNearOrigin =
         "stay within 200 or 300 units of the origin"
         (MoveTo "origin" Point2d.origin)
         [ { name = "distance from origin"
-          , function = Linear 1 0
+          , function = Linear { slope = 1, offset = 0 }
           , input = MetersToTargetPoint Point2d.origin
           , inputMin = 200
           , inputMax = 300
@@ -441,7 +441,7 @@ shoutFeedMe =
         "shout \"feed me!\" "
         (CallOut FeedMe 1.0)
         [ { name = "hunger"
-          , function = Sigmoid 15 0.5
+          , function = Sigmoid { bend = 15, center = 0.5 }
           , input = Hunger
           , inputMin = 0
           , inputMax = 1
@@ -449,7 +449,17 @@ shoutFeedMe =
           , offset = 0
           }
         , { name = "take a breath"
-          , function = Asymmetric 0.38 10 0.5 0.85 0.98 -1000 0.5 1
+          , function =
+                Asymmetric
+                    { centerA = 0.38
+                    , bendA = 10
+                    , offsetA = 0.5
+                    , squarenessA = 0.85
+                    , centerB = 0.98
+                    , bendB = -1000
+                    , offsetB = 0.5
+                    , squarenessB = 1
+                    }
           , input = TimeSinceLastShoutedFeedMe
           , inputMin = 10000
           , inputMax = 1000
@@ -457,7 +467,7 @@ shoutFeedMe =
           , offset = 1
           }
         , { name = "currently begging"
-          , function = Linear 1 0
+          , function = Linear { slope = 1, offset = 0 }
           , input = IAmBeggingForFood
           , inputMin = 0
           , inputMax = 1
@@ -475,7 +485,7 @@ emoteBored =
         "emote 'bored...'"
         (CallOut Bored 1.0)
         [ { name = "always 0.03"
-          , function = Linear 1 0
+          , function = Linear { slope = 1, offset = 0 }
           , input = Constant 0.03
           , inputMin = 0
           , inputMax = 1
@@ -489,7 +499,7 @@ emoteBored =
 defaultHysteresis : Float -> Consideration
 defaultHysteresis weighting =
     { name = "hysteresis"
-    , function = Linear 1 0
+    , function = Linear { slope = 1, offset = 0 }
     , input = IsCurrentAction
     , inputMin = 0
     , inputMax = 1

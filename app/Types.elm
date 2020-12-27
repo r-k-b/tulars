@@ -19,6 +19,7 @@ module Types exposing
     , Hitpoints(..)
     , Holding(..)
     , InputFunction(..)
+    , IsExpanded(..)
     , Layer(..)
     , LogEntry
     , MenuItem
@@ -240,40 +241,21 @@ type alias Collision =
     }
 
 
-type alias Exponent =
-    Float
-
-
-type alias Slope =
-    Float
-
-
-type alias Offset =
-    Float
-
-
-type alias Bend =
-    Float
-
-
-type alias Center =
-    Float
-
-
-type alias Tightness =
-    Float
-
-
-type alias Squareness =
-    Float
-
-
 type InputFunction
-    = Linear Slope Offset
-    | Exponential Exponent
-    | Sigmoid Bend Center
-    | Normal Tightness Center Squareness
-    | Asymmetric Center Bend Offset Squareness Center Bend Offset Squareness
+    = Linear { slope : Float, offset : Float }
+    | Exponential { exponent : Float }
+    | Sigmoid { bend : Float, center : Float }
+    | Normal { tightness : Float, center : Float, squareness : Float }
+    | Asymmetric
+        { centerA : Float
+        , bendA : Float
+        , offsetA : Float
+        , squarenessA : Float
+        , centerB : Float
+        , bendB : Float
+        , offsetB : Float
+        , squarenessB : Float
+        }
 
 
 type alias Food =

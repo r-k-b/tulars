@@ -913,16 +913,16 @@ tickHelper xVal yVal textAlign val =
 renderUF : InputFunction -> String
 renderUF f =
     case f of
-        Linear m b ->
-            "Linear (slope = " ++ String.fromFloat m ++ ", offset = " ++ String.fromFloat b ++ ")"
+        Linear { slope, offset } ->
+            "Linear (slope = " ++ String.fromFloat slope ++ ", offset = " ++ String.fromFloat offset ++ ")"
 
-        Exponential exponent ->
+        Exponential { exponent } ->
             "Exponential (exponent = " ++ String.fromFloat exponent ++ ")"
 
-        Sigmoid bend center ->
+        Sigmoid { bend, center } ->
             "Sigmoid (bend = " ++ String.fromFloat bend ++ ", center = " ++ String.fromFloat center ++ ")"
 
-        Normal tightness center squareness ->
+        Normal { tightness, center, squareness } ->
             let
                 values =
                     [ "tightness = " ++ String.fromFloat tightness
@@ -932,7 +932,7 @@ renderUF f =
             in
             "Normal (" ++ String.join ", " values ++ ")"
 
-        Asymmetric centerA bendA offsetA squarenessA centerB bendB offsetB squarenessB ->
+        Asymmetric { centerA, bendA, offsetA, squarenessA, centerB, bendB, offsetB, squarenessB } ->
             let
                 values =
                     [ "centerA=" ++ Round.round 1 centerA
