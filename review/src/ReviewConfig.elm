@@ -17,7 +17,10 @@ import NoDebug.TodoOrToString
 import NoExposingEverything
 import NoImportingEverything
 import NoLongImportLines
+import NoMissingSubscriptionsCall
 import NoMissingTypeExpose
+import NoRecursiveUpdate
+import NoUselessSubscriptions
 import Review.Rule exposing (Rule)
 
 
@@ -29,5 +32,8 @@ config =
     , NoExposingEverything.rule
     , NoImportingEverything.rule []
     , NoLongImportLines.rule
+    , NoMissingSubscriptionsCall.rule
     , NoMissingTypeExpose.rule
+    , NoRecursiveUpdate.rule
+    , NoUselessSubscriptions.rule
     ]
