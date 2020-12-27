@@ -68,6 +68,9 @@ type Range
 type alias Model =
     { time : Posix
     , agents : List Agent
+    , focalPoint :
+        -- TODO[camera]: keep this point in view
+        Point2d Meters YDownCoords
     , foods : List Food
     , fires : List Fire
     , gitHash : String

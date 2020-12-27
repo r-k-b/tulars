@@ -98,6 +98,7 @@ initialModelAt : String -> Posix -> Model
 initialModelAt gitHash posixTime =
     { time = posixTime
     , agents = []
+    , focalPoint = Point2d.origin
     , foods = []
     , fires = []
     , gitHash = gitHash
@@ -230,8 +231,7 @@ updateHelp : Msg -> Model -> Model
 updateHelp msg model =
     case msg of
         FocusLocation point ->
-            -- TODO[camera]: pan to that location
-            model
+            { model | focalPoint = point }
 
         TabOpenerClicked route ->
             { model | tabs = model.tabs |> openTabFor route }
