@@ -3,6 +3,7 @@ pkgs.mkShell {
   name = "tulars";
 
   buildInputs = with pkgs; [
+    elm2nix
     elmPackages.elm
     elmPackages.elm-format
     elmPackages.elm-json

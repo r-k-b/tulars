@@ -46,3 +46,25 @@ While the site is running on `localhost:8000` (perhaps via `npm run live`), run:
 [GameAIPro: Intro to Utility Theory (PDF)](http://www.gameaipro.com/GameAIPro/GameAIPro_Chapter09_An_Introduction_to_Utility_Theory.pdf)
 
 [Elm]: http://elm-lang.org/
+
+---
+
+ⓘ This project supports Nix Flakes; run 
+
+```shell
+nix flake show github:r-k-b/tulars
+```
+
+to see what it provides.
+
+
+## updating the generated elm nix files
+
+`elm2nix init > default.nix`
+
+`elm2nix convert > elm-srcs.nix`
+
+`elm2nix snapshot > versions.dat`
+
+More info: <https://github.com/cachix/elm2nix>
+

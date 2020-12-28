@@ -11,11 +11,13 @@
       <w>lorikeets</w>
       <w>morbi</w>
       <w>nixfmt</w>
+      <w>numtide</w>
       <w>packagename</w>
       <w>pkgs</w>
       <w>pushdown</w>
       <w>risus</w>
       <w>sibs</w>
+      <w>stdenv</w>
     </words>
   </dictionary>
 </component>
