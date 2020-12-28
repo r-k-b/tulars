@@ -5,6 +5,7 @@ import Browser exposing (Document)
 import Circle2d
 import CypressHandles exposing (cypress)
 import Dict
+import Exts.Tuple as ET
 import Frame2d exposing (Frame2d)
 import Geometry.Svg as Svg
 import Html
@@ -32,6 +33,7 @@ import Html
         )
 import Html.Attributes as HA exposing (href, style)
 import Html.Events exposing (onClick)
+import Html.Keyed
 import Json.Decode as JD
 import Length exposing (Meters)
 import LineSegment2d
@@ -99,6 +101,7 @@ import Types
         , MenuItemType(..)
         , Model
         , Msg(..)
+        , PastTense(..)
         , Portable(..)
         , Range(..)
         , Retardant
@@ -438,8 +441,63 @@ viewHud model =
             text ""
 
         _ ->
-            div [ classes.logHud |> HA.class ]
-                (recentEntries |> List.map viewHudLine)
+            Html.Keyed.node "div"
+                [ classes.logHud |> HA.class ]
+                (recentEntries
+                    |> List.reverse
+                    |> List.map (ET.fork logEntryKey viewHudLine)
+                )
+
+
+logEntryKey : LogEntry -> String
+logEntryKey logEntry =
+    let
+        entryType : String
+        entryType =
+            case logEntry.entry of
+                Types.AgentEntry { agentName } pastTense point2d ->
+                    [ "agent:" ++ agentName
+                    , pastTenseToKey pastTense
+                    , pointToKey point2d
+                    ]
+                        |> String.join ","
+
+                Types.SceneLoaded string ->
+                    "sceneLoaded:" ++ string
+
+                Types.SceneSaved ->
+                    "sceneSaved"
+    in
+    (logEntry.time |> Time.posixToMillis |> String.fromInt) ++ "|" ++ entryType
+
+
+pastTenseToKey : PastTense -> String
+pastTenseToKey pastTense =
+    case pastTense of
+        CriedForHelp ->
+            "cryHelp"
+
+        Died ->
+            "died"
+
+        PickedUp portable ->
+            (case portable of
+                Extinguisher ext ->
+                    "ext#" ++ String.fromInt ext.id
+
+                Edible food ->
+                    "food#" ++ String.fromInt food.id
+            )
+                |> (++) "pickedUp:"
+
+
+pointToKey : Point2d Meters YDownCoords -> String
+pointToKey point =
+    let
+        { x, y } =
+            point |> Point2d.unwrap
+    in
+    "x:" ++ String.fromFloat x ++ "m,y:" ++ String.fromFloat y ++ "m"
 
 
 viewHudLine : LogEntry -> Html Msg
