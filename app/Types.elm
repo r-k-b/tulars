@@ -36,6 +36,7 @@ module Types exposing
     , Route(..)
     , Scene
     , Signal(..)
+    , Species(..)
     , YDownCoords
     )
 
@@ -121,6 +122,7 @@ type Msg
 type alias Agent =
     { name : String
     , physics : PhysicalProperties
+    , species : Species
     , constantActions : List Action
     , variableActions : List Action
     , actionGenerators : List GeneratorType
@@ -135,6 +137,12 @@ type alias Agent =
     , foodsGivenAway : Set Int
     , hp : Hitpoints
     }
+
+
+type Species
+    = Human
+    | Rabbit
+    | Wolf
 
 
 type alias Action =

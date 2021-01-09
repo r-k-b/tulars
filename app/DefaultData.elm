@@ -41,6 +41,7 @@ import Types
         , Range(..)
         , ReferenceToPortable(..)
         , Signal(..)
+        , Species(..)
         , YDownCoords
         )
 import Vector2d
@@ -153,6 +154,7 @@ humans =
             , acceleration = Vector2d.zero
             , radius = agentRadius
             }
+      , species = Human
       , actionGenerators =
             [ MoveToFood
             , StopAtFood
@@ -191,6 +193,7 @@ humans =
             , acceleration = Vector2d.fromMeters { x = -2, y = -1 }
             , radius = agentRadius
             }
+      , species = Human
       , actionGenerators =
             [ MoveToFood
             , StopAtFood
@@ -229,6 +232,7 @@ humans =
             , acceleration = Vector2d.fromMeters { x = 0, y = 0 }
             , radius = agentRadius
             }
+      , species = Human
       , actionGenerators =
             [ StopAtFood
             , PickUpFoodToEat
@@ -266,6 +270,7 @@ humans =
             , acceleration = Vector2d.zero
             , radius = agentRadius
             }
+      , species = Human
       , actionGenerators = []
       , visibleActions = Dict.empty
       , variableActions = []
@@ -285,7 +290,6 @@ humans =
 
 rabbits : List Agent
 rabbits =
-    -- TODO: add a distinguishing property like human / rabbit / wolf
     [ (standardRabbitAt <| Point2d.fromMeters { x = 200, y = 150 }) <| "Rabbit 1"
     , (standardRabbitAt <| Point2d.fromMeters { x = 200, y = 160 }) <| "Rabbit 2"
     , (standardRabbitAt <| Point2d.fromMeters { x = 200, y = 170 }) <| "Rabbit 3"
@@ -307,7 +311,6 @@ rabbits =
 
 standardRabbitAt : Point2d.Point2d Meters YDownCoords -> String -> Agent
 standardRabbitAt position name =
-    -- TODO: add a distinguishing property like human / rabbit / wolf
     { name = name
     , physics =
         { facing = Direction2d.fromAngle (Angle.degrees 70)
@@ -316,6 +319,7 @@ standardRabbitAt position name =
         , acceleration = Vector2d.zero
         , radius = agentRadius
         }
+    , species = Rabbit
     , actionGenerators = []
     , visibleActions = Dict.empty
     , variableActions = []
@@ -355,7 +359,6 @@ wolves =
 
 standardWolfAt : Point2d.Point2d Meters YDownCoords -> String -> Agent
 standardWolfAt position name =
-    -- TODO: add a distinguishing property like human / rabbit / wolf
     { name = name
     , physics =
         { facing = Direction2d.fromAngle (Angle.degrees 70)
@@ -364,6 +367,7 @@ standardWolfAt position name =
         , acceleration = Vector2d.zero
         , radius = agentRadius
         }
+    , species = Wolf
     , actionGenerators = []
     , visibleActions = Dict.empty
     , variableActions = []
