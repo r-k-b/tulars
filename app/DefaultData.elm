@@ -290,23 +290,13 @@ humans =
 
 rabbits : List Agent
 rabbits =
-    [ (standardRabbitAt <| Point2d.fromMeters { x = 200, y = 150 }) <| "Rabbit 1"
-    , (standardRabbitAt <| Point2d.fromMeters { x = 200, y = 160 }) <| "Rabbit 2"
-    , (standardRabbitAt <| Point2d.fromMeters { x = 200, y = 170 }) <| "Rabbit 3"
-    , (standardRabbitAt <| Point2d.fromMeters { x = 200, y = 180 }) <| "Rabbit 4"
-    , (standardRabbitAt <| Point2d.fromMeters { x = 200, y = 190 }) <| "Rabbit 5"
-    , (standardRabbitAt <| Point2d.fromMeters { x = 200, y = 200 }) <| "Rabbit 6"
-    , (standardRabbitAt <| Point2d.fromMeters { x = 200, y = 210 }) <| "Rabbit 7"
-    , (standardRabbitAt <| Point2d.fromMeters { x = 200, y = 220 }) <| "Rabbit 8"
-    , (standardRabbitAt <| Point2d.fromMeters { x = 200, y = 230 }) <| "Rabbit 9"
-    , (standardRabbitAt <| Point2d.fromMeters { x = 200, y = 240 }) <| "Rabbit 10"
-    , (standardRabbitAt <| Point2d.fromMeters { x = 200, y = 250 }) <| "Rabbit 11"
-    , (standardRabbitAt <| Point2d.fromMeters { x = 200, y = 260 }) <| "Rabbit 12"
-    , (standardRabbitAt <| Point2d.fromMeters { x = 200, y = 270 }) <| "Rabbit 13"
-    , (standardRabbitAt <| Point2d.fromMeters { x = 200, y = 280 }) <| "Rabbit 14"
-    , (standardRabbitAt <| Point2d.fromMeters { x = 200, y = 290 }) <| "Rabbit 15"
-    , (standardRabbitAt <| Point2d.fromMeters { x = 200, y = 300 }) <| "Rabbit 16"
-    ]
+    List.range 1 16
+        |> List.map
+            (\n ->
+                standardRabbitAt
+                    (Point2d.fromMeters { x = 200, y = 150.0 + toFloat n * 10.0 })
+                    ("Rabbit " ++ String.fromInt n)
+            )
 
 
 standardRabbitAt : Point2d.Point2d Meters YDownCoords -> String -> Agent
@@ -338,23 +328,13 @@ standardRabbitAt position name =
 
 wolves : List Agent
 wolves =
-    [ (standardWolfAt <| Point2d.fromMeters { x = -200, y = 150 }) <| "Wolf 1"
-    , (standardWolfAt <| Point2d.fromMeters { x = -200, y = 160 }) <| "Wolf 2"
-    , (standardWolfAt <| Point2d.fromMeters { x = -200, y = 170 }) <| "Wolf 3"
-    , (standardWolfAt <| Point2d.fromMeters { x = -200, y = 180 }) <| "Wolf 4"
-    , (standardWolfAt <| Point2d.fromMeters { x = -200, y = 190 }) <| "Wolf 5"
-    , (standardWolfAt <| Point2d.fromMeters { x = -200, y = 200 }) <| "Wolf 6"
-    , (standardWolfAt <| Point2d.fromMeters { x = -200, y = 210 }) <| "Wolf 7"
-    , (standardWolfAt <| Point2d.fromMeters { x = -200, y = 220 }) <| "Wolf 8"
-    , (standardWolfAt <| Point2d.fromMeters { x = -200, y = 230 }) <| "Wolf 9"
-    , (standardWolfAt <| Point2d.fromMeters { x = -200, y = 240 }) <| "Wolf 10"
-    , (standardWolfAt <| Point2d.fromMeters { x = -200, y = 250 }) <| "Wolf 11"
-    , (standardWolfAt <| Point2d.fromMeters { x = -200, y = 260 }) <| "Wolf 12"
-    , (standardWolfAt <| Point2d.fromMeters { x = -200, y = 270 }) <| "Wolf 13"
-    , (standardWolfAt <| Point2d.fromMeters { x = -200, y = 280 }) <| "Wolf 14"
-    , (standardWolfAt <| Point2d.fromMeters { x = -200, y = 290 }) <| "Wolf 15"
-    , (standardWolfAt <| Point2d.fromMeters { x = -200, y = 300 }) <| "Wolf 16"
-    ]
+    List.range 1 16
+        |> List.map
+            (\n ->
+                standardWolfAt
+                    (Point2d.fromMeters { x = -200, y = 150.0 + toFloat n * 10.0 })
+                    ("Wolf " ++ String.fromInt n)
+            )
 
 
 standardWolfAt : Point2d.Point2d Meters YDownCoords -> String -> Agent
