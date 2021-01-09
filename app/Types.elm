@@ -119,6 +119,15 @@ type Msg
     | OpenMenuAt (Zipper (MenuItem Msg))
 
 
+{-| AKA "Actor". Something that moves around and does things.
+
+`constantActions` don't change (without player intervention?)
+
+`variableActions` are derived from the `actionGenerators` and are transient.
+(We _could_ recompute them on demand, but keeping them around might enable some
+performance wins, if the actionGenerators are expensive to run often.)
+
+-}
 type alias Agent =
     { name : String
     , physics : PhysicalProperties
