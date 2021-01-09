@@ -28,7 +28,9 @@ import DefaultData exposing (armsReach, defaultHysteresis, withSuffix)
 import Dict
 import Direction2d exposing (Direction2d)
 import Length
+import List.Extra as LE
 import Maybe exposing (withDefault)
+import Maybe.Extra as ME
 import Point2d
 import Quantity as Q
 import Set exposing (member)
@@ -57,6 +59,7 @@ import Types
         , Portable(..)
         , Range(..)
         , ReferenceToPortable(..)
+        , Species(..)
         , YDownCoords
         )
 import Vector2d
@@ -462,8 +465,8 @@ forGenerator genType =
         HoverNear name ->
             hoverNear name
 
-        MaintainPersonalSpace ->
-            maintainPersonalSpace
+        MaintainPersonalSpace fromSpecies ->
+            maintainPersonalSpace fromSpecies
 
         MoveToFood ->
             moveToFood
@@ -479,6 +482,9 @@ forGenerator genType =
 
         SetBeggingState ->
             setBeggingState
+
+        StayNear species ->
+            stayNear species
 
         StopAtFood ->
             stopAtFood
@@ -741,8 +747,8 @@ hoverNear targetAgentName model _ =
         |> List.map goalPerItem
 
 
-maintainPersonalSpace : ActionGenerator
-maintainPersonalSpace model agent =
+maintainPersonalSpace : Species -> ActionGenerator
+maintainPersonalSpace fromSpecies model agent =
     let
         goalPerItem : Agent -> Action
         goalPerItem otherAgent =
@@ -761,8 +767,59 @@ maintainPersonalSpace model agent =
                 Dict.empty
     in
     model.agents
-        |> List.filter (\other -> other.name /= agent.name)
+        |> List.filter
+            (\other ->
+                (other.species == fromSpecies)
+                    && (other.name /= agent.name)
+            )
         |> List.map goalPerItem
+
+
+stayNear : Species -> ActionGenerator
+stayNear species model agent =
+    let
+        label : String
+        label =
+            "stay near the closest " ++ speciesToName species
+
+        goalPerItem : Agent -> Action
+        goalPerItem otherAgent =
+            Action
+                label
+                (MoveTo otherAgent.name otherAgent.physics.position)
+                [ { name = label
+                  , function = Linear { slope = 1, offset = 0 }
+                  , input = Constant 1
+                  , inputMin = 0
+                  , inputMax = 1
+                  , weighting = 0.2
+                  , offset = 0
+                  }
+                ]
+                Dict.empty
+    in
+    model.agents
+        |> List.filter
+            (\other ->
+                (other.species == species)
+                    && (other.name /= agent.name)
+            )
+        |> LE.minimumBy (.physics >> .position >> Point2d.distanceFrom agent.physics.position >> Length.inMeters)
+        |> Maybe.map goalPerItem
+        |> ME.toList
+
+
+speciesToName : Species -> String
+speciesToName species =
+    case species of
+        Human ->
+            "Human"
+
+        Rabbit ->
+            "Rabbit"
+
+        Wolf ->
+            "Wolf"
 
 
 moveToFood : ActionGenerator

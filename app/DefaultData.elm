@@ -161,7 +161,7 @@ humans =
             , PickUpFoodToEat
             , EatCarriedFood
             , AvoidFire
-            , MaintainPersonalSpace
+            , MaintainPersonalSpace Human
             , DropFoodForBeggars
             , MoveToGiveFoodToBeggars
             , SetBeggingState
@@ -200,7 +200,7 @@ humans =
             , PickUpFoodToEat
             , EatCarriedFood
             , AvoidFire
-            , MaintainPersonalSpace
+            , MaintainPersonalSpace Human
             , DropFoodForBeggars
             , MoveToGiveFoodToBeggars
             , SetBeggingState
@@ -238,7 +238,7 @@ humans =
             , PickUpFoodToEat
             , EatCarriedFood
             , AvoidFire
-            , MaintainPersonalSpace
+            , MaintainPersonalSpace Human
             , HoverNear "Bob"
             , SetBeggingState
             , FightFires
@@ -310,10 +310,26 @@ standardRabbitAt position name =
         , radius = agentRadius
         }
     , species = Rabbit
-    , actionGenerators = []
+    , actionGenerators =
+        [ AvoidFire
+        , EatCarriedFood
+        , MaintainPersonalSpace Rabbit
+
+        -- eat plants? (when not scared?)
+        -- run from wolves?
+        -- avoid humans?
+        -- make burrows? (when not scared?)
+        -- hide in burrows?
+        -- be on guard?
+        -- become scared?
+        -- run fast when scared?
+        ]
     , visibleActions = Dict.empty
     , variableActions = []
-    , constantActions = []
+    , constantActions =
+        [ stayNearOrigin
+        , wander
+        ]
     , currentAction = "none"
     , currentOutcome = "none"
     , hunger = Range { min = 0, max = 1, value = 0 }
@@ -348,10 +364,22 @@ standardWolfAt position name =
         , radius = agentRadius
         }
     , species = Wolf
-    , actionGenerators = []
+    , actionGenerators =
+        [ AvoidFire
+        , StayNear Wolf
+
+        -- eat food from ground?
+        -- eat corpses?
+        -- run after rabbits?
+        -- avoid humans?
+        -- hide in tall grass?
+        ]
     , visibleActions = Dict.empty
     , variableActions = []
-    , constantActions = []
+    , constantActions =
+        [ stayNearOrigin
+        , justChill
+        ]
     , currentAction = "none"
     , currentOutcome = "none"
     , hunger = Range { min = 0, max = 1, value = 0 }

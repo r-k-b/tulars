@@ -168,12 +168,13 @@ type GeneratorType
     | EatCarriedFood
     | FightFires
     | HoverNear String
-    | MaintainPersonalSpace
+    | MaintainPersonalSpace Species
     | MoveToFood
     | MoveToGiveFoodToBeggars
     | PickUpFoodToEat
     | PlantThingsToEatLater
     | SetBeggingState
+    | StayNear Species
     | StopAtFood
 
 
