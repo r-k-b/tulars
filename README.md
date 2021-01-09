@@ -46,3 +46,12 @@ While the site is running on `localhost:8000` (perhaps via `npm run live`), run:
 [GameAIPro: Intro to Utility Theory (PDF)](http://www.gameaipro.com/GameAIPro/GameAIPro_Chapter09_An_Introduction_to_Utility_Theory.pdf)
 
 [Elm]: http://elm-lang.org/
+
+
+## inspirations
+
+[Creeper World](https://knucklecracker.com/)
+[Globulation](https://globulation2.org/wiki/Main_Page)
+[Incremancer](https://github.com/jamesmgittins/incremancer)
+[Kenshi](https://lofigames.com/)
+[Rimworld](https://rimworldgame.com/)
