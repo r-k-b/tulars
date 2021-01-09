@@ -10,7 +10,16 @@ import Point2d
 import SelectList exposing (SelectList)
 import Set
 import Test exposing (Test, describe, test)
-import Types exposing (Agent, Food, Hitpoints(..), Holding(..), Portable(..), Range(..))
+import Types
+    exposing
+        ( Agent
+        , Food
+        , Hitpoints(..)
+        , Holding(..)
+        , Portable(..)
+        , Range(..)
+        , Species(..)
+        )
 import Vector2d
 
 
@@ -24,6 +33,7 @@ agent =
         , acceleration = Vector2d.zero
         , radius = agentRadius
         }
+    , species = Human
     , actionGenerators = []
     , visibleActions = Dict.empty
     , variableActions = []
