@@ -166,12 +166,7 @@ initialMenu =
                 )
     in
     p "root"
-        [ p "Open a Scene"
-            [ s "Load Scene A" (LoadScene sceneA)
-            , s "Load Scene B" (LoadScene sceneB)
-            , s "Load Scene C" (LoadScene sceneC)
-            , s "Load Scene D" (LoadScene sceneD)
-            ]
+        [ p "Open a Scene" sceneButtons
         , p "Deeper Tree example 1"
             [ p "dt ex1 1"
                 [ p "dt ex1 1 a" [ s "dt ex1 1 a x" TogglePaused ]
@@ -217,6 +212,31 @@ initialMenu =
             ]
         ]
         |> Zipper.fromTree
+
+
+sceneButtons :
+    List
+        (Tree
+            { name : MenuItemLabel
+            , menuItemType : MenuItemType Msg
+            , cypressHandle : Maybe.Maybe a
+            }
+        )
+sceneButtons =
+    [ sceneA
+    , sceneB
+    , sceneC
+    , sceneD
+    ]
+        |> List.map
+            (\scene ->
+                tree
+                    { name = TextLabel scene.name
+                    , menuItemType = SimpleItem (LoadScene scene)
+                    , cypressHandle = Nothing
+                    }
+                    []
+            )
 
 
 
