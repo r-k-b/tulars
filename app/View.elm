@@ -1273,20 +1273,22 @@ renderFire fire =
 renderGrowable : Growable -> Svg Msg
 renderGrowable growable =
     let
-        emoji : String
         emoji =
             case growable.state of
                 FertileSoil _ ->
-                    "🕳"
+                    renderEmoji "🕳" origin
+                        |> Svg.scaleAbout origin 0.3
 
                 GrowingPlant _ ->
-                    "🌱"
+                    renderEmoji "🌱" origin
+                        |> Svg.scaleAbout origin 0.4
 
                 GrownPlant _ ->
-                    "🌾"
+                    renderEmoji "🌾" origin
 
                 DeadPlant _ ->
-                    "🍂"
+                    renderEmoji "🍂" origin
+                        |> Svg.scaleAbout origin 0.4
 
         hp : Hitpoints
         hp =
@@ -1319,7 +1321,7 @@ renderGrowable growable =
                     Range { min = 0, max = 1, value = 1 }
     in
     g [ id <| "growable_" ++ String.fromInt growable.id ]
-        [ renderEmoji emoji origin
+        [ emoji
         , renderHealthBar hp
         , renderProgressBar progress
         ]
