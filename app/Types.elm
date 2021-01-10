@@ -81,6 +81,7 @@ type alias Model =
     , menu : Zipper (MenuItem Msg)
     , retardants : List Retardant
     , paused : Bool
+    , showNames : Bool
     , tabs : SelectList Route
     }
 
@@ -116,6 +117,7 @@ type Msg
     | ToggleConditionsVisibility String String
     | ToggleConditionDetailsVisibility String String String
     | TogglePaused
+    | ToggleShowNamesClicked
     | OpenMenuAt (Zipper (MenuItem Msg))
 
 

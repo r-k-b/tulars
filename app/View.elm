@@ -395,7 +395,10 @@ mainMap model =
                     [ borderIndicator (Pixels.pixels 200)
                     , borderIndicator (Pixels.pixels 300)
                     , g [ id "agents" ]
-                        (List.map renderAgent model.agents)
+                        (List.map
+                            (renderAgent { showNames = model.showNames })
+                            model.agents
+                        )
                     , g [ id "foods" ]
                         (List.map renderFood model.foods)
                     , g [ id "fires" ]
@@ -607,8 +610,8 @@ agentVelocityArrow agent =
         )
 
 
-renderAgent : Agent -> Html Msg
-renderAgent agent =
+renderAgent : { showNames : Bool } -> Agent -> Html Msg
+renderAgent { showNames } agent =
     let
         call : List (Svg Msg)
         call =
@@ -666,8 +669,12 @@ renderAgent agent =
             )
          , agentVelocityArrow agent
          , body
-         , renderName agent
-            |> Svg.scaleAbout origin 0.6
+         , if showNames then
+            renderName agent
+                |> Svg.scaleAbout origin 0.6
+
+           else
+            Svg.text ""
          , renderHealthBar agent.hp
          , g [ svgClass.held ] held
          ]

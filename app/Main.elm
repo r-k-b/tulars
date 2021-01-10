@@ -107,6 +107,7 @@ initialModelAt gitHash posixTime =
     , menu = initialMenu
     , retardants = []
     , paused = False
+    , showNames = False
     , tabs = SelectList.fromLists [] MainMap []
     }
         |> loadScene sceneA
@@ -167,22 +168,9 @@ initialMenu =
     in
     p "root"
         [ p "Open a Scene" sceneButtons
-        , p "Deeper Tree example 1"
-            [ p "dt ex1 1"
-                [ p "dt ex1 1 a" [ s "dt ex1 1 a x" TogglePaused ]
-                , p "dt ex1 1 b" [ s "dt ex1 1 b y" TogglePaused ]
-                , p "dt ex1 1 c" [ s "dt ex1 1 c z" TogglePaused ]
-                ]
-            , p "dt ex1 2"
-                [ p "dt ex1 2 a" [ s "dt ex1 2 a x" TogglePaused ]
-                , p "dt ex1 2 b" [ s "dt ex1 2 b y" TogglePaused ]
-                , p "dt ex1 2 c" [ s "dt ex1 2 c z" TogglePaused ]
-                ]
-            , p "dt ex1 3"
-                [ p "dt ex1 3 a" [ s "dt ex1 3 a x" TogglePaused ]
-                , p "dt ex1 3 b" [ s "dt ex1 3 b y" TogglePaused ]
-                , p "dt ex1 3 c" [ s "dt ex1 3 c z" TogglePaused ]
-                ]
+        , p "Options"
+            [ -- should we make the label change to suit the current state?
+              s "Show/Hide Names" ToggleShowNamesClicked
             ]
         , s "Save" SaveClicked
         , s "Load" LoadClicked
@@ -261,6 +249,9 @@ updateHelp msg model =
         TogglePaused ->
             { model | paused = not model.paused }
                 |> andCloseTheMenu
+
+        ToggleShowNamesClicked ->
+            { model | showNames = not model.showNames }
 
         RAFTick newT ->
             if model.paused then
