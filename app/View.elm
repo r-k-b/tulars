@@ -640,10 +640,21 @@ renderAgent agent =
 
                 BothHands p ->
                     [ renderPortable p bothHands ]
+
+        body : Svg Msg
+        body =
+            case agent.species of
+                Types.Human ->
+                    bodies.human
+
+                Types.Rabbit ->
+                    bodies.rabbit
+
+                Types.Wolf ->
+                    bodies.wolf
     in
     g [ id <| "agent " ++ agent.name ]
-        ([ Svg.circle2d [ Svg.Attributes.fill "var(--color-fg)" ] (Circle2d.withRadius (Length.meters 3) origin)
-         , Svg.lineSegment2d []
+        ([ Svg.lineSegment2d []
             (LineSegment2d.fromEndpoints
                 ( origin
                 , origin
@@ -654,6 +665,7 @@ renderAgent agent =
                 )
             )
          , agentVelocityArrow agent
+         , body
          , renderName agent
             |> Svg.scaleAbout origin 0.6
          , renderHealthBar agent.hp
@@ -662,6 +674,28 @@ renderAgent agent =
             |> append call
         )
         |> Svg.translateBy (Vector2d.from Point2d.origin agent.physics.position)
+
+
+bodies : { human : Svg Msg, rabbit : Svg Msg, wolf : Svg Msg }
+bodies =
+    { human =
+        Svg.circle2d [ Svg.Attributes.fill "var(--color-fg)" ]
+            (Circle2d.withRadius (Length.meters 3) origin)
+    , rabbit =
+        Svg.text_
+            [ Svg.Attributes.textAnchor "middle"
+            , Svg.Attributes.alignmentBaseline "baseline"
+            , Svg.Attributes.transform "scale(0.8)"
+            ]
+            [ Svg.text "🐇" ]
+    , wolf =
+        Svg.text_
+            [ Svg.Attributes.textAnchor "middle"
+            , Svg.Attributes.alignmentBaseline "baseline"
+            , Svg.Attributes.transform "scale(0.8)"
+            ]
+            [ Svg.text "🐺" ]
+    }
 
 
 renderPortable : Portable -> Point2d.Point2d Meters YDownCoords -> Svg Msg
