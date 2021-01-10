@@ -127,9 +127,28 @@ import UtilityFunctions
 import Vector2d exposing (scaleBy)
 
 
+type alias PageView =
+    { content : List (Html Msg), enableScrolling : Bool }
+
+
 view : Model -> Document Msg
 view model =
     let
+        page : PageView
+        page =
+            case model.tabs |> selected of
+                About ->
+                    viewAboutPage model.gitHash
+
+                AgentInfo ->
+                    agentsInfo model.time model.agents
+
+                MainMap ->
+                    mainMap model
+
+                Variants ->
+                    viewVariantsPage
+
         body : Html Msg
         body =
             div [ classes.pageGrid.container |> HA.class ]
@@ -143,20 +162,13 @@ view model =
                     [ classes.pageGrid.content |> HA.class
                     , classes.position.relative |> HA.class
                     , cypress.mainContent
+                    , [ ( classes.pageGrid.contentEnableScrolling
+                        , page.enableScrolling
+                        )
+                      ]
+                        |> HA.classList
                     ]
-                    [ case model.tabs |> selected of
-                        About ->
-                            viewAboutPage model.gitHash
-
-                        AgentInfo ->
-                            agentsInfo model.time model.agents
-
-                        MainMap ->
-                            mainMap model
-
-                        Variants ->
-                            viewVariantsPage
-                    ]
+                    page.content
                 ]
     in
     { title = "Tulars", body = [ body ] }
@@ -374,29 +386,33 @@ render2dResponsive boundingBox svgMsg =
         [ Svg.relativeTo topLeftFrame svgMsg ]
 
 
-mainMap : Model -> Html.Html Msg
+mainMap : Model -> PageView
 mainMap model =
-    div [ classes.fullSize |> HA.class, classes.zoomSvg |> HA.class ]
-        [ render2dResponsive bb
-            (g [ id "mainMap" ]
-                [ borderIndicator (Pixels.pixels 200)
-                , borderIndicator (Pixels.pixels 300)
-                , g [ id "agents" ]
-                    (List.map renderAgent model.agents)
-                , g [ id "foods" ]
-                    (List.map renderFood model.foods)
-                , g [ id "fires" ]
-                    (List.map renderFire model.fires)
-                , g [ id "growables" ]
-                    (List.map renderGrowable model.growables)
-                , g [ id "extinguishers" ]
-                    (List.map renderExtinguisher model.extinguishers)
-                , g [ id "retardantProjectiles" ]
-                    (List.map renderRetardantCloud model.retardants)
-                ]
-            )
-        , viewHud model
+    { content =
+        [ div [ classes.fullSize |> HA.class, classes.zoomSvg |> HA.class ]
+            [ render2dResponsive bb
+                (g [ id "mainMap" ]
+                    [ borderIndicator (Pixels.pixels 200)
+                    , borderIndicator (Pixels.pixels 300)
+                    , g [ id "agents" ]
+                        (List.map renderAgent model.agents)
+                    , g [ id "foods" ]
+                        (List.map renderFood model.foods)
+                    , g [ id "fires" ]
+                        (List.map renderFire model.fires)
+                    , g [ id "growables" ]
+                        (List.map renderGrowable model.growables)
+                    , g [ id "extinguishers" ]
+                        (List.map renderExtinguisher model.extinguishers)
+                    , g [ id "retardantProjectiles" ]
+                        (List.map renderRetardantCloud model.retardants)
+                    ]
+                )
+            , viewHud model
+            ]
         ]
+    , enableScrolling = False
+    }
 
 
 logEntryIsAfter : Posix -> LogEntry -> Bool
@@ -558,15 +574,17 @@ borderIndicator radius =
         (Circle2d.withRadius radius Point2d.origin)
 
 
-agentsInfo : Posix -> List Agent -> Html.Html Msg
+agentsInfo : Posix -> List Agent -> PageView
 agentsInfo currentTime agents =
-    div []
+    { content =
         [ h2 []
             [ text "Agents" ]
         , div
             []
             (List.map (renderAgentInfo currentTime) agents)
         ]
+    , enableScrolling = True
+    }
 
 
 agentVelocityArrow : Agent -> Svg msg
@@ -1352,9 +1370,9 @@ origin =
     Point2d.origin
 
 
-viewAboutPage : String -> Html Msg
+viewAboutPage : String -> PageView
 viewAboutPage gitHash =
-    div []
+    { content =
         [ p []
             [ text "\"Tulars\", an exploration of "
             , a [ href "http://www.gameaipro.com/GameAIPro/GameAIPro_Chapter09_An_Introduction_to_Utility_Theory.pdf" ]
@@ -1377,17 +1395,21 @@ viewAboutPage gitHash =
             , a [ href "https://github.com/r-k-b" ] [ text "Robert K. Bell" ]
             ]
         ]
+    , enableScrolling = True
+    }
 
 
-viewVariantsPage : Html Msg
+viewVariantsPage : PageView
 viewVariantsPage =
-    div []
+    { content =
         [ ul []
             [ li [] [ a [ href "/index.html" ] [ text "Default" ] ]
             , li [] [ a [ href "/debug.html" ] [ text "Elm Debugger active" ] ]
             , li [] [ a [ href "/optimized.html" ] [ text "Optimized JS" ] ]
             ]
         ]
+    , enableScrolling = True
+    }
 
 
 orNoAttribute : Maybe (Html.Attribute msg) -> Html.Attribute msg

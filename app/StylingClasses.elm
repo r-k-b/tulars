@@ -23,6 +23,7 @@ classes :
         { agentInfo : String
         , container : String
         , content : String
+        , contentEnableScrolling : String
         , menu : String
         , subMenu : String
         , tabs : String
@@ -48,6 +49,7 @@ classes =
         { agentInfo = "page-grid__agent-info"
         , container = "page-grid__container"
         , content = "page-grid__content"
+        , contentEnableScrolling = "page-grid__content--enable-scrolling"
         , menu = "page-grid__menu"
         , subMenu = "page-grid__submenu"
         , tabs = "page-grid__tabs"
