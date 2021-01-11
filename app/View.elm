@@ -1273,6 +1273,7 @@ renderFire fire =
 renderGrowable : Growable -> Svg Msg
 renderGrowable growable =
     let
+        emoji : Svg Msg
         emoji =
             case growable.state of
                 FertileSoil _ ->
