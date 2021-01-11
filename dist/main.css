@@ -122,6 +122,10 @@ a {
     z-index: 1;
 }
 
+.page-grid__content--enable-scrolling {
+    overflow: auto;
+}
+
 .page-grid__agent-info {
     grid-area: info;
     overflow: auto;
