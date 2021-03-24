@@ -1,7 +1,7 @@
 module TestPhysics exposing (suite)
 
 import Direction2d exposing (positiveX)
-import Expect exposing (FloatingPointTolerance(..))
+import Expect
 import Length
 import Physics exposing (collide)
 import Point2d

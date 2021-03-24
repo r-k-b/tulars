@@ -1,6 +1,6 @@
 module TestMenu exposing (suite)
 
-import Expect exposing (Expectation, FloatingPointTolerance(..))
+import Expect exposing (Expectation)
 import Maybe exposing (andThen)
 import Maybe.Extra as ME
 import Menu

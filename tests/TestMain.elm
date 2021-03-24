@@ -4,7 +4,7 @@ import Angle
 import DefaultData exposing (agentRadius, foodRadius)
 import Dict
 import Direction2d
-import Expect exposing (FloatingPointTolerance(..))
+import Expect
 import Main exposing (closeTabAt, pickUpFood)
 import Point2d
 import SelectList exposing (SelectList)
