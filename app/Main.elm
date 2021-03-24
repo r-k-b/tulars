@@ -1121,7 +1121,7 @@ foldOverAgentsAndGrowables currentTime deltaTMilliseconds agent growables =
 growNaturally : Int -> Growable -> Growable
 growNaturally deltaTMilliseconds growable =
     case growable.state of
-        FertileSoil stats ->
+        FertileSoil _ ->
             growable
 
         GrowingPlant stats ->
