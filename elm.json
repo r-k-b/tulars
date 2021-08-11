@@ -15,7 +15,7 @@
             "elm/time": "1.0.0",
             "elm-community/list-extra": "8.3.0",
             "elm-community/maybe-extra": "5.2.0",
-            "ianmackenzie/elm-geometry": "3.9.0",
+            "ianmackenzie/elm-geometry": "3.9.1",
             "ianmackenzie/elm-geometry-svg": "3.0.0",
             "ianmackenzie/elm-units": "2.7.0",
             "krisajenkins/elm-exts": "28.0.0",
