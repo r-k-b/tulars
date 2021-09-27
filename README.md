@@ -8,7 +8,16 @@ E.g., how do we specify rich, sequential and/or parallel behaviours that
 are robust to changing environments and dynamic goals? 
 
 
-# building
+# building with Nix
+
+```shell
+$ nix build github:r-k-b/tulars
+
+$ xdg-open result/index.html
+```
+
+
+# building (non-nix)
 
 (requires git, node.js 10+, and [Elm] 0.19)
 

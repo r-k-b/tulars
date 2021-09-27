@@ -5,8 +5,8 @@
 set -e
 
 src="app/Main.elm"
-js="./dist/main.optimized.js"
-min="./dist/main.optimized.min.js"
+js="./dist/Main.optimized.js"
+min="./dist/Main.optimized.min.js"
 
 npx elm make --optimize $src --output=$js $@
 
@@ -18,4 +18,4 @@ echo "Minified size:$(cat $min | wc -c) bytes  ($min)"
 echo "Gzipped size: $(cat $min | gzip -c | wc -c) bytes"
 
 # Create a copy of index.html that points to the optimized, minified output
-sed "s/main.js/main.optimized.min.js/" dist/index.html > dist/optimized.html
+sed "s/Main.js/Main.optimized.min.js/" dist/index.html > dist/optimized.html
