@@ -8,5 +8,8 @@
       let
         pkgs = nixpkgs.legacyPackages.${system};
         inherit (pkgs) lib callPackage;
-      in { devShell = import ./shell.nix { inherit pkgs; }; });
+      in {
+        defaultPackage = import ./default.nix { inherit pkgs; };
+        devShell = import ./shell.nix { inherit pkgs; };
+      });
 }
