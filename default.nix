@@ -9,6 +9,8 @@ let
     in stdenv.mkDerivation {
       inherit name src;
 
+      nativeBuildInputs = [ git ];
+
       buildInputs = [ elmPackages.elm ]
         ++ lib.optional outputJavaScript nodePackages.uglify-js;
 
@@ -23,6 +25,8 @@ let
           "${srcdir}/${builtins.replaceStrings [ "." ] [ "/" ] module}.elm";
       in ''
         mkdir -p $out/share/doc
+        patchShebangs ./write-context-js.sh
+        ./write-context-js.sh
         cp dist/* $out/
         ${lib.concatStrings (map (module: ''
           echo "compiling ${elmfile module}"

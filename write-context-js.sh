@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+set -e
+
 GIT_HASH="$(git rev-parse HEAD)";
 
 git rev-parse HEAD > dist/version.txt
