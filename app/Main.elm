@@ -899,12 +899,12 @@ moveWorld newTime model =
     in
     { model
         | time = newTime
-        , foods = includingDroppedFood
         , agents = agentsAfterDroppingFood
-        , extinguishers = extinguisherAcc
-        , retardants = retardantsAfterCollisionWithFire
+        , foods = includingDroppedFood
         , fires = firesAfterCollisionWithRetardants
         , growables = updatedGrowables
+        , extinguishers = extinguisherAcc
+        , retardants = retardantsAfterCollisionWithFire
     }
         |> logAll deathEntries
         |> logAll movementEntries
@@ -929,10 +929,9 @@ createRetardantProjectiles currentTime agent acc =
         Just action ->
             case action.outcome of
                 ShootExtinguisher direction ->
-                    { expiry = Time.posixToMillis currentTime + 1000 |> Time.millisToPosix
-                    , physics =
-                        { facing = direction
-                        , position = agent.physics.position
+                    { physics =
+                        { position = agent.physics.position
+                        , facing = direction
                         , velocity =
                             direction
                                 |> Vector2d.withLength (Length.meters 100)
@@ -940,6 +939,7 @@ createRetardantProjectiles currentTime agent acc =
                         , acceleration = Vector2d.zero
                         , radius = retardantRadius
                         }
+                    , expiry = Time.posixToMillis currentTime + 1000 |> Time.millisToPosix
                     }
                         :: acc
 
@@ -975,7 +975,7 @@ foldOverPickedItems currentTime agent { agentAcc, foodAcc, extinguisherAcc, logE
                 |> List.sortBy (computeUtility agent currentTime >> (*) -1)
                 |> List.head
 
-        { updatedAgent, updatedFoods, updatedExtinguishers, newEntries } =
+        { updatedFoods, updatedExtinguishers, updatedAgent, newEntries } =
             let
                 noChange : PickedItemsHelper
                 noChange =

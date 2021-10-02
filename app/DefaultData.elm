@@ -51,8 +51,8 @@ foods : List Food
 foods =
     [ { id = 1
       , physics =
-            { facing = Direction2d.fromAngle (Angle.degrees 0)
-            , position = Point2d.fromMeters { x = -100, y = 100 }
+            { position = Point2d.fromMeters { x = -100, y = 100 }
+            , facing = Direction2d.fromAngle (Angle.degrees 0)
             , velocity = Vector2d.zero
             , acceleration = Vector2d.zero
             , radius = foodRadius
@@ -61,8 +61,8 @@ foods =
       }
     , { id = 2
       , physics =
-            { facing = Direction2d.fromAngle (Angle.degrees 0)
-            , position = Point2d.fromMeters { x = 100, y = 100 }
+            { position = Point2d.fromMeters { x = 100, y = 100 }
+            , facing = Direction2d.fromAngle (Angle.degrees 0)
             , velocity = Vector2d.zero
             , acceleration = Vector2d.zero
             , radius = foodRadius
@@ -76,8 +76,8 @@ fires : List Fire
 fires =
     [ { id = 1
       , physics =
-            { facing = Direction2d.fromAngle (Angle.degrees 0)
-            , position = Point2d.fromMeters { x = -100, y = -100 }
+            { position = Point2d.fromMeters { x = -100, y = -100 }
+            , facing = Direction2d.fromAngle (Angle.degrees 0)
             , velocity = Vector2d.fromMeters { x = 0, y = 0 }
             , acceleration = Vector2d.zero
             , radius = fireRadius
@@ -118,8 +118,8 @@ basicGrowableAt : Point2d Meters YDownCoords -> Int -> GrowableState -> Growable
 basicGrowableAt position id state =
     { id = id
     , physics =
-        { facing = Direction2d.fromAngle (Angle.degrees 0)
-        , position = position
+        { position = position
+        , facing = Direction2d.fromAngle (Angle.degrees 0)
         , velocity = Vector2d.fromMeters { x = 0, y = 0 }
         , acceleration = Vector2d.zero
         , radius = growableRadius
@@ -132,8 +132,8 @@ extinguishers : List FireExtinguisher
 extinguishers =
     [ { id = 1
       , physics =
-            { facing = Direction2d.fromAngle (Angle.degrees 0)
-            , position = Point2d.fromMeters { x = -20, y = -300 }
+            { position = Point2d.fromMeters { x = -20, y = -300 }
+            , facing = Direction2d.fromAngle (Angle.degrees 0)
             , velocity = Vector2d.fromMeters { x = 0, y = 0 }
             , acceleration = Vector2d.zero
             , radius = extinguisherRadius
@@ -148,52 +148,20 @@ humans : List Agent
 humans =
     [ { name = "Alf"
       , physics =
-            { facing = Direction2d.fromAngle (Angle.degrees 70)
-            , position = Point2d.fromMeters { x = 200, y = 150 }
+            { position = Point2d.fromMeters { x = 200, y = 150 }
+            , facing = Direction2d.fromAngle (Angle.degrees 70)
             , velocity = Vector2d.fromMeters { x = -1, y = -10 }
             , acceleration = Vector2d.zero
             , radius = agentRadius
             }
       , species = Human
-      , actionGenerators =
-            [ MoveToFood
-            , StopAtFood
-            , PickUpFoodToEat
-            , EatCarriedFood
-            , AvoidFire
-            , MaintainPersonalSpace Human
-            , DropFoodForBeggars
-            , MoveToGiveFoodToBeggars
-            , SetBeggingState
-            , FightFires
-            ]
-      , visibleActions = Dict.empty
-      , variableActions = []
       , constantActions =
             [ stayNearOrigin
             , justChill
             , emoteBored
             , shoutFeedMe
             ]
-      , currentAction = "none"
-      , currentOutcome = "none"
-      , hunger = Range { min = 0, max = 1, value = 0.8 }
-      , beggingForFood = False
-      , callingOut = Nothing
-      , holding = EmptyHanded
-      , topActionLastStartTimes = Dict.empty
-      , foodsGivenAway = Set.empty
-      , hp = Hitpoints 100 100
-      }
-    , { name = "Bob"
-      , physics =
-            { facing = Direction2d.fromAngle (Angle.degrees 200)
-            , position = Point2d.fromMeters { x = 100, y = 250 }
-            , velocity = Vector2d.fromMeters { x = -10, y = -20 }
-            , acceleration = Vector2d.fromMeters { x = -2, y = -1 }
-            , radius = agentRadius
-            }
-      , species = Human
+      , variableActions = []
       , actionGenerators =
             [ MoveToFood
             , StopAtFood
@@ -207,32 +175,71 @@ humans =
             , FightFires
             ]
       , visibleActions = Dict.empty
-      , variableActions = []
+      , currentAction = "none"
+      , currentOutcome = "none"
+      , hunger = Range { min = 0, max = 1, value = 0.8 }
+      , beggingForFood = False
+      , topActionLastStartTimes = Dict.empty
+      , callingOut = Nothing
+      , holding = EmptyHanded
+      , foodsGivenAway = Set.empty
+      , hp = Hitpoints 100 100
+      }
+    , { name = "Bob"
+      , physics =
+            { position = Point2d.fromMeters { x = 100, y = 250 }
+            , facing = Direction2d.fromAngle (Angle.degrees 200)
+            , velocity = Vector2d.fromMeters { x = -10, y = -20 }
+            , acceleration = Vector2d.fromMeters { x = -2, y = -1 }
+            , radius = agentRadius
+            }
+      , species = Human
       , constantActions =
             [ stayNearOrigin
             , wander
             , emoteBored
             , shoutFeedMe
             ]
+      , variableActions = []
+      , actionGenerators =
+            [ MoveToFood
+            , StopAtFood
+            , PickUpFoodToEat
+            , EatCarriedFood
+            , AvoidFire
+            , MaintainPersonalSpace Human
+            , DropFoodForBeggars
+            , MoveToGiveFoodToBeggars
+            , SetBeggingState
+            , FightFires
+            ]
+      , visibleActions = Dict.empty
       , currentAction = "none"
       , currentOutcome = "none"
       , hunger = Range { min = 0, max = 1, value = 0 }
       , beggingForFood = False
+      , topActionLastStartTimes = Dict.empty
       , callingOut = Nothing
       , holding = EmptyHanded
-      , topActionLastStartTimes = Dict.empty
       , foodsGivenAway = Set.empty
       , hp = Hitpoints 100 100
       }
     , { name = "Charlie"
       , physics =
-            { facing = Direction2d.fromAngle (Angle.degrees 150)
-            , position = Point2d.fromMeters { x = -120, y = -120 }
+            { position = Point2d.fromMeters { x = -120, y = -120 }
+            , facing = Direction2d.fromAngle (Angle.degrees 150)
             , velocity = Vector2d.fromMeters { x = 0, y = 0 }
             , acceleration = Vector2d.fromMeters { x = 0, y = 0 }
             , radius = agentRadius
             }
       , species = Human
+      , constantActions =
+            [ justChill
+            , emoteBored
+            , stayNearOrigin
+            , shoutFeedMe
+            ]
+      , variableActions = []
       , actionGenerators =
             [ StopAtFood
             , PickUpFoodToEat
@@ -245,43 +252,36 @@ humans =
             , PlantThingsToEatLater
             ]
       , visibleActions = Dict.empty
-      , variableActions = []
-      , constantActions =
-            [ justChill
-            , emoteBored
-            , stayNearOrigin
-            , shoutFeedMe
-            ]
       , currentAction = "none"
       , currentOutcome = "none"
       , hunger = Range { min = 0, max = 1, value = 0.8 }
       , beggingForFood = False
+      , topActionLastStartTimes = Dict.empty
       , callingOut = Nothing
       , holding = EmptyHanded
-      , topActionLastStartTimes = Dict.empty
       , foodsGivenAway = Set.empty
       , hp = Hitpoints 100 100
       }
     , { name = "Dead Don"
       , physics =
-            { facing = Direction2d.fromAngle (Angle.degrees 70)
-            , position = Point2d.fromMeters { x = 200, y = 150 }
+            { position = Point2d.fromMeters { x = 200, y = 150 }
+            , facing = Direction2d.fromAngle (Angle.degrees 70)
             , velocity = Vector2d.fromMeters { x = -1, y = -10 }
             , acceleration = Vector2d.zero
             , radius = agentRadius
             }
       , species = Human
+      , constantActions = []
+      , variableActions = []
       , actionGenerators = []
       , visibleActions = Dict.empty
-      , variableActions = []
-      , constantActions = []
       , currentAction = "none"
       , currentOutcome = "none"
       , hunger = Range { min = 0, max = 1, value = 0 }
       , beggingForFood = False
+      , topActionLastStartTimes = Dict.empty
       , callingOut = Nothing
       , holding = EmptyHanded
-      , topActionLastStartTimes = Dict.empty
       , foodsGivenAway = Set.empty
       , hp = Hitpoints 0 100
       }
@@ -303,13 +303,18 @@ standardRabbitAt : Point2d.Point2d Meters YDownCoords -> String -> Agent
 standardRabbitAt position name =
     { name = name
     , physics =
-        { facing = Direction2d.fromAngle (Angle.degrees 70)
-        , position = position
+        { position = position
+        , facing = Direction2d.fromAngle (Angle.degrees 70)
         , velocity = Vector2d.fromMeters { x = 0, y = 0 }
         , acceleration = Vector2d.zero
         , radius = agentRadius
         }
     , species = Rabbit
+    , constantActions =
+        [ stayNearOrigin
+        , wander
+        ]
+    , variableActions = []
     , actionGenerators =
         [ AvoidFire
         , EatCarriedFood
@@ -325,18 +330,13 @@ standardRabbitAt position name =
         -- run fast when scared?
         ]
     , visibleActions = Dict.empty
-    , variableActions = []
-    , constantActions =
-        [ stayNearOrigin
-        , wander
-        ]
     , currentAction = "none"
     , currentOutcome = "none"
     , hunger = Range { min = 0, max = 1, value = 0 }
     , beggingForFood = False
+    , topActionLastStartTimes = Dict.empty
     , callingOut = Nothing
     , holding = EmptyHanded
-    , topActionLastStartTimes = Dict.empty
     , foodsGivenAway = Set.empty
     , hp = Hitpoints 20 20
     }
@@ -357,13 +357,18 @@ standardWolfAt : Point2d.Point2d Meters YDownCoords -> String -> Agent
 standardWolfAt position name =
     { name = name
     , physics =
-        { facing = Direction2d.fromAngle (Angle.degrees 70)
-        , position = position
+        { position = position
+        , facing = Direction2d.fromAngle (Angle.degrees 70)
         , velocity = Vector2d.fromMeters { x = 0, y = 0 }
         , acceleration = Vector2d.zero
         , radius = agentRadius
         }
     , species = Wolf
+    , constantActions =
+        [ stayNearOrigin
+        , justChill
+        ]
+    , variableActions = []
     , actionGenerators =
         [ AvoidFire
         , StayNear Wolf
@@ -375,18 +380,13 @@ standardWolfAt position name =
         -- hide in tall grass?
         ]
     , visibleActions = Dict.empty
-    , variableActions = []
-    , constantActions =
-        [ stayNearOrigin
-        , justChill
-        ]
     , currentAction = "none"
     , currentOutcome = "none"
     , hunger = Range { min = 0, max = 1, value = 0 }
     , beggingForFood = False
+    , topActionLastStartTimes = Dict.empty
     , callingOut = Nothing
     , holding = EmptyHanded
-    , topActionLastStartTimes = Dict.empty
     , foodsGivenAway = Set.empty
     , hp = Hitpoints 20 20
     }
