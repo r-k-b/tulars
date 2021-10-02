@@ -29,7 +29,7 @@
   },
   "homepage": "https://github.com/r-k-b/tulars#readme",
   "dependencies": {
-    "chokidar": "3.5.1",
+    "chokidar": "3.5.2",
     "chokidar-cli": "2.1.0",
     "elm": "^0.19.1-5",
     "elm-review": "^2.6.1",
