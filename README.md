@@ -38,6 +38,11 @@ Then, either run `npm run live`, or open one of these in a browser:
 
 Run `npm test`.
 
+# keeping dependencies up to date
+
+dependabot should keep the package.json and elm.json dependencies up to date;
+to keep the elm2nix / elm-srcs.nix dependencies up to date,
+run `update-elm-nix-deps`. 
 
 # integration tests
 
