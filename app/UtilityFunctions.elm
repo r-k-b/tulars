@@ -95,12 +95,12 @@ computeConsideration agent currentTime forced action consideration =
         inputOrForced : Float
         inputOrForced =
             case forced of
+                Just x ->
+                    x
+
                 Nothing ->
                     getConsiderationRawValue agent currentTime action consideration
                         |> clampTo consideration
-
-                Just x ->
-                    x
 
         mappedInput : Float
         mappedInput =
@@ -192,23 +192,23 @@ getConsiderationRawValue agent currentTime action consideration =
 
         TimeSinceLastShoutedFeedMe ->
             case Dict.get "CallOut(FeedMe)" agent.topActionLastStartTimes of
-                Nothing ->
-                    1 / 0
-
                 Just time ->
                     posixToMillis currentTime - posixToMillis time |> toFloat
+
+                Nothing ->
+                    1 / 0
 
         IsCurrentAction ->
             agent.currentAction
                 == action.name
                 |> true1false0
 
-        Held somePortable ->
-            isHolding somePortable agent.holding
-                |> true1false0
-
         IAmBeggingForFood ->
             agent.beggingForFood
+                |> true1false0
+
+        Held somePortable ->
+            isHolding somePortable agent.holding
                 |> true1false0
 
         FoodWasGivenAway foodID ->
@@ -295,8 +295,8 @@ applyList model agent generators =
 isMovementAction : Action -> Bool
 isMovementAction action =
     case action.outcome of
-        ArrestMomentum ->
-            True
+        DoNothing ->
+            False
 
         MoveTo _ _ ->
             True
@@ -304,14 +304,14 @@ isMovementAction action =
         MoveAwayFrom _ _ ->
             True
 
-        Wander ->
+        ArrestMomentum ->
             True
-
-        DoNothing ->
-            False
 
         CallOut _ ->
             False
+
+        Wander ->
+            True
 
         PickUp _ ->
             False

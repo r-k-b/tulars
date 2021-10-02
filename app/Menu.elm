@@ -100,18 +100,18 @@ zipperToAnnotatedBreadcrumbsHelper maybeZipper crumbs =
 siblingsBeforeFocus : List (Zipper a) -> Zipper a -> List (Zipper a)
 siblingsBeforeFocus accumulator zipper =
     case zipper |> Zipper.previousSibling of
-        Nothing ->
-            accumulator
-
         Just sibling ->
             siblingsBeforeFocus (sibling :: accumulator) sibling
+
+        Nothing ->
+            accumulator
 
 
 siblingsAfterFocus : List (Zipper a) -> Zipper a -> List (Zipper a)
 siblingsAfterFocus accumulator zipper =
     case zipper |> Zipper.nextSibling of
-        Nothing ->
-            accumulator
-
         Just sibling ->
             siblingsAfterFocus (sibling :: accumulator) sibling
+
+        Nothing ->
+            accumulator

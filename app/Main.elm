@@ -239,19 +239,21 @@ update msg model =
 updateHelp : Msg -> Model -> Model
 updateHelp msg model =
     case msg of
+        ExportClicked ->
+            -- todo
+            model
+
         FocusLocation point ->
             { model | focalPoint = point }
 
-        TabOpenerClicked route ->
-            { model | tabs = model.tabs |> openTabFor route }
-                |> andCloseTheMenu
+        LoadClicked ->
+            -- todo
+            model
 
-        TogglePaused ->
-            { model | paused = not model.paused }
+        LoadScene scene ->
+            model
+                |> loadScene scene
                 |> andCloseTheMenu
-
-        ToggleShowNamesClicked ->
-            { model | showNames = not model.showNames }
 
         RAFTick newT ->
             if model.paused then
@@ -259,6 +261,20 @@ updateHelp msg model =
 
             else
                 moveWorld newT model
+
+        SaveClicked ->
+            -- todo
+            model |> log SceneSaved
+
+        TabClicked relativeIndex ->
+            { model | tabs = model.tabs |> selectTabAt relativeIndex }
+
+        TabCloserClicked route index ->
+            { model | tabs = model.tabs |> closeTabAt index route }
+
+        TabOpenerClicked route ->
+            { model | tabs = model.tabs |> openTabFor route }
+                |> andCloseTheMenu
 
         ToggleConditionsVisibility agentName actionName ->
             let
@@ -330,28 +346,12 @@ updateHelp msg model =
             in
             { model | agents = newAgents }
 
-        LoadScene scene ->
-            model
-                |> loadScene scene
+        TogglePaused ->
+            { model | paused = not model.paused }
                 |> andCloseTheMenu
 
-        ExportClicked ->
-            -- todo
-            model
-
-        LoadClicked ->
-            -- todo
-            model
-
-        SaveClicked ->
-            -- todo
-            model |> log SceneSaved
-
-        TabClicked relativeIndex ->
-            { model | tabs = model.tabs |> selectTabAt relativeIndex }
-
-        TabCloserClicked route index ->
-            { model | tabs = model.tabs |> closeTabAt index route }
+        ToggleShowNamesClicked ->
+            { model | showNames = not model.showNames }
 
         OpenMenuAt zipper ->
             { model | menu = zipper }
@@ -402,9 +402,6 @@ closeTabAt relativeIndex route tabs =
             route == (validOffset |> SelectList.selected)
     in
     case foundTabs of
-        Nothing ->
-            tabs
-
         Just validOffset ->
             if weAreDeletingTheExpectedTabAt validOffset then
                 validOffset
@@ -414,6 +411,9 @@ closeTabAt relativeIndex route tabs =
 
             else
                 tabs
+
+        Nothing ->
+            tabs
 
 
 moveProjectiles : Int -> List (Physical a) -> List (Physical a)
@@ -619,19 +619,8 @@ updateCurrentSignal :
     -> ( Maybe CurrentSignal, Maybe EntryKind )
 updateCurrentSignal agent time currentSignal maybeNewSignal =
     case maybeNewSignal of
-        Nothing ->
-            ( Nothing, Nothing )
-
         Just newSignal ->
             case currentSignal of
-                Nothing ->
-                    ( Just { signal = newSignal, started = time }
-                    , Just <|
-                        AgentEntry { agentName = agent.name }
-                            CriedForHelp
-                            agent.physics.position
-                    )
-
                 Just priorSignal ->
                     if priorSignal.signal == newSignal then
                         ( Just priorSignal, Nothing )
@@ -643,6 +632,17 @@ updateCurrentSignal agent time currentSignal maybeNewSignal =
                                 CriedForHelp
                                 agent.physics.position
                         )
+
+                Nothing ->
+                    ( Just { signal = newSignal, started = time }
+                    , Just <|
+                        AgentEntry { agentName = agent.name }
+                            CriedForHelp
+                            agent.physics.position
+                    )
+
+        Nothing ->
+            ( Nothing, Nothing )
 
 
 deadzone : Vector2d Meters coords -> Vector2d Meters coords
@@ -657,6 +657,9 @@ deadzone v =
 getMovementVector : Posix -> Int -> Agent -> Action -> Maybe (Vector2d Meters YDownCoords)
 getMovementVector currentTime deltaTime agent action =
     case action.outcome of
+        DoNothing ->
+            Nothing
+
         MoveTo _ point ->
             let
                 weighted : Vector2d Meters YDownCoords
@@ -705,18 +708,15 @@ getMovementVector currentTime deltaTime agent action =
                             (Vector2d.withLength <| Length.meters weighting)
                     )
 
+        CallOut _ ->
+            Nothing
+
         Wander ->
             agent.physics.facing
                 |> Vector2d.withLength (Length.meters 1)
                 |> Vector2d.rotateBy
                     (Angle.degrees 10 |> Q.multiplyBy (toFloat deltaTime / 1000))
                 |> Just
-
-        DoNothing ->
-            Nothing
-
-        CallOut _ ->
-            Nothing
 
         PickUp _ ->
             Nothing
@@ -926,9 +926,6 @@ createRetardantProjectiles currentTime agent acc =
                 |> List.head
     in
     case topAction of
-        Nothing ->
-            acc
-
         Just action ->
             case action.outcome of
                 ShootExtinguisher direction ->
@@ -948,6 +945,9 @@ createRetardantProjectiles currentTime agent acc =
 
                 _ ->
                     acc
+
+        Nothing ->
+            acc
 
 
 type alias PickedItems =
@@ -986,39 +986,8 @@ foldOverPickedItems currentTime agent { agentAcc, foodAcc, extinguisherAcc, logE
                     }
             in
             case topAction of
-                Nothing ->
-                    noChange
-
                 Just action ->
                     case action.outcome of
-                        PickUp (EdibleID foodID) ->
-                            let
-                                modified : ( Agent, List Food )
-                                modified =
-                                    pickUpFood agent foodID foodAcc
-                            in
-                            { updatedAgent = Tuple.first modified
-                            , updatedFoods = Tuple.second modified
-                            , updatedExtinguishers = extinguisherAcc
-                            , newEntries = []
-                            }
-
-                        PickUp (ExtinguisherID extinguisherID) ->
-                            let
-                                modified :
-                                    ( Agent
-                                    , List FireExtinguisher
-                                    , List EntryKind
-                                    )
-                                modified =
-                                    pickUpExtinguisher agent extinguisherID extinguisherAcc
-                            in
-                            { updatedAgent = Tuple3.first modified
-                            , updatedFoods = foodAcc
-                            , updatedExtinguishers = Tuple3.second modified
-                            , newEntries = Tuple3.third modified
-                            }
-
                         DoNothing ->
                             noChange
 
@@ -1037,6 +1006,34 @@ foldOverPickedItems currentTime agent { agentAcc, foodAcc, extinguisherAcc, logE
                         Wander ->
                             noChange
 
+                        PickUp (ExtinguisherID extinguisherID) ->
+                            let
+                                modified :
+                                    ( Agent
+                                    , List FireExtinguisher
+                                    , List EntryKind
+                                    )
+                                modified =
+                                    pickUpExtinguisher agent extinguisherID extinguisherAcc
+                            in
+                            { updatedAgent = Tuple3.first modified
+                            , updatedFoods = foodAcc
+                            , updatedExtinguishers = Tuple3.second modified
+                            , newEntries = Tuple3.third modified
+                            }
+
+                        PickUp (EdibleID foodID) ->
+                            let
+                                modified : ( Agent, List Food )
+                                modified =
+                                    pickUpFood agent foodID foodAcc
+                            in
+                            { updatedAgent = Tuple.first modified
+                            , updatedFoods = Tuple.second modified
+                            , updatedExtinguishers = extinguisherAcc
+                            , newEntries = []
+                            }
+
                         EatHeldFood ->
                             noChange
 
@@ -1054,6 +1051,9 @@ foldOverPickedItems currentTime agent { agentAcc, foodAcc, extinguisherAcc, logE
 
                         PlantSeed _ ->
                             noChange
+
+                Nothing ->
+                    noChange
     in
     { agentAcc = updatedAgent :: agentAcc
     , foodAcc = updatedFoods
@@ -1073,9 +1073,6 @@ foldOverDroppedFood currentTime agent ( agentAcc, foodAcc ) =
 
         ( updatedAgent, updatedFoods ) =
             case topAction of
-                Nothing ->
-                    ( agent, foodAcc )
-
                 Just action ->
                     case action.outcome of
                         DropHeldFood ->
@@ -1083,6 +1080,9 @@ foldOverDroppedFood currentTime agent ( agentAcc, foodAcc ) =
 
                         _ ->
                             ( agent, foodAcc )
+
+                Nothing ->
+                    ( agent, foodAcc )
     in
     ( updatedAgent :: agentAcc, updatedFoods )
 
@@ -1104,9 +1104,6 @@ foldOverAgentsAndGrowables currentTime deltaTMilliseconds agent growables =
         updatedGrowables : List Growable
         updatedGrowables =
             case topAction of
-                Nothing ->
-                    withNaturalGrowth
-
                 Just action ->
                     case action.outcome of
                         PlantSeed growableID ->
@@ -1114,6 +1111,9 @@ foldOverAgentsAndGrowables currentTime deltaTMilliseconds agent growables =
 
                         _ ->
                             withNaturalGrowth
+
+                Nothing ->
+                    withNaturalGrowth
     in
     updatedGrowables
 
@@ -1206,11 +1206,11 @@ pickUpFood agent foodID foods =
         carry =
             if agentIsAvailable && foodAvailable then
                 case foods |> List.filter targetIsAvailable |> List.head of
-                    Nothing ->
-                        agent
-
                     Just food ->
                         { agent | holding = BothHands (Edible food) }
+
+                    Nothing ->
+                        agent
 
             else
                 agent
@@ -1278,9 +1278,6 @@ collideRetardantAndFire fire maybeRetardant =
             ( Just fire, maybeRetardant )
     in
     case maybeRetardant of
-        Nothing ->
-            noChange
-
         Just retardant ->
             let
                 collisionResult : Collision
@@ -1307,6 +1304,9 @@ collideRetardantAndFire fire maybeRetardant =
 
             else
                 noChange
+
+        Nothing ->
+            noChange
 
 
 collideRetardantAndFires : Retardant -> List Fire -> ( List Fire, Maybe Retardant )
@@ -1372,9 +1372,6 @@ pickUpExtinguisher agent extinguisherID extinguishers =
         carryAndEntry =
             if agentIsAvailable && targetAvailable then
                 case extinguishers |> List.head of
-                    Nothing ->
-                        ( agent, [] )
-
                     Just extinguisher ->
                         ( { agent | holding = BothHands (Extinguisher extinguisher) }
                         , [ AgentEntry { agentName = agent.name }
@@ -1382,6 +1379,9 @@ pickUpExtinguisher agent extinguisherID extinguishers =
                                 extinguisher.physics.position
                           ]
                         )
+
+                    Nothing ->
+                        ( agent, [] )
 
             else
                 ( agent, [] )

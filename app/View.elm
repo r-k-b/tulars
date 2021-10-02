@@ -616,9 +616,6 @@ renderAgent { showNames } agent =
         call : List (Svg Msg)
         call =
             case agent.callingOut of
-                Nothing ->
-                    []
-
                 Just calling ->
                     case calling.signal of
                         FeedMe ->
@@ -630,6 +627,9 @@ renderAgent { showNames } agent =
                             [ renderEmoji "😑" origin
                                 |> Svg.scaleAbout origin 0.7
                             ]
+
+                Nothing ->
+                    []
 
         bothHands : Point2d Meters coordinates
         bothHands =
@@ -709,11 +709,11 @@ renderPortable : Portable -> Point2d.Point2d Meters YDownCoords -> Svg Msg
 renderPortable p pOffset =
     Svg.scaleAbout pOffset 0.6 <|
         case p of
-            Edible _ ->
-                renderEmoji "🍽" pOffset
-
             Extinguisher _ ->
                 renderEmoji "🚒" pOffset
+
+            Edible _ ->
+                renderEmoji "🍽" pOffset
 
 
 append : List a -> List a -> List a
@@ -1117,11 +1117,11 @@ renderCI currentTime agent action ci =
                 val : String
                 val =
                     case Dict.get "CallOut FeedMe" agent.topActionLastStartTimes of
-                        Nothing ->
-                            "Never"
-
                         Just t ->
                             differenceInMillis currentTime t |> String.fromInt
+
+                        Nothing ->
+                            "Never"
             in
             "Time since last shouted \"Feed Me!\" "
                 ++ val
@@ -1129,14 +1129,14 @@ renderCI currentTime agent action ci =
         IsCurrentAction ->
             "Is action the current one? " ++ (action.name == agent.currentAction |> boolString)
 
+        IAmBeggingForFood ->
+            "Am I begging for food? " ++ (agent.beggingForFood |> boolString)
+
         Held carryCheck ->
             "Am I carrying "
                 ++ describeCarryCheck carryCheck
                 ++ "? "
                 ++ (isHolding carryCheck agent.holding |> boolString)
-
-        IAmBeggingForFood ->
-            "Am I begging for food? " ++ (agent.beggingForFood |> boolString)
 
         FoodWasGivenAway foodID ->
             "Did I give this food away already? (id#" ++ String.fromInt foodID ++ ")"

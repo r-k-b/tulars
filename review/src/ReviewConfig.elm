@@ -22,6 +22,7 @@ import NoMissingTypeAnnotation
 import NoMissingTypeAnnotationInLetIn
 import NoMissingTypeExpose
 import NoRecursiveUpdate
+import NoUnsortedCases
 import NoUnused.CustomTypeConstructorArgs
 import NoUnused.CustomTypeConstructors
 import NoUnused.Dependencies
@@ -47,6 +48,7 @@ config =
     , NoMissingTypeAnnotationInLetIn.rule
     , NoMissingTypeExpose.rule
     , NoRecursiveUpdate.rule
+    , NoUnsortedCases.rule NoUnsortedCases.defaults
     , NoUnused.CustomTypeConstructorArgs.rule
     , NoUnused.CustomTypeConstructors.rule
         [ { moduleName = "Point2d", typeName = "Point2d", index = 1 }
