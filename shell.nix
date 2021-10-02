@@ -1,5 +1,13 @@
 { pkgs ? import <nixpkgs> { } }:
-pkgs.mkShell {
+let
+  updateElmNixDeps = pkgs.writeScriptBin "update-elm-nix-deps" ''
+    set -e
+    cd "$(git rev-parse --show-toplevel)"
+    elm2nix convert > elm-srcs.nix
+    nixfmt elm-srcs.nix
+    echo elm-srcs.nix has been updated.
+  '';
+in pkgs.mkShell {
   name = "tulars";
 
   buildInputs = with pkgs; [
@@ -13,6 +21,7 @@ pkgs.mkShell {
     cypress
     nixfmt
     nodejs
+    updateElmNixDeps
   ];
 
   shellHook = ''
