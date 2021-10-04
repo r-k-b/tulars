@@ -83,9 +83,9 @@ main : Program Flags Model Msg
 main =
     Browser.document
         { init = init
-        , view = view
-        , update = update
         , subscriptions = subscriptions
+        , update = update
+        , view = view
         }
 
 
@@ -95,20 +95,20 @@ main =
 
 initialModelAt : String -> Posix -> Model
 initialModelAt gitHash posixTime =
-    { time = posixTime
-    , agents = []
+    { agents = []
+    , extinguishers = []
+    , fires = []
     , focalPoint = Point2d.origin
     , foods = []
-    , fires = []
     , gitHash = gitHash
     , growables = []
-    , extinguishers = []
     , log = []
     , menu = initialMenu
-    , retardants = []
     , paused = False
+    , retardants = []
     , showNames = False
     , tabs = SelectList.fromLists [] MainMap []
+    , time = posixTime
     }
         |> loadScene sceneA
 
@@ -128,9 +128,9 @@ initialMenu =
         s : String -> Msg -> Tree (MenuItem Msg)
         s name msg =
             tree
-                { name = TextLabel name
+                { cypressHandle = Nothing
                 , menuItemType = SimpleItem msg
-                , cypressHandle = Nothing
+                , name = TextLabel name
                 }
                 []
 
@@ -139,24 +139,24 @@ initialMenu =
             -> Msg
             ->
                 Tree
-                    { name : MenuItemLabel
+                    { cypressHandle : Maybe (Html.Attribute Msg)
                     , menuItemType : MenuItemType Msg
-                    , cypressHandle : Maybe (Html.Attribute Msg)
+                    , name : MenuItemLabel
                     }
         labelledS name msg =
             tree
-                { name = name
+                { cypressHandle = Nothing
                 , menuItemType = SimpleItem msg
-                , cypressHandle = Nothing
+                , name = name
                 }
                 []
 
         p : String -> List (Tree (MenuItem Msg)) -> Tree (MenuItem Msg)
         p name =
             tree
-                { name = TextLabel name
+                { cypressHandle = Nothing
                 , menuItemType = ParentItem
-                , cypressHandle = Nothing
+                , name = TextLabel name
                 }
 
         cyHandle : Html.Attribute Msg -> Tree (MenuItem Msg) -> Tree (MenuItem Msg)
@@ -205,9 +205,9 @@ initialMenu =
 sceneButtons :
     List
         (Tree
-            { name : MenuItemLabel
+            { cypressHandle : Maybe.Maybe a
             , menuItemType : MenuItemType Msg
-            , cypressHandle : Maybe.Maybe a
+            , name : MenuItemLabel
             }
         )
 sceneButtons =
@@ -219,9 +219,9 @@ sceneButtons =
         |> List.map
             (\scene ->
                 tree
-                    { name = TextLabel scene.name
+                    { cypressHandle = Nothing
                     , menuItemType = SimpleItem (LoadScene scene)
-                    , cypressHandle = Nothing
+                    , name = TextLabel scene.name
                     }
                     []
             )
@@ -562,9 +562,9 @@ moveAgent currentTime dT agent =
             in
             { p
                 | position = newPosition
+                , facing = newFacing
                 , velocity = newVelocity
                 , acceleration = newAcceleration
-                , facing = newFacing
             }
 
         beggingForFood : Bool
@@ -586,13 +586,13 @@ moveAgent currentTime dT agent =
     in
     ( { agent
         | physics = newPhysics
-        , topActionLastStartTimes = newTopActionLastStartTimes
-        , callingOut = newCall
-        , hunger = newHunger
         , currentAction = topAction |> Maybe.map .name |> withDefault "none"
         , currentOutcome = newOutcome
-        , holding = newHolding
+        , hunger = newHunger
         , beggingForFood = beggingForFood
+        , topActionLastStartTimes = newTopActionLastStartTimes
+        , callingOut = newCall
+        , holding = newHolding
         , hp = hitpointsAfterStarvation
       }
     , callEntry
@@ -899,12 +899,12 @@ moveWorld newTime model =
     in
     { model
         | time = newTime
-        , foods = includingDroppedFood
         , agents = agentsAfterDroppingFood
-        , extinguishers = extinguisherAcc
-        , retardants = retardantsAfterCollisionWithFire
+        , foods = includingDroppedFood
         , fires = firesAfterCollisionWithRetardants
         , growables = updatedGrowables
+        , extinguishers = extinguisherAcc
+        , retardants = retardantsAfterCollisionWithFire
     }
         |> logAll deathEntries
         |> logAll movementEntries
@@ -929,10 +929,9 @@ createRetardantProjectiles currentTime agent acc =
         Just action ->
             case action.outcome of
                 ShootExtinguisher direction ->
-                    { expiry = Time.posixToMillis currentTime + 1000 |> Time.millisToPosix
-                    , physics =
-                        { facing = direction
-                        , position = agent.physics.position
+                    { physics =
+                        { position = agent.physics.position
+                        , facing = direction
                         , velocity =
                             direction
                                 |> Vector2d.withLength (Length.meters 100)
@@ -940,6 +939,7 @@ createRetardantProjectiles currentTime agent acc =
                         , acceleration = Vector2d.zero
                         , radius = retardantRadius
                         }
+                    , expiry = Time.posixToMillis currentTime + 1000 |> Time.millisToPosix
                     }
                         :: acc
 
@@ -975,7 +975,7 @@ foldOverPickedItems currentTime agent { agentAcc, foodAcc, extinguisherAcc, logE
                 |> List.sortBy (computeUtility agent currentTime >> (*) -1)
                 |> List.head
 
-        { updatedAgent, updatedFoods, updatedExtinguishers, newEntries } =
+        { updatedFoods, updatedExtinguishers, updatedAgent, newEntries } =
             let
                 noChange : PickedItemsHelper
                 noChange =

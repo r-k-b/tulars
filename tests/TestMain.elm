@@ -27,24 +27,24 @@ agent : Agent
 agent =
     { name = "Alf"
     , physics =
-        { facing = Direction2d.fromAngle (Angle.degrees 70)
-        , position = Point2d.origin
+        { position = Point2d.origin
+        , facing = Direction2d.fromAngle (Angle.degrees 70)
         , velocity = Vector2d.zero
         , acceleration = Vector2d.zero
         , radius = agentRadius
         }
     , species = Human
+    , constantActions = []
+    , variableActions = []
     , actionGenerators = []
     , visibleActions = Dict.empty
-    , variableActions = []
-    , constantActions = []
     , currentAction = "none"
     , currentOutcome = "none"
     , hunger = Range { min = 0, max = 1, value = 0.8 }
     , beggingForFood = False
+    , topActionLastStartTimes = Dict.empty
     , callingOut = Nothing
     , holding = EmptyHanded
-    , topActionLastStartTimes = Dict.empty
     , foodsGivenAway = Set.empty
     , hp = Hitpoints 100 100
     }
@@ -54,8 +54,8 @@ food1 : Food
 food1 =
     { id = 1
     , physics =
-        { facing = Direction2d.fromAngle (Angle.degrees 0)
-        , position = Point2d.fromMeters { x = 0, y = 10 }
+        { position = Point2d.fromMeters { x = 0, y = 10 }
+        , facing = Direction2d.fromAngle (Angle.degrees 0)
         , velocity = Vector2d.zero
         , acceleration = Vector2d.zero
         , radius = foodRadius
@@ -68,8 +68,8 @@ food2 : Food
 food2 =
     { id = 2
     , physics =
-        { facing = Direction2d.fromAngle (Angle.degrees 0)
-        , position = Point2d.fromMeters { x = 10, y = 0 }
+        { position = Point2d.fromMeters { x = 10, y = 0 }
+        , facing = Direction2d.fromAngle (Angle.degrees 0)
         , velocity = Vector2d.zero
         , acceleration = Vector2d.zero
         , radius = foodRadius
@@ -82,8 +82,8 @@ food3OutOfReach : Food
 food3OutOfReach =
     { id = 3
     , physics =
-        { facing = Direction2d.fromAngle (Angle.degrees 0)
-        , position = Point2d.fromMeters { x = 100, y = 100 }
+        { position = Point2d.fromMeters { x = 100, y = 100 }
+        , facing = Direction2d.fromAngle (Angle.degrees 0)
         , velocity = Vector2d.zero
         , acceleration = Vector2d.zero
         , radius = foodRadius

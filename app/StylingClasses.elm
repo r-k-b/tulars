@@ -16,7 +16,6 @@ classes :
     { activeMenuItem : String
     , clickable : String
     , fullSize : String
-    , theme : { notSoHarsh : String }
     , logHud : String
     , logHudLine : String
     , pageGrid :
@@ -28,21 +27,19 @@ classes :
         , subMenu : String
         , tabs : String
         }
-    , parentButton : { button : String, text : String, indicator : String }
+    , parentButton : { button : String, indicator : String, text : String }
     , position : { relative : String }
     , selectedTab : String
     , tab : String
     , tabCloser : String
     , tabText : String
+    , theme : { notSoHarsh : String }
     , zoomSvg : String
     }
 classes =
     { activeMenuItem = "menu-item--active"
     , clickable = "clickable"
     , fullSize = "full-size"
-    , theme =
-        { notSoHarsh = "theme--not-so-harsh"
-        }
     , logHud = "log-hud"
     , logHudLine = "log-hud__line"
     , pageGrid =
@@ -56,8 +53,8 @@ classes =
         }
     , parentButton =
         { button = "parent-button"
-        , text = "parent-button__text"
         , indicator = "parent-button__indicator"
+        , text = "parent-button__text"
         }
     , position =
         { relative = "pos-relative"
@@ -66,6 +63,9 @@ classes =
     , tab = "page-grid__tabs__tab"
     , tabCloser = "page-grid__tabs__tab-closer"
     , tabText = "page-grid__tabs__tab__text"
+    , theme =
+        { notSoHarsh = "theme--not-so-harsh"
+        }
     , zoomSvg = "zoom-svg"
     }
 

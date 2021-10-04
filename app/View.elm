@@ -344,17 +344,17 @@ viewMenuItem isPaused item =
 bb : BoundingBox2d Meters YDownCoords
 bb =
     BoundingBox2d.fromExtrema
-        { minX = Length.meters -300
-        , maxX = Length.meters 300
-        , minY = Length.meters -300
+        { maxX = Length.meters 300
         , maxY = Length.meters 300
+        , minX = Length.meters -300
+        , minY = Length.meters -300
         }
 
 
 render2dResponsive : BoundingBox2d Meters YDownCoords -> Svg msg -> Html msg
 render2dResponsive boundingBox svgMsg =
     let
-        { minX, maxY } =
+        { maxY, minX } =
             BoundingBox2d.extrema boundingBox
 
         topLeftFrame : Frame2d Meters coordinates defines
@@ -924,10 +924,10 @@ renderConsiderationChart agent currentTime action con =
         chartBB : BoundingBox2d Meters YDownCoords
         chartBB =
             BoundingBox2d.fromExtrema
-                { minX = Length.meters -20
-                , maxX = Length.meters 120
-                , minY = Length.meters -20
+                { maxX = Length.meters 120
                 , maxY = Length.meters 120
+                , minX = Length.meters -20
+                , minY = Length.meters -20
                 }
 
         chartYMin : Float

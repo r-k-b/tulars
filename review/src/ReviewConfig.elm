@@ -23,6 +23,7 @@ import NoMissingTypeAnnotationInLetIn
 import NoMissingTypeExpose
 import NoRecursiveUpdate
 import NoUnsortedCases
+import NoUnsortedRecords
 import NoUnused.CustomTypeConstructorArgs
 import NoUnused.CustomTypeConstructors
 import NoUnused.Dependencies
@@ -49,6 +50,10 @@ config =
     , NoMissingTypeExpose.rule
     , NoRecursiveUpdate.rule
     , NoUnsortedCases.rule NoUnsortedCases.defaults
+    , NoUnsortedRecords.rule
+        (NoUnsortedRecords.defaults
+            |> NoUnsortedRecords.reportAmbiguousRecordsWithoutFix
+        )
     , NoUnused.CustomTypeConstructorArgs.rule
     , NoUnused.CustomTypeConstructors.rule
         [ { moduleName = "Point2d", typeName = "Point2d", index = 1 }
