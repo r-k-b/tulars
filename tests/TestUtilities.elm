@@ -5,16 +5,6 @@ import Test exposing (Test, describe, test)
 import UtilityFunctions exposing (linearTransform)
 
 
-standardTransform : Float -> Float
-standardTransform =
-    linearTransform 0 100 0 1
-
-
-epsilon : FloatingPointTolerance
-epsilon =
-    Absolute 0.000000001
-
-
 suite : Test
 suite =
     describe "linear transforms"
@@ -59,3 +49,13 @@ suite =
                 linearTransform 68 104 20 40 32
                     |> Expect.within epsilon 89.6
         ]
+
+
+epsilon : FloatingPointTolerance
+epsilon =
+    Absolute 0.000000001
+
+
+standardTransform : Float -> Float
+standardTransform =
+    linearTransform 0 100 0 1

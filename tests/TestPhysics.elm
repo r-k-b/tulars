@@ -10,28 +10,8 @@ import Types exposing (Collision, Physical, PhysicalProperties)
 import Vector2d exposing (zero)
 
 
-defaultPhysics : PhysicalProperties
-defaultPhysics =
-    { position = Point2d.origin
-    , facing = positiveX
-    , velocity = zero
-    , acceleration = zero
-    , radius = Length.meters 1
-    }
-
-
 type alias Empty =
     {}
-
-
-circleAt : Float -> Float -> Float -> Physical Empty
-circleAt x y radius =
-    { physics =
-        { defaultPhysics
-            | position = Point2d.fromMeters { x = x, y = y }
-            , radius = Length.meters radius
-        }
-    }
 
 
 suite : Test
@@ -64,3 +44,23 @@ suite =
                         |> Expect.equal (Collision (Just positiveX) (Length.meters -10))
             ]
         ]
+
+
+circleAt : Float -> Float -> Float -> Physical Empty
+circleAt x y radius =
+    { physics =
+        { defaultPhysics
+            | position = Point2d.fromMeters { x = x, y = y }
+            , radius = Length.meters radius
+        }
+    }
+
+
+defaultPhysics : PhysicalProperties
+defaultPhysics =
+    { position = Point2d.origin
+    , facing = positiveX
+    , velocity = zero
+    , acceleration = zero
+    , radius = Length.meters 1
+    }

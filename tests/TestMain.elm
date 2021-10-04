@@ -23,75 +23,6 @@ import Types
 import Vector2d
 
 
-agent : Agent
-agent =
-    { name = "Alf"
-    , physics =
-        { position = Point2d.origin
-        , facing = Direction2d.fromAngle (Angle.degrees 70)
-        , velocity = Vector2d.zero
-        , acceleration = Vector2d.zero
-        , radius = agentRadius
-        }
-    , species = Human
-    , constantActions = []
-    , variableActions = []
-    , actionGenerators = []
-    , visibleActions = Dict.empty
-    , currentAction = "none"
-    , currentOutcome = "none"
-    , hunger = Range { min = 0, max = 1, value = 0.8 }
-    , beggingForFood = False
-    , topActionLastStartTimes = Dict.empty
-    , callingOut = Nothing
-    , holding = EmptyHanded
-    , foodsGivenAway = Set.empty
-    , hp = Hitpoints 100 100
-    }
-
-
-food1 : Food
-food1 =
-    { id = 1
-    , physics =
-        { position = Point2d.fromMeters { x = 0, y = 10 }
-        , facing = Direction2d.fromAngle (Angle.degrees 0)
-        , velocity = Vector2d.zero
-        , acceleration = Vector2d.zero
-        , radius = foodRadius
-        }
-    , joules = Range { min = 0, max = 3 * 10 ^ 9, value = 3 * 10 ^ 9 }
-    }
-
-
-food2 : Food
-food2 =
-    { id = 2
-    , physics =
-        { position = Point2d.fromMeters { x = 10, y = 0 }
-        , facing = Direction2d.fromAngle (Angle.degrees 0)
-        , velocity = Vector2d.zero
-        , acceleration = Vector2d.zero
-        , radius = foodRadius
-        }
-    , joules = Range { min = 0, max = 3 * 10 ^ 9, value = 3 * 10 ^ 9 }
-    }
-
-
-food3OutOfReach : Food
-food3OutOfReach =
-    { id = 3
-    , physics =
-        { position = Point2d.fromMeters { x = 100, y = 100 }
-        , facing = Direction2d.fromAngle (Angle.degrees 0)
-        , velocity = Vector2d.zero
-        , acceleration = Vector2d.zero
-        , radius = foodRadius
-        }
-    , joules = Range { min = 0, max = 3 * 10 ^ 9, value = 3 * 10 ^ 9 }
-    }
-
-
 suite : Test
 suite =
     describe "main"
@@ -169,3 +100,72 @@ suite =
                         |> Expect.equal (sl [ 'b', 'c' ] 'd' [ 'e' ])
             ]
         ]
+
+
+agent : Agent
+agent =
+    { name = "Alf"
+    , physics =
+        { position = Point2d.origin
+        , facing = Direction2d.fromAngle (Angle.degrees 70)
+        , velocity = Vector2d.zero
+        , acceleration = Vector2d.zero
+        , radius = agentRadius
+        }
+    , species = Human
+    , constantActions = []
+    , variableActions = []
+    , actionGenerators = []
+    , visibleActions = Dict.empty
+    , currentAction = "none"
+    , currentOutcome = "none"
+    , hunger = Range { min = 0, max = 1, value = 0.8 }
+    , beggingForFood = False
+    , topActionLastStartTimes = Dict.empty
+    , callingOut = Nothing
+    , holding = EmptyHanded
+    , foodsGivenAway = Set.empty
+    , hp = Hitpoints 100 100
+    }
+
+
+food1 : Food
+food1 =
+    { id = 1
+    , physics =
+        { position = Point2d.fromMeters { x = 0, y = 10 }
+        , facing = Direction2d.fromAngle (Angle.degrees 0)
+        , velocity = Vector2d.zero
+        , acceleration = Vector2d.zero
+        , radius = foodRadius
+        }
+    , joules = Range { min = 0, max = 3 * 10 ^ 9, value = 3 * 10 ^ 9 }
+    }
+
+
+food2 : Food
+food2 =
+    { id = 2
+    , physics =
+        { position = Point2d.fromMeters { x = 10, y = 0 }
+        , facing = Direction2d.fromAngle (Angle.degrees 0)
+        , velocity = Vector2d.zero
+        , acceleration = Vector2d.zero
+        , radius = foodRadius
+        }
+    , joules = Range { min = 0, max = 3 * 10 ^ 9, value = 3 * 10 ^ 9 }
+    }
+
+
+food3OutOfReach : Food
+food3OutOfReach =
+    { id = 3
+    , physics =
+        { position = Point2d.fromMeters { x = 100, y = 100 }
+        , facing = Direction2d.fromAngle (Angle.degrees 0)
+        , velocity = Vector2d.zero
+        , acceleration = Vector2d.zero
+        , radius = foodRadius
+        }
+    , joules = Range { min = 0, max = 3 * 10 ^ 9, value = 3 * 10 ^ 9 }
+    }

@@ -47,6 +47,64 @@ import Types
 import Vector2d
 
 
+agentRadius : Length
+agentRadius =
+    Length.meters 10
+
+
+armsReach : Length
+armsReach =
+    Length.meters 20
+
+
+defaultHysteresis : Float -> Consideration
+defaultHysteresis weighting =
+    { name = "hysteresis"
+    , function = Linear { slope = 1, offset = 0 }
+    , input = IsCurrentAction
+    , inputMin = 0
+    , inputMax = 1
+    , weighting = weighting
+    , offset = 1
+    }
+
+
+extinguishers : List FireExtinguisher
+extinguishers =
+    [ { id = 1
+      , physics =
+            { position = Point2d.fromMeters { x = -20, y = -300 }
+            , facing = Direction2d.fromAngle (Angle.degrees 0)
+            , velocity = Vector2d.fromMeters { x = 0, y = 0 }
+            , acceleration = Vector2d.zero
+            , radius = extinguisherRadius
+            }
+      , capacity = 100
+      , remaining = 100
+      }
+    ]
+
+
+fires : List Fire
+fires =
+    [ { id = 1
+      , physics =
+            { position = Point2d.fromMeters { x = -100, y = -100 }
+            , facing = Direction2d.fromAngle (Angle.degrees 0)
+            , velocity = Vector2d.fromMeters { x = 0, y = 0 }
+            , acceleration = Vector2d.zero
+            , radius = fireRadius
+            }
+      , hp = Hitpoints 100 100
+      }
+    ]
+
+
+foodRadius : Length
+foodRadius =
+    Length.meters 10
+
+
 foods : List Food
 foods =
     [ { id = 1
@@ -72,21 +130,6 @@ foods =
     ]
 
 
-fires : List Fire
-fires =
-    [ { id = 1
-      , physics =
-            { position = Point2d.fromMeters { x = -100, y = -100 }
-            , facing = Direction2d.fromAngle (Angle.degrees 0)
-            , velocity = Vector2d.fromMeters { x = 0, y = 0 }
-            , acceleration = Vector2d.zero
-            , radius = fireRadius
-            }
-      , hp = Hitpoints 100 100
-      }
-    ]
-
-
 growables : List Growable
 growables =
     [ FertileSoil { plantedProgress = unseeded } |> basicGrowableAt (Point2d.fromMeters { x = -80, y = -70 }) 1
@@ -101,46 +144,6 @@ growables =
     , DeadPlant { hp = Hitpoints 1 50 } |> basicGrowableAt (Point2d.fromMeters { x = -20, y = -90 }) 10
     , DeadPlant { hp = Hitpoints 30 50 } |> basicGrowableAt (Point2d.fromMeters { x = -20, y = -50 }) 11
     , DeadPlant { hp = Hitpoints 50 50 } |> basicGrowableAt (Point2d.fromMeters { x = -20, y = -30 }) 12
-    ]
-
-
-plantGrowth : Float -> Range
-plantGrowth value =
-    Range { min = 0, max = 30, value = value }
-
-
-unseeded : Range
-unseeded =
-    Range { min = 0, max = 30, value = 0 }
-
-
-basicGrowableAt : Point2d Meters YDownCoords -> Int -> GrowableState -> Growable
-basicGrowableAt position id state =
-    { id = id
-    , physics =
-        { position = position
-        , facing = Direction2d.fromAngle (Angle.degrees 0)
-        , velocity = Vector2d.fromMeters { x = 0, y = 0 }
-        , acceleration = Vector2d.zero
-        , radius = growableRadius
-        }
-    , state = state
-    }
-
-
-extinguishers : List FireExtinguisher
-extinguishers =
-    [ { id = 1
-      , physics =
-            { position = Point2d.fromMeters { x = -20, y = -300 }
-            , facing = Direction2d.fromAngle (Angle.degrees 0)
-            , velocity = Vector2d.fromMeters { x = 0, y = 0 }
-            , acceleration = Vector2d.zero
-            , radius = extinguisherRadius
-            }
-      , capacity = 100
-      , remaining = 100
-      }
     ]
 
 
@@ -299,47 +302,19 @@ rabbits =
             )
 
 
-standardRabbitAt : Point2d.Point2d Meters YDownCoords -> String -> Agent
-standardRabbitAt position name =
-    { name = name
-    , physics =
-        { position = position
-        , facing = Direction2d.fromAngle (Angle.degrees 70)
-        , velocity = Vector2d.fromMeters { x = 0, y = 0 }
-        , acceleration = Vector2d.zero
-        , radius = agentRadius
-        }
-    , species = Rabbit
-    , constantActions =
-        [ stayNearOrigin
-        , wander
-        ]
-    , variableActions = []
-    , actionGenerators =
-        [ AvoidFire
-        , EatCarriedFood
-        , MaintainPersonalSpace Rabbit
+retardantRadius : Length
+retardantRadius =
+    Length.meters 3
 
-        -- eat plants? (when not scared?)
-        -- run from wolves?
-        -- avoid humans?
-        -- make burrows? (when not scared?)
-        -- hide in burrows?
-        -- be on guard?
-        -- become scared?
-        -- run fast when scared?
-        ]
-    , visibleActions = Dict.empty
-    , currentAction = "none"
-    , currentOutcome = "none"
-    , hunger = Range { min = 0, max = 1, value = 0 }
-    , beggingForFood = False
-    , topActionLastStartTimes = Dict.empty
-    , callingOut = Nothing
-    , holding = EmptyHanded
-    , foodsGivenAway = Set.empty
-    , hp = Hitpoints 20 20
-    }
+
+unseeded : Range
+unseeded =
+    Range { min = 0, max = 30, value = 0 }
+
+
+withSuffix : Int -> String -> String
+withSuffix id s =
+    s ++ " (#" ++ String.fromInt id ++ ")"
 
 
 wolves : List Agent
@@ -353,43 +328,50 @@ wolves =
             )
 
 
-standardWolfAt : Point2d.Point2d Meters YDownCoords -> String -> Agent
-standardWolfAt position name =
-    { name = name
+basicGrowableAt : Point2d Meters YDownCoords -> Int -> GrowableState -> Growable
+basicGrowableAt position id state =
+    { id = id
     , physics =
         { position = position
-        , facing = Direction2d.fromAngle (Angle.degrees 70)
+        , facing = Direction2d.fromAngle (Angle.degrees 0)
         , velocity = Vector2d.fromMeters { x = 0, y = 0 }
         , acceleration = Vector2d.zero
-        , radius = agentRadius
+        , radius = growableRadius
         }
-    , species = Wolf
-    , constantActions =
-        [ stayNearOrigin
-        , justChill
-        ]
-    , variableActions = []
-    , actionGenerators =
-        [ AvoidFire
-        , StayNear Wolf
-
-        -- eat food from ground?
-        -- eat corpses?
-        -- run after rabbits?
-        -- avoid humans?
-        -- hide in tall grass?
-        ]
-    , visibleActions = Dict.empty
-    , currentAction = "none"
-    , currentOutcome = "none"
-    , hunger = Range { min = 0, max = 1, value = 0 }
-    , beggingForFood = False
-    , topActionLastStartTimes = Dict.empty
-    , callingOut = Nothing
-    , holding = EmptyHanded
-    , foodsGivenAway = Set.empty
-    , hp = Hitpoints 20 20
+    , state = state
     }
+
+
+emoteBored : Action
+emoteBored =
+    Action
+        "emote 'bored...'"
+        (CallOut Bored)
+        [ { name = "always 0.03"
+          , function = Linear { slope = 1, offset = 0 }
+          , input = Constant 0.03
+          , inputMin = 0
+          , inputMax = 1
+          , weighting = 1
+          , offset = 0
+          }
+        ]
+        Dict.empty
+
+
+extinguisherRadius : Length
+extinguisherRadius =
+    Length.meters 10
+
+
+fireRadius : Length
+fireRadius =
+    Length.meters 6
+
+
+growableRadius : Length
+growableRadius =
+    Length.meters 5
 
 
 justChill : Action
@@ -409,39 +391,9 @@ justChill =
         Dict.empty
 
 
-wander : Action
-wander =
-    Action
-        "wander"
-        Wander
-        [ { name = "always 0.04"
-          , function = Linear { slope = 1, offset = 0 }
-          , input = Constant 0.04
-          , inputMin = 0
-          , inputMax = 1
-          , weighting = 1
-          , offset = 0
-          }
-        ]
-        Dict.empty
-
-
-stayNearOrigin : Action
-stayNearOrigin =
-    Action
-        "stay within 200 or 300 units of the origin"
-        (MoveTo "origin" Point2d.origin)
-        [ { name = "distance from origin"
-          , function = Linear { slope = 1, offset = 0 }
-          , input = MetersToTargetPoint Point2d.origin
-          , inputMin = 200
-          , inputMax = 300
-          , weighting = 0.1
-          , offset = 0
-          }
-        , defaultHysteresis 0.1
-        ]
-        Dict.empty
+plantGrowth : Float -> Range
+plantGrowth value =
+    Range { min = 0, max = 30, value = value }
 
 
 shoutFeedMe : Action
@@ -488,14 +440,114 @@ shoutFeedMe =
         Dict.empty
 
 
-emoteBored : Action
-emoteBored =
+standardRabbitAt : Point2d.Point2d Meters YDownCoords -> String -> Agent
+standardRabbitAt position name =
+    { name = name
+    , physics =
+        { position = position
+        , facing = Direction2d.fromAngle (Angle.degrees 70)
+        , velocity = Vector2d.fromMeters { x = 0, y = 0 }
+        , acceleration = Vector2d.zero
+        , radius = agentRadius
+        }
+    , species = Rabbit
+    , constantActions =
+        [ stayNearOrigin
+        , wander
+        ]
+    , variableActions = []
+    , actionGenerators =
+        [ AvoidFire
+        , EatCarriedFood
+        , MaintainPersonalSpace Rabbit
+
+        -- eat plants? (when not scared?)
+        -- run from wolves?
+        -- avoid humans?
+        -- make burrows? (when not scared?)
+        -- hide in burrows?
+        -- be on guard?
+        -- become scared?
+        -- run fast when scared?
+        ]
+    , visibleActions = Dict.empty
+    , currentAction = "none"
+    , currentOutcome = "none"
+    , hunger = Range { min = 0, max = 1, value = 0 }
+    , beggingForFood = False
+    , topActionLastStartTimes = Dict.empty
+    , callingOut = Nothing
+    , holding = EmptyHanded
+    , foodsGivenAway = Set.empty
+    , hp = Hitpoints 20 20
+    }
+
+
+standardWolfAt : Point2d.Point2d Meters YDownCoords -> String -> Agent
+standardWolfAt position name =
+    { name = name
+    , physics =
+        { position = position
+        , facing = Direction2d.fromAngle (Angle.degrees 70)
+        , velocity = Vector2d.fromMeters { x = 0, y = 0 }
+        , acceleration = Vector2d.zero
+        , radius = agentRadius
+        }
+    , species = Wolf
+    , constantActions =
+        [ stayNearOrigin
+        , justChill
+        ]
+    , variableActions = []
+    , actionGenerators =
+        [ AvoidFire
+        , StayNear Wolf
+
+        -- eat food from ground?
+        -- eat corpses?
+        -- run after rabbits?
+        -- avoid humans?
+        -- hide in tall grass?
+        ]
+    , visibleActions = Dict.empty
+    , currentAction = "none"
+    , currentOutcome = "none"
+    , hunger = Range { min = 0, max = 1, value = 0 }
+    , beggingForFood = False
+    , topActionLastStartTimes = Dict.empty
+    , callingOut = Nothing
+    , holding = EmptyHanded
+    , foodsGivenAway = Set.empty
+    , hp = Hitpoints 20 20
+    }
+
+
+stayNearOrigin : Action
+stayNearOrigin =
     Action
-        "emote 'bored...'"
-        (CallOut Bored)
-        [ { name = "always 0.03"
+        "stay within 200 or 300 units of the origin"
+        (MoveTo "origin" Point2d.origin)
+        [ { name = "distance from origin"
           , function = Linear { slope = 1, offset = 0 }
-          , input = Constant 0.03
+          , input = MetersToTargetPoint Point2d.origin
+          , inputMin = 200
+          , inputMax = 300
+          , weighting = 0.1
+          , offset = 0
+          }
+        , defaultHysteresis 0.1
+        ]
+        Dict.empty
+
+
+wander : Action
+wander =
+    Action
+        "wander"
+        Wander
+        [ { name = "always 0.04"
+          , function = Linear { slope = 1, offset = 0 }
+          , input = Constant 0.04
           , inputMin = 0
           , inputMax = 1
           , weighting = 1
@@ -503,55 +555,3 @@ emoteBored =
           }
         ]
         Dict.empty
-
-
-defaultHysteresis : Float -> Consideration
-defaultHysteresis weighting =
-    { name = "hysteresis"
-    , function = Linear { slope = 1, offset = 0 }
-    , input = IsCurrentAction
-    , inputMin = 0
-    , inputMax = 1
-    , weighting = weighting
-    , offset = 1
-    }
-
-
-withSuffix : Int -> String -> String
-withSuffix id s =
-    s ++ " (#" ++ String.fromInt id ++ ")"
-
-
-agentRadius : Length
-agentRadius =
-    Length.meters 10
-
-
-armsReach : Length
-armsReach =
-    Length.meters 20
-
-
-extinguisherRadius : Length
-extinguisherRadius =
-    Length.meters 10
-
-
-retardantRadius : Length
-retardantRadius =
-    Length.meters 3
-
-
-fireRadius : Length
-fireRadius =
-    Length.meters 6
-
-
-growableRadius : Length
-growableRadius =
-    Length.meters 5
-
-
-foodRadius : Length
-foodRadius =
-    Length.meters 10

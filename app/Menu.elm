@@ -9,27 +9,6 @@ import Maybe exposing (withDefault)
 import Tree.Zipper as Zipper exposing (Zipper)
 
 
-zipperToBreadcrumbs : Zipper a -> ( a, List a )
-zipperToBreadcrumbs zipper =
-    zipperToBreadcrumbsHelper
-        (zipper |> Zipper.parent)
-        (zipper |> Zipper.label)
-        []
-
-
-zipperToBreadcrumbsHelper : Maybe (Zipper a) -> a -> List a -> ( a, List a )
-zipperToBreadcrumbsHelper maybeZipper label crumbs =
-    case maybeZipper of
-        Just parent ->
-            zipperToBreadcrumbsHelper
-                (parent |> Zipper.parent)
-                (parent |> Zipper.label)
-                (label :: crumbs)
-
-        Nothing ->
-            ( label, crumbs )
-
-
 type alias AnnotatedCrumb a =
     { focus : Zipper a
     , siblingsBefore : List (Zipper a)
@@ -69,6 +48,34 @@ zipperToAnnotatedBreadcrumbs zipper =
         endOfTheTrail
 
 
+zipperToBreadcrumbs : Zipper a -> ( a, List a )
+zipperToBreadcrumbs zipper =
+    zipperToBreadcrumbsHelper
+        (zipper |> Zipper.parent)
+        (zipper |> Zipper.label)
+        []
+
+
+siblingsAfterFocus : List (Zipper a) -> Zipper a -> List (Zipper a)
+siblingsAfterFocus accumulator zipper =
+    case zipper |> Zipper.nextSibling of
+        Just sibling ->
+            siblingsAfterFocus (sibling :: accumulator) sibling
+
+        Nothing ->
+            accumulator
+
+
+siblingsBeforeFocus : List (Zipper a) -> Zipper a -> List (Zipper a)
+siblingsBeforeFocus accumulator zipper =
+    case zipper |> Zipper.previousSibling of
+        Just sibling ->
+            siblingsBeforeFocus (sibling :: accumulator) sibling
+
+        Nothing ->
+            accumulator
+
+
 zipperToAnnotatedBreadcrumbsHelper :
     Maybe (Zipper a)
     -> AnnotatedCrumb a
@@ -97,21 +104,14 @@ zipperToAnnotatedBreadcrumbsHelper maybeZipper crumbs =
             crumbs
 
 
-siblingsBeforeFocus : List (Zipper a) -> Zipper a -> List (Zipper a)
-siblingsBeforeFocus accumulator zipper =
-    case zipper |> Zipper.previousSibling of
-        Just sibling ->
-            siblingsBeforeFocus (sibling :: accumulator) sibling
+zipperToBreadcrumbsHelper : Maybe (Zipper a) -> a -> List a -> ( a, List a )
+zipperToBreadcrumbsHelper maybeZipper label crumbs =
+    case maybeZipper of
+        Just parent ->
+            zipperToBreadcrumbsHelper
+                (parent |> Zipper.parent)
+                (parent |> Zipper.label)
+                (label :: crumbs)
 
         Nothing ->
-            accumulator
-
-
-siblingsAfterFocus : List (Zipper a) -> Zipper a -> List (Zipper a)
-siblingsAfterFocus accumulator zipper =
-    case zipper |> Zipper.nextSibling of
-        Just sibling ->
-            siblingsAfterFocus (sibling :: accumulator) sibling
-
-        Nothing ->
-            accumulator
+            ( label, crumbs )

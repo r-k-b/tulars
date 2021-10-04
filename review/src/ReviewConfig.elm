@@ -24,6 +24,7 @@ import NoMissingTypeExpose
 import NoRecursiveUpdate
 import NoUnsortedCases
 import NoUnsortedRecords
+import NoUnsortedTopLevelDeclarations
 import NoUnused.CustomTypeConstructorArgs
 import NoUnused.CustomTypeConstructors
 import NoUnused.Dependencies
@@ -53,6 +54,13 @@ config =
     , NoUnsortedRecords.rule
         (NoUnsortedRecords.defaults
             |> NoUnsortedRecords.reportAmbiguousRecordsWithoutFix
+        )
+    , NoUnsortedTopLevelDeclarations.rule
+        (NoUnsortedTopLevelDeclarations.sortTopLevelDeclarations
+            |> NoUnsortedTopLevelDeclarations.typesFirst
+            |> NoUnsortedTopLevelDeclarations.portsFirst
+            |> NoUnsortedTopLevelDeclarations.exposedOrderWithPrivateLast
+            |> NoUnsortedTopLevelDeclarations.alphabetically
         )
     , NoUnused.CustomTypeConstructorArgs.rule
     , NoUnused.CustomTypeConstructors.rule

@@ -65,22 +65,27 @@ import Types
 import Vector2d
 
 
-computeUtility : Agent -> Posix -> Action -> Float
-computeUtility agent currentTime action =
-    let
-        tiny : Float
-        tiny =
-            List.map (computeConsideration agent currentTime Nothing action) action.considerations
-                |> List.foldl (*) 1
+boolString : Bool -> String
+boolString b =
+    if b then
+        "true"
 
-        undoTiny : Float
-        undoTiny =
-            List.length action.considerations
-                |> toFloat
-                |> min 1
+    else
+        "false"
+
+
+clampTo : Consideration -> Float -> Float
+clampTo con x =
+    let
+        inputMin : Float
+        inputMin =
+            min con.inputMin con.inputMax
+
+        inputMax : Float
+        inputMax =
+            max con.inputMin con.inputMax
     in
-    -- What's the name for this operation?
-    tiny ^ (1 / undoTiny)
+    clamp inputMin inputMax x
 
 
 {-| Provide a "forced" value to override the consideration's
@@ -145,29 +150,43 @@ computeConsideration agent currentTime forced action consideration =
     normalizedOutput * consideration.weighting + consideration.offset
 
 
-nansToZero : Float -> Float
-nansToZero n =
-    if isNaN n then
-        0
-
-    else
-        n
-
-
-{-| Take x and map it from the `x1` - `x2` range into the `y1` - `y2` range.
--}
-linearTransform : Float -> Float -> Float -> Float -> Float -> Float
-linearTransform y1 y2 x1 x2 x =
+computeUtility : Agent -> Posix -> Action -> Float
+computeUtility agent currentTime action =
     let
-        scale : Float
-        scale =
-            (y2 - y1) / (x2 - x1)
+        tiny : Float
+        tiny =
+            List.map (computeConsideration agent currentTime Nothing action) action.considerations
+                |> List.foldl (*) 1
 
-        offset : Float
-        offset =
-            y1 - (scale * x1)
+        undoTiny : Float
+        undoTiny =
+            List.length action.considerations
+                |> toFloat
+                |> min 1
     in
-    scale * x + offset
+    -- What's the name for this operation?
+    tiny ^ (1 / undoTiny)
+
+
+computeVariableActions : Model -> Agent -> List Action
+computeVariableActions model agent =
+    agent.actionGenerators
+        |> applyList model agent
+        |> List.concat
+
+
+{-| Returns a positive int if a is later than b.
+-}
+differenceInMillis : Posix -> Posix -> Int
+differenceInMillis a b =
+    Time.posixToMillis a - Time.posixToMillis b
+
+
+{-| Convenience method for combining the Variable and Constant action lists.
+-}
+getActions : Agent -> List Action
+getActions agent =
+    List.append agent.constantActions agent.variableActions
 
 
 getConsiderationRawValue : Agent -> Posix -> Action -> Consideration -> Float
@@ -217,13 +236,32 @@ getConsiderationRawValue agent currentTime action consideration =
                 |> true1false0
 
 
-true1false0 : Bool -> Float
-true1false0 b =
-    if b then
-        1
+{-| Turns a Hitpoints type into a normalised float, between 0 (dead) and 1 (full hp).
+-}
+hpAsFloat : Hitpoints -> Float
+hpAsFloat hp =
+    case hp of
+        Hitpoints current max ->
+            current
+                / max
+                |> clamp 0 1
 
-    else
-        0
+
+hpRawValue : Hitpoints -> Float
+hpRawValue hp =
+    case hp of
+        Hitpoints current _ ->
+            current
+
+
+isBeggingRelated : Action -> Maybe Bool
+isBeggingRelated action =
+    case action.outcome of
+        BeggingForFood bool ->
+            Just bool
+
+        _ ->
+            Nothing
 
 
 isHolding : CarryableCheck -> Holding -> Bool
@@ -252,44 +290,6 @@ isHolding check held =
 
                         Edible _ ->
                             True
-
-
-clampTo : Consideration -> Float -> Float
-clampTo con x =
-    let
-        inputMin : Float
-        inputMin =
-            min con.inputMin con.inputMax
-
-        inputMax : Float
-        inputMax =
-            max con.inputMin con.inputMax
-    in
-    clamp inputMin inputMax x
-
-
-{-| Convenience method for combining the Variable and Constant action lists.
--}
-getActions : Agent -> List Action
-getActions agent =
-    List.append agent.constantActions agent.variableActions
-
-
-computeVariableActions : Model -> Agent -> List Action
-computeVariableActions model agent =
-    agent.actionGenerators
-        |> applyList model agent
-        |> List.concat
-
-
-applyList : Model -> Agent -> List GeneratorType -> List (List Action)
-applyList model agent generators =
-    case generators of
-        [] ->
-            []
-
-        genType :: rest ->
-            forGenerator genType model agent :: applyList model agent rest
 
 
 isMovementAction : Action -> Bool
@@ -335,65 +335,37 @@ isMovementAction action =
             False
 
 
-isBeggingRelated : Action -> Maybe Bool
-isBeggingRelated action =
-    case action.outcome of
-        BeggingForFood bool ->
-            Just bool
-
-        _ ->
-            Nothing
-
-
-onlyArrestMomentum : Action -> Maybe Action
-onlyArrestMomentum action =
-    case action.outcome of
-        ArrestMomentum ->
-            Just action
-
-        _ ->
-            Nothing
-
-
-boolString : Bool -> String
-boolString b =
-    if b then
-        "true"
-
-    else
-        "false"
-
-
-{-| Returns a positive int if a is later than b.
+{-| Take x and map it from the `x1` - `x2` range into the `y1` - `y2` range.
 -}
-differenceInMillis : Posix -> Posix -> Int
-differenceInMillis a b =
-    Time.posixToMillis a - Time.posixToMillis b
+linearTransform : Float -> Float -> Float -> Float -> Float -> Float
+linearTransform y1 y2 x1 x2 x =
+    let
+        scale : Float
+        scale =
+            (y2 - y1) / (x2 - x1)
+
+        offset : Float
+        offset =
+            y1 - (scale * x1)
+    in
+    scale * x + offset
 
 
-rangeCurrentValue : Range -> Float
-rangeCurrentValue range =
-    case range of
-        Range r ->
-            r.value
-                |> clamp r.min r.max
+log : EntryKind -> Model -> Model
+log entry model =
+    let
+        newEntry : LogEntry
+        newEntry =
+            { entry = entry
+            , time = model.time
+            }
+    in
+    { model | log = newEntry :: model.log }
 
 
-normaliseRange : Range -> Float
-normaliseRange range =
-    case range of
-        Range r ->
-            r.value
-                |> linearTransform 0 1 r.min r.max
-
-
-{-| Set the current value of a range, clamped to the min and max.
--}
-updateRange : Range -> Float -> Range
-updateRange original newVal =
-    case original of
-        Range r ->
-            Range { r | value = newVal }
+logAll : List EntryKind -> Model -> Model
+logAll entries model =
+    List.foldl log model entries
 
 
 mapRange : (Float -> Float) -> Range -> Range
@@ -406,22 +378,30 @@ mapRange func original =
                 |> (\newValue -> Range { r | value = newValue })
 
 
-{-| Turns a Hitpoints type into a normalised float, between 0 (dead) and 1 (full hp).
--}
-hpAsFloat : Hitpoints -> Float
-hpAsFloat hp =
-    case hp of
-        Hitpoints current max ->
-            current
-                / max
-                |> clamp 0 1
+normaliseRange : Range -> Float
+normaliseRange range =
+    case range of
+        Range r ->
+            r.value
+                |> linearTransform 0 1 r.min r.max
 
 
-hpRawValue : Hitpoints -> Float
-hpRawValue hp =
-    case hp of
-        Hitpoints current _ ->
-            current
+onlyArrestMomentum : Action -> Maybe Action
+onlyArrestMomentum action =
+    case action.outcome of
+        ArrestMomentum ->
+            Just action
+
+        _ ->
+            Nothing
+
+
+rangeCurrentValue : Range -> Float
+rangeCurrentValue range =
+    case range of
+        Range r ->
+            r.value
+                |> clamp r.min r.max
 
 
 setHitpoints : Hitpoints -> Float -> Hitpoints
@@ -431,63 +411,23 @@ setHitpoints oldHP new =
             Hitpoints (new |> clamp 0 max) max
 
 
-isReadyToPlant : Growable -> Bool
-isReadyToPlant growable =
-    case growable.state of
-        FertileSoil _ ->
-            True
-
-        GrowingPlant _ ->
-            False
-
-        GrownPlant _ ->
-            False
-
-        DeadPlant _ ->
-            False
+{-| Set the current value of a range, clamped to the min and max.
+-}
+updateRange : Range -> Float -> Range
+updateRange original newVal =
+    case original of
+        Range r ->
+            Range { r | value = newVal }
 
 
-forGenerator : GeneratorType -> ActionGenerator
-forGenerator genType =
-    case genType of
-        AvoidFire ->
-            avoidFire
+applyList : Model -> Agent -> List GeneratorType -> List (List Action)
+applyList model agent generators =
+    case generators of
+        [] ->
+            []
 
-        DropFoodForBeggars ->
-            dropFoodForBeggar
-
-        EatCarriedFood ->
-            eatCarriedFood
-
-        FightFires ->
-            fightFires
-
-        HoverNear name ->
-            hoverNear name
-
-        MaintainPersonalSpace fromSpecies ->
-            maintainPersonalSpace fromSpecies
-
-        MoveToFood ->
-            moveToFood
-
-        MoveToGiveFoodToBeggars ->
-            moveToGiveFoodToBeggar
-
-        PickUpFoodToEat ->
-            pickUpFoodToEat
-
-        PlantThingsToEatLater ->
-            plantGrowables
-
-        SetBeggingState ->
-            setBeggingState
-
-        StayNear species ->
-            stayNear species
-
-        StopAtFood ->
-            stopAtFood
+        genType :: rest ->
+            forGenerator genType model agent :: applyList model agent rest
 
 
 avoidFire : ActionGenerator
@@ -723,6 +663,49 @@ fightFires model agent_ =
         []
 
 
+forGenerator : GeneratorType -> ActionGenerator
+forGenerator genType =
+    case genType of
+        AvoidFire ->
+            avoidFire
+
+        DropFoodForBeggars ->
+            dropFoodForBeggar
+
+        EatCarriedFood ->
+            eatCarriedFood
+
+        FightFires ->
+            fightFires
+
+        HoverNear name ->
+            hoverNear name
+
+        MaintainPersonalSpace fromSpecies ->
+            maintainPersonalSpace fromSpecies
+
+        MoveToFood ->
+            moveToFood
+
+        MoveToGiveFoodToBeggars ->
+            moveToGiveFoodToBeggar
+
+        PickUpFoodToEat ->
+            pickUpFoodToEat
+
+        PlantThingsToEatLater ->
+            plantGrowables
+
+        SetBeggingState ->
+            setBeggingState
+
+        StayNear species ->
+            stayNear species
+
+        StopAtFood ->
+            stopAtFood
+
+
 hoverNear : String -> ActionGenerator
 hoverNear targetAgentName model _ =
     let
@@ -745,6 +728,22 @@ hoverNear targetAgentName model _ =
     model.agents
         |> List.filter (\other -> other.name == targetAgentName)
         |> List.map goalPerItem
+
+
+isReadyToPlant : Growable -> Bool
+isReadyToPlant growable =
+    case growable.state of
+        FertileSoil _ ->
+            True
+
+        GrowingPlant _ ->
+            False
+
+        GrownPlant _ ->
+            False
+
+        DeadPlant _ ->
+            False
 
 
 maintainPersonalSpace : Species -> ActionGenerator
@@ -773,53 +772,6 @@ maintainPersonalSpace fromSpecies model agent =
                     && (other.name /= agent.name)
             )
         |> List.map goalPerItem
-
-
-stayNear : Species -> ActionGenerator
-stayNear species model agent =
-    let
-        label : String
-        label =
-            "stay near the closest " ++ speciesToName species
-
-        goalPerItem : Agent -> Action
-        goalPerItem otherAgent =
-            Action
-                label
-                (MoveTo otherAgent.name otherAgent.physics.position)
-                [ { name = label
-                  , function = Linear { slope = 1, offset = 0 }
-                  , input = Constant 1
-                  , inputMin = 0
-                  , inputMax = 1
-                  , weighting = 0.2
-                  , offset = 0
-                  }
-                ]
-                Dict.empty
-    in
-    model.agents
-        |> List.filter
-            (\other ->
-                (other.species == species)
-                    && (other.name /= agent.name)
-            )
-        |> LE.minimumBy (.physics >> .position >> Point2d.distanceFrom agent.physics.position >> Length.inMeters)
-        |> Maybe.map goalPerItem
-        |> ME.toList
-
-
-speciesToName : Species -> String
-speciesToName species =
-    case species of
-        Human ->
-            "Human"
-
-        Rabbit ->
-            "Rabbit"
-
-        Wolf ->
-            "Wolf"
 
 
 moveToFood : ActionGenerator
@@ -915,6 +867,15 @@ moveToGiveFoodToBeggar model _ =
     model.agents
         |> List.filter .beggingForFood
         |> List.map goalPerItem
+
+
+nansToZero : Float -> Float
+nansToZero n =
+    if isNaN n then
+        0
+
+    else
+        n
 
 
 pickUpFoodToEat : ActionGenerator
@@ -1102,6 +1063,53 @@ setBeggingState _ agent =
         [ beginBegging ]
 
 
+speciesToName : Species -> String
+speciesToName species =
+    case species of
+        Human ->
+            "Human"
+
+        Rabbit ->
+            "Rabbit"
+
+        Wolf ->
+            "Wolf"
+
+
+stayNear : Species -> ActionGenerator
+stayNear species model agent =
+    let
+        label : String
+        label =
+            "stay near the closest " ++ speciesToName species
+
+        goalPerItem : Agent -> Action
+        goalPerItem otherAgent =
+            Action
+                label
+                (MoveTo otherAgent.name otherAgent.physics.position)
+                [ { name = label
+                  , function = Linear { slope = 1, offset = 0 }
+                  , input = Constant 1
+                  , inputMin = 0
+                  , inputMax = 1
+                  , weighting = 0.2
+                  , offset = 0
+                  }
+                ]
+                Dict.empty
+    in
+    model.agents
+        |> List.filter
+            (\other ->
+                (other.species == species)
+                    && (other.name /= agent.name)
+            )
+        |> LE.minimumBy (.physics >> .position >> Point2d.distanceFrom agent.physics.position >> Length.inMeters)
+        |> Maybe.map goalPerItem
+        |> ME.toList
+
+
 stopAtFood : ActionGenerator
 stopAtFood model _ =
     let
@@ -1141,18 +1149,10 @@ stopAtFood model _ =
     List.map goalPerItem model.foods
 
 
-log : EntryKind -> Model -> Model
-log entry model =
-    let
-        newEntry : LogEntry
-        newEntry =
-            { entry = entry
-            , time = model.time
-            }
-    in
-    { model | log = newEntry :: model.log }
+true1false0 : Bool -> Float
+true1false0 b =
+    if b then
+        1
 
-
-logAll : List EntryKind -> Model -> Model
-logAll entries model =
-    List.foldl log model entries
+    else
+        0

@@ -262,11 +262,11 @@ suite =
         ]
 
 
-orBadData : Maybe (Zipper Char) -> Zipper Char
-orBadData =
-    Maybe.withDefault (tree 'Z' [] |> Zipper.fromTree)
-
-
 checkHelperLabel : Char -> Zipper Char -> (a -> Expectation)
 checkHelperLabel char helper _ =
     Expect.equal char (helper |> label)
+
+
+orBadData : Maybe (Zipper Char) -> Zipper Char
+orBadData =
+    Maybe.withDefault (tree 'Z' [] |> Zipper.fromTree)
