@@ -41,6 +41,6 @@
     "cypress": "9.5.4",
     "elm-format": "0.8.5",
     "elm-live": "^4.0.2",
-    "uglify-js": "3.15.3"
+    "uglify-js": "3.15.4"
   }
 }
