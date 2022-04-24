@@ -37,9 +37,7 @@ import Types
         , Hitpoints(..)
         , Holding(..)
         , InputFunction(..)
-        , Portable(..)
         , Range(..)
-        , ReferenceToPortable(..)
         , Signal(..)
         , Species(..)
         , YDownCoords
