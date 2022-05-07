@@ -42,7 +42,7 @@ let
       '';
     };
 in mkDerivation {
-  name = "tulars-0.1.0";
+  name = "tulars-elm2nix-0.1.0";
   srcs = ./elm-srcs.nix;
   src = ./.;
   targets = [ "Main" ];
