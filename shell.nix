@@ -4,6 +4,9 @@ let
     set -e
     cd "$(git rev-parse --show-toplevel)"
     elm2nix convert > elm-srcs.nix
+    # "Snapshot only outputs any data when redirected to the registry.dat file"
+    # <https://github.com/cachix/elm2nix/issues/43>
+    elm2nix snapshot > registry.dat
     nixfmt elm-srcs.nix
     echo elm-srcs.nix has been updated.
   '';
