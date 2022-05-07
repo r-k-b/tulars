@@ -10,8 +10,7 @@
         inherit (pkgs) lib stdenv callPackage;
 
         elm2nix = import ./default.nix { inherit pkgs; };
-      in {
-        packages.default = stdenv.mkDerivation {
+        built = stdenv.mkDerivation {
           name = "tulars";
           src = pkgs.nix-gitignore.gitignoreRecursiveSource "" ./.;
           # build-time-only dependencies
@@ -58,7 +57,17 @@
             cp ${elm2nix}/Main.js $out/
           '';
         };
+      in {
+        packages.default = built;
         packages.rawElm2Nix = elm2nix;
         devShells.default = import ./shell.nix { inherit pkgs; };
+        apps.default = {
+          type = "app";
+          program = "${pkgs.writeScript "tularsApp" ''
+            #!${pkgs.bash}/bin/bash
+
+            xdg-open ${built}/index.html
+          ''}";
+        };
       });
 }
