@@ -9,7 +9,36 @@
         pkgs = nixpkgs.legacyPackages.${system};
         inherit (pkgs) lib stdenv callPackage;
 
-        elm2nix = import ./default.nix { inherit pkgs; };
+        # The build cache will be invalidated if any of the files within change.
+        # So, exclude files from here unless they're necessary for `elm make` et al.
+        minimalElmSrc = lib.cleanSourceWith {
+          name = "tulars-cleaned-source";
+          filter = name: type:
+            let
+              baseName = baseNameOf (toString name);
+              relevantName =
+                # turns paths like `/nix/store/eurr2u3-source/foo/bar.baz` into `foo/bar.baz`:
+                lib.elemAt
+                (builtins.match "^/[^/]*/[^/]*/[^/]*/(.*)$" (toString name)) 0;
+
+            in (lib.cleanSourceFilter name type
+              && !(lib.hasSuffix ".lock" baseName && isFile type)
+              && !(lib.hasSuffix ".md" baseName && isFile type)
+              && !(lib.hasSuffix ".nix" baseName && isFile type)
+              && !(lib.hasSuffix ".json" baseName && isFile type)
+              && !(lib.hasSuffix ".patch" baseName && isFile type)
+              && !(lib.hasSuffix ".sh" baseName && isFile type)
+              # fdgjfdgk
+              && !(relevantName == "Makefile") && !(relevantName == "LICENSE")
+              && !(lib.hasPrefix "cypress" relevantName)
+              && !(lib.hasPrefix "dist/" relevantName)
+              && !(lib.hasPrefix "hook-samples/" relevantName)
+              || (relevantName == "elm.json"));
+          src = pkgs.nix-gitignore.gitignoreRecursiveSource "" ./.;
+        };
+
+        elm2nix = import ./default.nix { inherit pkgs minimalElmSrc; };
+
         built = stdenv.mkDerivation {
           name = "tulars";
           src = pkgs.nix-gitignore.gitignoreRecursiveSource "" ./.;
@@ -66,9 +95,20 @@
             cp ${elm2nix}/Main.js $out/
           '';
         };
+
+        # See the listing @ <https://github.com/NixOS/nixpkgs/blob/1e1396aafccff9378b8f3d0c686e277c226398cf/lib/sources.nix#L23-L26>
+        isFile = type: type == "regular";
       in {
-        packages.default = built;
-        packages.rawElm2Nix = elm2nix;
+        packages = {
+          default = built;
+          rawElm2Nix = elm2nix;
+          minimalElmSrc = stdenv.mkDerivation {
+            src = minimalElmSrc;
+            name = "minimal-elm-source";
+            buildPhase = "mkdir -p $out";
+            installPhase = "cp -r ./* $out";
+          };
+        };
         devShells.default = import ./shell.nix { inherit pkgs; };
         apps.default = {
           type = "app";

@@ -4,7 +4,7 @@
 # manually replaced the next two lines:
 # { nixpkgs ? <nixpkgs>, config ? { } }:
 # with (import nixpkgs config);
-{ pkgs }:
+{ pkgs, minimalElmSrc }:
 with pkgs;
 
 let
@@ -44,7 +44,7 @@ let
 in mkDerivation {
   name = "tulars-elm2nix-0.1.0";
   srcs = ./elm-srcs.nix;
-  src = ./.;
+  src = minimalElmSrc;
   targets = [ "Main" ];
   srcdir = "./app";
   outputJavaScript = true;
