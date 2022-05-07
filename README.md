@@ -7,6 +7,11 @@ Experimentation with simple Utility Function-based agents. [(Demo)](https://tula
 E.g., how do we specify rich, sequential and/or parallel behaviours that 
 are robust to changing environments and dynamic goals? 
 
+# running direct from GitHub
+
+```shell
+$ nix run github:r-k-b/tulars
+```
 
 # building with Nix
 
