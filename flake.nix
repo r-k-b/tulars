@@ -92,7 +92,7 @@
           installPhase = ''
             mkdir -p $out
             cp -r dist/* $out/
-            cp ${elm2nix}/Main.js $out/
+            cp ${elm2nix}/*.js $out/
           '';
         };
 
