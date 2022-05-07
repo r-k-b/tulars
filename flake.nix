@@ -46,7 +46,12 @@
                   shortRev: '${
                     if (self ? shortRev) then self.shortRev else "dirty"
                   }',
-                  submodules: '${toString self.sourceInfo.submodules}',
+                  submodules: ${
+                    if self.sourceInfo ? submodulestoString then
+                      "'${self.sourceInfo.submodules}'"
+                    else
+                      "null"
+                  },
                 },
             }
             EOF
