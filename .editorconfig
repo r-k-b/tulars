@@ -8,6 +8,9 @@ tab_width = 4
 insert_final_newline = true
 max_line_length = 80
 
+[.idea/**]
+insert_final_newline = false
+
 [*.cs]
 indent_style = tab
 

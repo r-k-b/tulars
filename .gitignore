@@ -1,3 +1,6 @@
+# `nix build` outputs
+result*
+
 # elm-package generated files
 elm-stuff
 # elm-repl generated files
