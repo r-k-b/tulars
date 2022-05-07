@@ -4,7 +4,8 @@
   inputs.flake-utils.url = "github:numtide/flake-utils";
 
   outputs = { self, nixpkgs, flake-utils }:
-    flake-utils.lib.eachDefaultSystem (system:
+    let supportedSystems = with flake-utils.lib.system; [ x86_64-linux ];
+    in flake-utils.lib.eachSystem supportedSystems (system:
       let
         pkgs = nixpkgs.legacyPackages.${system};
         inherit (pkgs) lib stdenv callPackage;
