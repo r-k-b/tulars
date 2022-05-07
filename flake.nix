@@ -26,29 +26,33 @@
             window.appContext = {
                 gitHash: '${if (self ? rev) then self.rev else "NO_GIT_REPO"}',
                 nix: {
-                  availableSourceInfo: [${
-                    lib.strings.concatMapStringsSep ", " (name: "'${name}'")
-                    (lib.attrNames self.sourceInfo)
-                  }],
-                  lastModified: '${toString self.sourceInfo.lastModified}',
-                  lastModifiedDate: '${
-                    toString self.sourceInfo.lastModifiedDate
-                  }',
-                  narHash: '${self.sourceInfo.narHash}',
-                  outPath: '${self.sourceInfo.outPath}',
-                  rev: '${if (self ? rev) then self.rev else "dirty"}',
+                  availableSourceInfo: ${
+                    builtins.toJSON (lib.attrNames self.sourceInfo)
+                  },
+                  lastModified: ${builtins.toJSON self.sourceInfo.lastModified},
+                  lastModifiedDate: ${
+                    builtins.toJSON self.sourceInfo.lastModifiedDate
+                  },
+                  narHash: ${builtins.toJSON self.sourceInfo.narHash},
+                  outPath: ${builtins.toJSON self.sourceInfo.outPath},
+                  rev: ${
+                    if (self ? rev) then builtins.toJSON self.rev else "'dirty'"
+                  },
                   revCount: ${
                     if self.sourceInfo ? revCount then
-                      toString self.sourceInfo.revCount
+                      builtins.toJSON self.sourceInfo.revCount
                     else
-                      ''"dirty"''
+                      "'dirty'"
                   },
-                  shortRev: '${
-                    if (self ? shortRev) then self.shortRev else "dirty"
-                  }',
+                  shortRev: ${
+                    if (self ? shortRev) then
+                      builtins.toJSON self.shortRev
+                    else
+                      "'dirty'"
+                  },
                   submodules: ${
                     if self.sourceInfo ? submodulestoString then
-                      "'${self.sourceInfo.submodules}'"
+                      builtins.toJSON self.sourceInfo.submodules
                     else
                       "null"
                   },
