@@ -13,7 +13,7 @@ let
     stdenv.mkDerivation {
       inherit name src;
 
-      buildInputs = [ elmPackages.elm ]
+      buildInputs = (with elmPackages; [ elm elm-json elm-test ])
         ++ lib.optional outputJavaScript nodePackages.uglify-js;
 
       buildPhase = pkgs.elmPackages.fetchElmDeps {
@@ -21,6 +21,14 @@ let
         elmVersion = "0.19.1";
         inherit registryDat;
       };
+
+      # checkPhase manually added; not part of `elm2nix init`.
+      doCheck = true;
+      checkPhase = ''
+        printf 'elm-json is present, at version: '
+        elm-json --version
+        elm-test
+      '';
 
       installPhase = let
         elmfile = module:
