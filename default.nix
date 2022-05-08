@@ -13,7 +13,7 @@ let
     stdenv.mkDerivation {
       inherit name src;
 
-      buildInputs = (with elmPackages; [ elm elm-json elm-test ])
+      buildInputs = (with pkgs.elmPackages; [ elm elm-json elm-test ])
         ++ lib.optional outputJavaScript nodePackages.uglify-js;
 
       buildPhase = pkgs.elmPackages.fetchElmDeps {
@@ -25,8 +25,11 @@ let
       # checkPhase manually added; not part of `elm2nix init`.
       doCheck = true;
       checkPhase = ''
-        printf 'elm-json is present, at version: '
-        elm-json --version
+        ELM_JSON_VERSION="$(elm-json --version | cut -d ' ' -f 2)"
+        echo "elm-json is present, at version: $ELM_JSON_VERSION"
+        mkdir -p "$ELM_HOME/elm-tooling/elm-json/$ELM_JSON_VERSION"
+        ln -s ${pkgs.elmPackages.elm-json}/bin/elm-json \
+          "$ELM_HOME/elm-tooling/elm-json/$ELM_JSON_VERSION/elm-json"
         elm-test
       '';
 
