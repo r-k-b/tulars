@@ -1,0 +1,49 @@
+# Our desired pipeline using only a Nix shell environment.
+# You can locally run the exact same code and tooling as the GitHub Actions CI
+# runners, by running the `nix develop --command x` lines.
+# More info: <https://determinate.systems/posts/nix-github-actions>
+
+name: Check and build Hippo with Nix
+
+on:
+    push:
+#    branches:
+#      - main
+#  pull_request:
+#    branches:
+#      - main
+
+jobs:
+    build_and_test_Hippo_via_nix:
+        name: Test and build Hippo
+        strategy:
+            matrix:
+                os: [ ubuntu-22.04, macos-12 ]
+        runs-on: ubuntu-22.04
+        steps:
+            - name: git checkout
+              uses: actions/checkout@v3
+            - name: Install Nix via Cachix
+              uses: cachix/install-nix-action@v18
+              with:
+                  extra_nix_config: |
+                      access-tokens = github.com=${{ secrets.GITHUB_TOKEN }}
+            - name: cache elm
+              uses: actions/cache@v3
+              with:
+                  path: ~/.elm
+                  key: ${{ runner.os }}-elm-${{ hashFiles('**/elm.json') }}
+                  restore-keys: |
+                      ${{ runner.os }}-elm-
+            - name: cache npm
+              uses: actions/cache@v3
+              with:
+                  path: ~/.npm
+                  key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+                  restore-keys: |
+                      ${{ runner.os }}-node-
+            - name: install npm deps
+              #working-directory: hippo
+              run: |
+                  nix develop --command \
+                    npm install
