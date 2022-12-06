@@ -6,8 +6,8 @@
   };
 
   "elm-community/list-extra" = {
-    sha256 = "043iwpdwyrfb1jndxh7kf7xlkgq1v6pjczv1r1b19p2wky6nmy8z";
-    version = "8.5.2";
+    sha256 = "02grd0p5hc2gvdy4n723d1s28pm1grn95jrzic6jcgb26qh16vcc";
+    version = "8.7.0";
   };
 
   "elm-community/maybe-extra" = {
@@ -16,13 +16,18 @@
   };
 
   "elm-explorations/test" = {
-    sha256 = "1fsd7bajm7qa93r5pn3mdafqh3blpzya601jbs9l238p0hmvh576";
-    version = "1.2.2";
+    sha256 = "16lpk71aiw6cz4g804sra0gzssqyp6w1s4c2zdnyywmfwwnxiw4s";
+    version = "2.1.0";
   };
 
   "elm/browser" = {
     sha256 = "0nagb9ajacxbbg985r4k9h0jadqpp0gp84nm94kcgbr5sf8i9x13";
     version = "1.0.2";
+  };
+
+  "elm/bytes" = {
+    sha256 = "02ywbf52akvxclpxwj9n04jydajcbsbcbsnjs53yjc5lwck3abwj";
+    version = "1.0.8";
   };
 
   "elm/core" = {
@@ -71,8 +76,8 @@
   };
 
   "elm/virtual-dom" = {
-    sha256 = "0q1v5gi4g336bzz1lgwpn5b1639lrn63d8y6k6pimcyismp2i1yg";
-    version = "1.0.2";
+    sha256 = "1yvb8px2z62xd578ag2q0r5hd1vkz9y7dfkx05355iiy1d7jwq4v";
+    version = "1.0.3";
   };
 
   "etaque/elm-response" = {
@@ -131,8 +136,8 @@
   };
 
   "myrho/elm-round" = {
-    sha256 = "1ghw75fq2p316gw95b3mknfhkq7196fc6ziy6c5ic34gxfb03zvg";
-    version = "1.0.4";
+    sha256 = "0zv0a60wzkx4xib7h07ijcg72mcyb3vb914hk5pjp6rf4k2lv9kj";
+    version = "1.0.5";
   };
 
   "r-k-b/map-accumulate" = {

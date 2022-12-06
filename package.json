@@ -32,13 +32,13 @@
     "chokidar": "3.5.3",
     "chokidar-cli": "3.0.0",
     "elm": "^0.19.1-5",
-    "elm-review": "^2.7.6",
-    "elm-test": "^0.19.1",
+    "elm-review": "^2.8.4",
+    "elm-test": "^0.19.1-revision10",
     "g": "2.0.1",
     "natives": "^1.1.6"
   },
   "devDependencies": {
-    "cypress": "11.0.1",
+    "cypress": "^11.2.0",
     "elm-format": "0.8.5",
     "elm-live": "^4.0.2",
     "uglify-js": "3.17.4"
