@@ -39,7 +39,7 @@
   },
   "devDependencies": {
     "cypress": "^12.8.1",
-    "elm-format": "0.8.5",
+    "elm-format": "0.8.6",
     "elm-live": "^4.0.2",
     "uglify-js": "3.17.4"
   }
