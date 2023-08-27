@@ -32,3 +32,11 @@ updates:
   open-pull-requests-limit: 10
   reviewers:
   - r-k-b
+- package-ecosystem: github-actions
+  directory: "/.github/workflows"
+  schedule:
+    interval: daily
+    time: "19:00"
+  open-pull-requests-limit: 10
+  reviewers:
+  - r-k-b
