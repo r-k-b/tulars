@@ -141,8 +141,8 @@
   };
 
   "elm-explorations/test" = {
-    sha256 = "0x2vjclcnka83awn4846cp78qkd9x4s3n6sjrvrirdiixahfm6g1";
-    version = "2.1.1";
+    sha256 = "0q3bplgdd2q0zkfcbfjr44mm7ip98ijqarzzsq0kg4hvysdhhzgs";
+    version = "2.1.2";
   };
 
   "elm/bytes" = {
