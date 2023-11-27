@@ -1,7 +1,10 @@
 {
   description = "Trying out flakes with Tulars";
 
-  inputs.flake-utils.url = "github:numtide/flake-utils";
+  inputs = {
+    flake-utils.url = "github:numtide/flake-utils";
+    nixpkgs.url = "nixpkgs/nixos-unstable";
+  };
 
   outputs = { self, nixpkgs, flake-utils }:
     let supportedSystems = with flake-utils.lib.system; [ x86_64-linux ];
