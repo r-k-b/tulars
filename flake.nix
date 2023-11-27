@@ -66,10 +66,7 @@
           '';
         };
 
-        elm2nix = import ./default.nix {
-          inherit pkgs;
-          minimalElmSrc = failIfDepsOutOfSync;
-        };
+        elm2nix = import ./default.nix { inherit pkgs minimalElmSrc; };
 
         built = stdenv.mkDerivation {
           name = "tulars";
@@ -141,6 +138,7 @@
             installPhase = "cp -r ./* $out";
           };
         };
+        checks = { inherit failIfDepsOutOfSync; };
         devShells.default = import ./shell.nix { inherit pkgs; };
         apps.default = {
           type = "app";
