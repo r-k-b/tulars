@@ -1,7 +1,10 @@
 {
   description = "Trying out flakes with Tulars";
 
-  inputs.flake-utils.url = "github:numtide/flake-utils";
+  inputs = {
+    flake-utils.url = "github:numtide/flake-utils";
+    nixpkgs.url = "nixpkgs/nixos-unstable";
+  };
 
   outputs = { self, nixpkgs, flake-utils }:
     let supportedSystems = with flake-utils.lib.system; [ x86_64-linux ];
@@ -66,10 +69,7 @@
           '';
         };
 
-        elm2nix = import ./default.nix {
-          inherit pkgs;
-          minimalElmSrc = failIfDepsOutOfSync;
-        };
+        elm2nix = import ./default.nix { inherit pkgs minimalElmSrc; };
 
         built = stdenv.mkDerivation {
           name = "tulars";
@@ -141,6 +141,7 @@
             installPhase = "cp -r ./* $out";
           };
         };
+        checks = { inherit failIfDepsOutOfSync; };
         devShells.default = import ./shell.nix { inherit pkgs; };
         apps.default = {
           type = "app";
