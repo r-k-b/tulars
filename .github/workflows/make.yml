@@ -8,14 +8,14 @@ jobs:
     name: Node ${{ matrix.node }} sample
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/cache@v3
+      - uses: actions/cache@v4
         name: cache elm
         with:
           path: ~/.elm
           key: ${{ runner.os }}-elm-${{ hashFiles('**/elm.json') }}
           restore-keys: |
             ${{ runner.os }}-elm-
-      - uses: actions/cache@v3
+      - uses: actions/cache@v4
         name: cache npm
         with:
           path: ~/.npm
