@@ -38,7 +38,7 @@
     "natives": "^1.1.6"
   },
   "devDependencies": {
-    "cypress": "^13.7.2",
+    "cypress": "^13.7.3",
     "elm-format": "0.8.7",
     "elm-live": "^4.0.2",
     "uglify-js": "3.17.4"
