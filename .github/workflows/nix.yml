@@ -19,7 +19,7 @@ jobs:
                   # If you chose API tokens for write access OR if you have a private cache
                   authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
             - name: Keep the Flake up-to-date and healthy
-              uses: DeterminateSystems/flake-checker-action@v5
+              uses: DeterminateSystems/flake-checker-action@v7
               with:
                   fail-mode: true
             - run: nix flake check
