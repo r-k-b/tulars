@@ -108,7 +108,7 @@ initialModelAt gitHash posixTime =
     , retardants = []
     , paused = False
     , showNames = False
-    , tabs = SelectList.fromLists [] MainMap []
+    , tabs = SelectList.fromLists [] MainMap [ AgentInfo ]
     }
         |> loadScene sceneA
 
