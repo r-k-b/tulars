@@ -23,6 +23,7 @@ in pkgs.mkShell {
     elmPackages.elm-review
     elmPackages.elm-test
     cypress
+    firebase-tools # for deploying to static hosting
     nixfmt
     nodejs
     updateElmNixDeps
