@@ -1,6 +1,6 @@
 # tulars
 
-![.github/workflows/make.yml](https://github.com/r-k-b/tulars/workflows/.github/workflows/make.yml/badge.svg)
+![.github/workflows/make.yml](https://github.com/r-k-b/tulars/actions/workflows/nix.yml/badge.svg)
 
 Experimentation with simple Utility Function-based agents. [(Demo)](https://tulars-5f1d1.firebaseapp.com) 
 
