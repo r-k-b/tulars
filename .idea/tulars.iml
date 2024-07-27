@@ -4,6 +4,7 @@
     <exclude-output />
     <content url="file://$MODULE_DIR$">
       <excludeFolder url="file://$MODULE_DIR$/.direnv" />
+      <excludeFolder url="file://$MODULE_DIR$/.firebase" />
       <excludeFolder url="file://$MODULE_DIR$/result" />
       <excludePattern pattern="elm-stuff" />
     </content>
