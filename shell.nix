@@ -14,7 +14,6 @@ in pkgs.mkShell {
   name = "tulars";
 
   buildInputs = with pkgs; [
-    cachix
     elm2nix
     elmPackages.elm
     elmPackages.elm-format
