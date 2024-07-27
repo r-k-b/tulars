@@ -132,6 +132,7 @@
         isFile = type: type == "regular";
       in {
         packages = {
+          inherit built;
           default = built;
           rawElm2Nix = elm2nix;
           minimalElmSrc = stdenv.mkDerivation {

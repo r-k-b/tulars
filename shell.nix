@@ -1,4 +1,4 @@
-{ pkgs ? import <nixpkgs> { } }:
+{ pkgs }:
 let
   updateElmNixDeps = pkgs.writeScriptBin "update-elm-nix-deps" ''
     set -e
@@ -24,7 +24,7 @@ in pkgs.mkShell {
     elmPackages.elm-test
     cypress
     firebase-tools # for deploying to static hosting
-    nixfmt
+    nixfmt-classic
     nodejs
     updateElmNixDeps
   ];
@@ -33,5 +33,9 @@ in pkgs.mkShell {
     export CYPRESS_INSTALL_BINARY=0
     export CYPRESS_RUN_BINARY=${pkgs.cypress}/bin/Cypress
     export PATH=$PATH:${toString ./node_modules/.bin}
+
+    echo ""
+    echo "This is the dev shell for the Tulars project. Coming Soon: Run 'tu --help' to see available commands."
+    echo ""
   '';
 }
