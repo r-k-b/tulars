@@ -142,7 +142,7 @@
             installPhase = "cp -r ./* $out";
           };
         };
-        checks = { inherit failIfDepsOutOfSync; };
+        checks = { inherit built failIfDepsOutOfSync; };
         devShells.default = import ./shell.nix { inherit pkgs; };
         apps.default = {
           type = "app";
