@@ -12,33 +12,19 @@
       let
         pkgs = nixpkgs.legacyPackages.${system};
         inherit (pkgs) lib stdenv callPackage;
+        inherit (lib) fileset hasInfix hasSuffix;
 
         # The build cache will be invalidated if any of the files within change.
         # So, exclude files from here unless they're necessary for `elm make` et al.
-        minimalElmSrc = lib.cleanSourceWith {
-          name = "tulars-cleaned-source";
-          filter = name: type:
-            let
-              baseName = baseNameOf (toString name);
-              relevantName =
-                # turns paths like `/nix/store/eurr2u3-source/foo/bar.baz` into `foo/bar.baz`:
-                lib.elemAt
-                (builtins.match "^/[^/]*/[^/]*/[^/]*/(.*)$" (toString name)) 0;
-
-            in (lib.cleanSourceFilter name type
-              && !(lib.hasSuffix ".lock" baseName && isFile type)
-              && !(lib.hasSuffix ".md" baseName && isFile type)
-              && !(lib.hasSuffix ".nix" baseName && isFile type)
-              && !(lib.hasSuffix ".json" baseName && isFile type)
-              && !(lib.hasSuffix ".patch" baseName && isFile type)
-              && !(lib.hasSuffix ".sh" baseName && isFile type)
-              # fdgjfdgk
-              && !(relevantName == "Makefile") && !(relevantName == "LICENSE")
-              && !(lib.hasPrefix "cypress" relevantName)
-              && !(lib.hasPrefix "dist/" relevantName)
-              && !(lib.hasPrefix "hook-samples/" relevantName)
-              || (relevantName == "elm.json"));
-          src = pkgs.nix-gitignore.gitignoreRecursiveSource "" ./.;
+        minimalElmSrc = fileset.toSource {
+          root = ./.;
+          fileset = fileset.unions [
+            (fileset.fileFilter (file: file.hasExt "elm") ./.)
+            ./dist
+            ./elm.json
+            ./registry.dat
+            ./versions.dat
+          ];
         };
 
         failIfDepsOutOfSync = stdenv.mkDerivation {
@@ -73,7 +59,7 @@
 
         built = stdenv.mkDerivation {
           name = "tulars";
-          src = pkgs.nix-gitignore.gitignoreRecursiveSource "" ./.;
+          src = minimalElmSrc;
           # build-time-only dependencies
           nativeBuildDeps = with pkgs; [ git nodejs ];
           # runtime dependencies
