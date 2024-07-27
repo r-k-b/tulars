@@ -14,6 +14,10 @@ let
     nixfmt ./nix/elm/elm-srcs.nix
     echo $(realpath ./nix/elm/elm-srcs.nix) has been updated.
   '';
+  liveDev = pkgs.writeScriptBin "livedev" ''
+    cd "$(git rev-parse --show-toplevel)"
+    elm-live app/Main.elm -d dist -Hu -- --output="dist/Main.js"
+  '';
 in pkgs.mkShell {
   name = "tulars";
 
@@ -26,9 +30,8 @@ in pkgs.mkShell {
     elmPackages.elm-review
     elmPackages.elm-test
     cypress
-    firebase-tools # for deploying to static hosting
+    liveDev
     nixfmt-classic
-    nodejs
     updateElmNixDeps
   ];
 

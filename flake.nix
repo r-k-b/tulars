@@ -60,7 +60,7 @@
           name = "tulars";
           src = minimalElmSrc;
           # build-time-only dependencies
-          nativeBuildDeps = with pkgs; [ git nodejs ];
+          nativeBuildDeps = with pkgs; [ git ];
           # runtime dependencies
           buildDeps = [ ];
           buildPhase = ''
