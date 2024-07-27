@@ -53,8 +53,7 @@ import Vector2d exposing (Vector2d)
 
 
 type alias Flags =
-    { gitHash : String
-    , posixMillis : Int
+    { posixMillis : Int
     }
 
 
@@ -74,7 +73,6 @@ type alias Model =
         Point2d Meters YDownCoords
     , foods : List Food
     , fires : List Fire
-    , gitHash : String
     , growables : List Growable
     , extinguishers : List FireExtinguisher
     , log : List LogEntry

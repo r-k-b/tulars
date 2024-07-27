@@ -138,7 +138,7 @@ view model =
         page =
             case model.tabs |> selected of
                 About ->
-                    viewAboutPage model.gitHash
+                    viewAboutPage
 
                 AgentInfo ->
                     agentsInfo model.time model.agents
@@ -1414,8 +1414,8 @@ origin =
     Point2d.origin
 
 
-viewAboutPage : String -> PageView
-viewAboutPage gitHash =
+viewAboutPage : PageView
+viewAboutPage =
     { content =
         [ p []
             [ text "\"Tulars\", an exploration of "
@@ -1428,10 +1428,8 @@ viewAboutPage gitHash =
             , a [ href "https://github.com/r-k-b/tulars" ] [ text "github.com" ]
             , text ", under the GNU Affero General Public Licence 3.0. "
             , text "This code built from "
-            , a [ href <| "https://github.com/r-k-b/tulars/commit/" ++ gitHash ]
-                [ text <| "commit "
-                , code [] [ text (gitHash |> String.left 8) ]
-                , text "."
+            , a [ href "https://github.com/r-k-b/tulars" ]
+                [ text "github.com/r-k-b/tulars"
                 ]
             ]
         , p []

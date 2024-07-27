@@ -93,14 +93,13 @@ main =
 -- MODEL
 
 
-initialModelAt : String -> Posix -> Model
-initialModelAt gitHash posixTime =
+initialModelAt : Posix -> Model
+initialModelAt posixTime =
     { time = posixTime
     , agents = []
     , focalPoint = Point2d.origin
     , foods = []
     , fires = []
-    , gitHash = gitHash
     , growables = []
     , extinguishers = []
     , log = []
@@ -115,9 +114,7 @@ initialModelAt gitHash posixTime =
 
 init : Flags -> ( Model, Cmd Msg )
 init flags =
-    ( initialModelAt
-        flags.gitHash
-        (flags.posixMillis |> Time.millisToPosix)
+    ( initialModelAt (flags.posixMillis |> Time.millisToPosix)
     , Cmd.none
     )
 

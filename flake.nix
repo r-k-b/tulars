@@ -85,38 +85,8 @@
             // (not by write-context-js.sh, there's no access to the git metadata inside a nix build)
 
             window.appContext = {
-                gitHash: '${if (self ? rev) then self.rev else "NO_GIT_REPO"}',
                 nix: {
-                  availableSourceInfo: ${
-                    builtins.toJSON (lib.attrNames self.sourceInfo)
-                  },
-                  lastModified: ${builtins.toJSON self.sourceInfo.lastModified},
-                  lastModifiedDate: ${
-                    builtins.toJSON self.sourceInfo.lastModifiedDate
-                  },
-                  narHash: ${builtins.toJSON self.sourceInfo.narHash},
                   outPath: ${builtins.toJSON self.sourceInfo.outPath},
-                  rev: ${
-                    if (self ? rev) then builtins.toJSON self.rev else "'dirty'"
-                  },
-                  revCount: ${
-                    if self.sourceInfo ? revCount then
-                      builtins.toJSON self.sourceInfo.revCount
-                    else
-                      "'dirty'"
-                  },
-                  shortRev: ${
-                    if (self ? shortRev) then
-                      builtins.toJSON self.shortRev
-                    else
-                      "'dirty'"
-                  },
-                  submodules: ${
-                    if self.sourceInfo ? submodulestoString then
-                      builtins.toJSON self.sourceInfo.submodules
-                    else
-                      "null"
-                  },
                 },
             }
             EOF
