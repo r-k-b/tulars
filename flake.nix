@@ -22,8 +22,7 @@
             (fileset.fileFilter (file: file.hasExt "elm") ./.)
             ./dist
             ./elm.json
-            ./registry.dat
-            ./versions.dat
+            ./nix/elm/registry.dat
           ];
         };
 
@@ -38,7 +37,7 @@
             jq . --sort-keys < ${
               pkgs.writeText "elmSrcsNixFlattened.json" (builtins.toJSON
                 (builtins.mapAttrs (k: value: value.version)
-                  (import ./elm-srcs.nix)))
+                  (import ./nix/elm/elm-srcs.nix)))
             } > flat-nix-deps.json
 
             if diff flat-elm-deps.json flat-nix-deps.json; then
@@ -55,7 +54,7 @@
           '';
         };
 
-        elm2nix = import ./default.nix { inherit pkgs minimalElmSrc; };
+        elm2nix = import ./nix/default.nix { inherit pkgs minimalElmSrc; };
 
         built = stdenv.mkDerivation {
           name = "tulars";
@@ -99,7 +98,7 @@
           };
         };
         checks = { inherit built failIfDepsOutOfSync; };
-        devShells.default = import ./shell.nix { inherit pkgs; };
+        devShells.default = import ./nix/shell.nix { inherit pkgs; };
         apps.default = {
           type = "app";
           program = "${pkgs.writeScript "tularsApp" ''

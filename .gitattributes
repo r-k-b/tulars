@@ -1,1 +1,4 @@
 *.sh    text eof=lf
+
+# Tell tools that these files weren't written by hand.
+nix/elm/** linguist-generated=true

@@ -3,12 +3,16 @@ let
   updateElmNixDeps = pkgs.writeScriptBin "update-elm-nix-deps" ''
     set -e
     cd "$(git rev-parse --show-toplevel)"
-    elm2nix convert > elm-srcs.nix
-    # "Snapshot only outputs any data when redirected to the registry.dat file"
-    # <https://github.com/cachix/elm2nix/issues/43>
-    elm2nix snapshot > registry.dat
-    nixfmt elm-srcs.nix
-    echo elm-srcs.nix has been updated.
+    echo working in "$(realpath $PWD)"
+
+    echo creating registry snapshot at "$(realpath ./nix/elm/registry.dat)"
+    elm2nix snapshot
+    mv -f ./registry.dat ./nix/elm/registry.dat
+
+    echo "Generating Nix expressions from elm.json..."
+    elm2nix convert > ./nix/elm/elm-srcs.nix
+    nixfmt ./nix/elm/elm-srcs.nix
+    echo $(realpath ./nix/elm/elm-srcs.nix) has been updated.
   '';
 in pkgs.mkShell {
   name = "tulars";
@@ -31,7 +35,7 @@ in pkgs.mkShell {
   shellHook = ''
     export CYPRESS_INSTALL_BINARY=0
     export CYPRESS_RUN_BINARY=${pkgs.cypress}/bin/Cypress
-    export PATH=$PATH:${toString ./node_modules/.bin}
+    export PATH=$PATH:${toString ../node_modules/.bin}
 
     echo ""
     echo "This is the dev shell for the Tulars project. Coming Soon: Run 'tu --help' to see available commands."
