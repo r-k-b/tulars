@@ -1,2 +1,1 @@
 *.sh    text eof=lf
-Makefile    text eof=lf
