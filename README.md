@@ -1,17 +1,21 @@
 # tulars
 
-![.github/workflows/make.yml](https://github.com/r-k-b/tulars/workflows/.github/workflows/make.yml/badge.svg)
+![.github/workflows/make.yml](https://github.com/r-k-b/tulars/actions/workflows/nix.yml/badge.svg)
 
 Experimentation with simple Utility Function-based agents. [(Demo)](https://tulars-5f1d1.firebaseapp.com) 
 
 E.g., how do we specify rich, sequential and/or parallel behaviours that 
 are robust to changing environments and dynamic goals? 
 
+
 # running direct from GitHub
+
+You'll need [Nix] installed.
 
 ```shell
 $ nix run github:r-k-b/tulars
 ```
+
 
 # building with Nix
 
@@ -22,45 +26,41 @@ $ xdg-open result/index.html
 ```
 
 
-# building (non-nix)
-
-(requires git, node.js 10+, and [Elm] 0.19)
-
-`git clone git@github.com:r-k-b/tulars.git`
-
-`cd tulars`
-
-`npm install`
-
-Then, either run `npm run live`, or open one of these in a browser:
-
-- `dist/index.html`
-- `dist/debug.html`
-- `dist/optimized.html`
-
-
 # testing
 
-Run `npm test` and/or `nix flake check`.
+Run `nix flake check github:r-k-b/tulars`.
+
+TODO: include these in `nix flake check`:
+
+- elm-test
+- elm-review
+- an elm-format check
+- style checks for all the other files?
 
 
 # keeping dependencies up to date
 
-dependabot should keep the package.json and elm.json dependencies up to date;
+dependabot should keep the elm.json dependencies up to date;
 to keep the elm2nix / elm-srcs.nix dependencies up to date,
-run `update-elm-nix-deps`. 
+run `update-elm-nix-deps`.
 
+NB, these commands assume you've entered the provided dev shell.
+`direnv allow` or `nix develop` should get you there.
+
+TODO: add something like `tulars --help` to list these available commands (nushell?) 
 
 # integration tests
 
-Not part of the default `npm test`, yet.
+Not part of the default test run, yet.
 
-While the site is running on `localhost:8000` (perhaps via `npm run live`), run:
+While the site is running on `localhost:8000` (perhaps via `livedev`), run:
 
-    npm run cypress:open
+    Cypress open
 
 
 # misc
+
+[Nix]: https://nixos.org/
 
 [Verlet integration](https://en.wikipedia.org/wiki/Verlet_integration)
 

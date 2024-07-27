@@ -8,8 +8,9 @@
 with pkgs;
 
 let
-  mkDerivation = { srcs ? ./elm-srcs.nix, src, name, srcdir ? "./src"
-    , targets ? [ ], registryDat ? ./registry.dat, outputJavaScript ? false }:
+  mkDerivation = { srcs ? ./elm/elm-srcs.nix, src, name, srcdir ? "../src"
+    , targets ? [ ], registryDat ? ./elm/registry.dat, outputJavaScript ? false
+    }:
     stdenv.mkDerivation {
       inherit name src;
 
@@ -43,7 +44,7 @@ let
     };
 in mkDerivation {
   name = "tulars-elm2nix-0.1.0";
-  srcs = ./elm-srcs.nix;
+  srcs = ./elm/elm-srcs.nix;
   src = minimalElmSrc;
   targets = [ "Main" ];
   srcdir = "./app";
