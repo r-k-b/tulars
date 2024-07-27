@@ -25,4 +25,3 @@ jobs:
                   fail-mode: true
             - run: nix flake check
             - run: nix build .
-            - run: nix shell --command echo "Computer says OK."
