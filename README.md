@@ -7,6 +7,7 @@ Experimentation with simple Utility Function-based agents. [(Demo)](https://tula
 E.g., how do we specify rich, sequential and/or parallel behaviours that 
 are robust to changing environments and dynamic goals? 
 
+
 # running direct from GitHub
 
 You'll need [Nix] installed.
@@ -46,12 +47,13 @@ run `update-elm-nix-deps`.
 NB, these commands assume you've entered the provided dev shell.
 `direnv allow` or `nix develop` should get you there.
 
+TODO: add something like `tulars --help` to list these available commands (nushell?) 
 
 # integration tests
 
 Not part of the default test run, yet.
 
-While the site is running on `localhost:8000` (perhaps via `liveDev`), run:
+While the site is running on `localhost:8000` (perhaps via `livedev`), run:
 
     Cypress open
 
