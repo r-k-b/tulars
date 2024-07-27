@@ -67,7 +67,6 @@
             patchShebangs *.sh
             cat >./dist/context.js <<EOF
             // This file generated within flake.nix
-            // (not by write-context-js.sh, there's no access to the git metadata inside a nix build)
 
             window.appContext = {
                 nix: {
