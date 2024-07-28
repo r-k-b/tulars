@@ -28,7 +28,7 @@ $ xdg-open result/index.html
 
 # testing
 
-Run `nix flake check github:r-k-b/tulars`.
+Run `just check` to check everything, or `just test` for the unit tests.
 
 TODO: include these in `nix flake check`:
 
@@ -42,20 +42,19 @@ TODO: include these in `nix flake check`:
 
 dependabot should keep the elm.json dependencies up to date;
 to keep the elm2nix / elm-srcs.nix dependencies up to date,
-run `update-elm-nix-deps`.
+run `just update`.
 
 NB, these commands assume you've entered the provided dev shell.
 `direnv allow` or `nix develop` should get you there.
 
-TODO: add something like `tulars --help` to list these available commands (nushell?) 
 
 # integration tests
 
 Not part of the default test run, yet.
 
-While the site is running on `localhost:8000` (perhaps via `livedev`), run:
+While the site is running on `localhost:8000` (perhaps via `just live`), run:
 
-    Cypress open
+    just e2e
 
 
 # misc

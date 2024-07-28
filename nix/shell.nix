@@ -30,6 +30,7 @@ in pkgs.mkShell {
     elmPackages.elm-review
     elmPackages.elm-test
     cypress
+    just # for discoverable project-specific commands. Simpler than Make, plus Nix already handles the build system.
     liveDev
     nixfmt-classic
     updateElmNixDeps
@@ -38,10 +39,10 @@ in pkgs.mkShell {
   shellHook = ''
     export CYPRESS_INSTALL_BINARY=0
     export CYPRESS_RUN_BINARY=${pkgs.cypress}/bin/Cypress
-    export PATH=$PATH:${toString ../node_modules/.bin}
 
     echo ""
-    echo "This is the dev shell for the Tulars project. Coming Soon: Run 'tu --help' to see available commands."
+    echo "This is the dev shell for the Tulars project."
+    just --list --list-heading $'Run \'just\' to see the available commands:\n'
     echo ""
   '';
 }
