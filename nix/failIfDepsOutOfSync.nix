@@ -10,7 +10,7 @@ stdenv.mkDerivation {
     jq . --sort-keys < ${
       pkgs.writeText "elmSrcsNixFlattened.json" (builtins.toJSON
         (builtins.mapAttrs (k: value: value.version)
-          (import ./elm/elm-srcs.nix)))
+          (import ./elm/elm-srcs-main.nix)))
     } > flat-nix-deps.json
 
     if diff flat-elm-deps.json flat-nix-deps.json; then

@@ -4,9 +4,13 @@
   inputs = {
     flake-utils.url = "github:numtide/flake-utils";
     nixpkgs.url = "nixpkgs/nixos-unstable";
+    elm-review-tool-src = {
+      url = "github:jfmengels/node-elm-review";
+      flake = false;
+    };
   };
 
-  outputs = { self, nixpkgs, flake-utils }:
+  outputs = { elm-review-tool-src, self, nixpkgs, flake-utils }:
     let supportedSystems = with flake-utils.lib.system; [ x86_64-linux ];
     in flake-utils.lib.eachSystem supportedSystems (system:
       let
@@ -26,7 +30,7 @@
           (fileset.fileFilter (file: file.hasExt "elm") ./app)
           ./dist
           ./elm.json
-          ./nix/elm/registry.dat
+          #./nix/elm/registry.dat
         ];
 
         testsSrc = toSource [
@@ -43,6 +47,12 @@
         failIfDepsOutOfSync =
           callPackage ./nix/failIfDepsOutOfSync.nix { inherit minimalElmSrc; };
 
+        elm-review-tool = callPackage ./nix/elm-review-tool.nix {
+          inherit elm-review-tool-src;
+        };
+
+        fetchElmDepsWithDocs = callPackage ./nix/fetchElmDepsWithDocs.nix { };
+
         elm2nix = callPackage ./nix/default.nix { inherit minimalElmSrc; };
 
         built = callPackage ./nix/built.nix {
@@ -51,6 +61,9 @@
         };
 
         elmtests = callPackage ./nix/elmtests.nix { inherit testsSrc; };
+        elmReviewed = callPackage ./nix/elmReviewed.nix {
+          inherit elm-review-tool fetchElmDepsWithDocs reviewSrc;
+        };
 
         peekSrc = name: src:
           stdenv.mkDerivation {
@@ -61,15 +74,16 @@
           };
       in {
         packages = {
-          inherit built;
+          inherit built elm-review-tool;
           default = built;
           rawElm2Nix = elm2nix;
           minimalElmSrc = peekSrc "minimal-elm" minimalElmSrc;
           testsSrc = peekSrc "tests" testsSrc;
           reviewSrc = peekSrc "elm-review" reviewSrc;
         };
-        checks = { inherit built elmtests failIfDepsOutOfSync; };
-        devShells.default = import ./nix/shell.nix { inherit pkgs; };
+        checks = { inherit built elmReviewed elmtests failIfDepsOutOfSync; };
+        devShells.default =
+          import ./nix/shell.nix { inherit elm-review-tool pkgs; };
         apps.default = {
           type = "app";
           program = "${pkgs.writeScript "tularsApp" ''

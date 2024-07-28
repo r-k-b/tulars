@@ -6,7 +6,7 @@ stdenv.mkDerivation {
   buildInputs = with elmPackages; [ elm elm-test ];
 
   buildPhase = pkgs.elmPackages.fetchElmDeps {
-    elmPackages = import ./elm/elm-srcs.nix;
+    elmPackages = import ./elm/elm-srcs-main.nix;
     elmVersion = "0.19.1";
     registryDat = ./elm/registry.dat;
   };

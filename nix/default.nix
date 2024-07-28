@@ -6,7 +6,7 @@
 # with (import nixpkgs config);
 { elmPackages, lib, pkgs, minimalElmSrc, nodePackages, stdenv }:
 let
-  mkDerivation = { srcs ? ./elm/elm-srcs.nix, src, name, srcdir ? "../src"
+  mkDerivation = { srcs ? ./elm/elm-srcs-main.nix, src, name, srcdir ? "../src"
     , targets ? [ ], registryDat ? ./elm/registry.dat, outputJavaScript ? false
     }:
     stdenv.mkDerivation {
@@ -15,7 +15,7 @@ let
       buildInputs = [ elmPackages.elm ]
         ++ lib.optional outputJavaScript nodePackages.uglify-js;
 
-      buildPhase = pkgs.elmPackages.fetchElmDeps {
+      buildPhase = elmPackages.fetchElmDeps {
         elmPackages = import srcs;
         elmVersion = "0.19.1";
         inherit registryDat;
@@ -42,7 +42,7 @@ let
     };
 in mkDerivation {
   name = "tulars-elm2nix-0.1.0";
-  srcs = ./elm/elm-srcs.nix;
+  srcs = ./elm/elm-srcs-main.nix;
   src = minimalElmSrc;
   targets = [ "Main" ];
   srcdir = "./app";

@@ -1,0 +1,48 @@
+Index: lib/project-dependencies.js
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/lib/project-dependencies.js b/lib/project-dependencies.js
+--- a/lib/project-dependencies.js	(revision f0894b30a252e7db739546efa17f2ded174d167a)
++++ b/lib/project-dependencies.js	(date 1722160229220)
+@@ -33,6 +33,7 @@
+           packageVersion
+         ).catch(() => {
+           hasDependenciesThatCouldNotBeDownloaded = true;
++          console.log('getDocsJson failed:', {elmVersion, name, packageVersion});
+           return [];
+         }),
+         ProjectJsonFiles.getElmJson(
+@@ -42,6 +43,7 @@
+           packageVersion
+         ).catch(() => {
+           hasDependenciesThatCouldNotBeDownloaded = true;
++          console.log('getElmJson failed:', {elmVersion, name, packageVersion})
+           return defaultElmJson(name, packageVersion);
+         })
+       ]);
+Index: lib/project-json-files.js
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/lib/project-json-files.js b/lib/project-json-files.js
+--- a/lib/project-json-files.js	(revision f0894b30a252e7db739546efa17f2ded174d167a)
++++ b/lib/project-json-files.js	(date 1722162109928)
+@@ -46,6 +46,7 @@
+     } catch (error) {
+       // Finally, try to download it from the packages website
+       if (options.offline) {
++        console.log('getElmJson read failed', {cacheLocation})
+         // Unless we're in offline mode
+         throw error;
+       }
+@@ -147,6 +148,7 @@
+     } catch (error) {
+       // Finally, try to download it from the packages website
+       if (options.offline) {
++        console.log('getDocsJson read failed', {cacheLocation})
+         // Unless we're in offline mode
+         throw error;
+       }

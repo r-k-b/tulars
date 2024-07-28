@@ -1,18 +1,28 @@
-{ pkgs }:
+{ elm-review-tool, pkgs }:
 let
   updateElmNixDeps = pkgs.writeScriptBin "update-elm-nix-deps" ''
     set -e
-    cd "$(git rev-parse --show-toplevel)"
-    echo working in "$(realpath $PWD)"
+    RR="$(realpath $(git rev-parse --show-toplevel))"
+    echo "Repo Root is $RR"
+    cd "$RR"
 
-    echo creating registry snapshot at "$(realpath ./nix/elm/registry.dat)"
+    echo creating registry snapshot at "$RR"/nix/elm/registry.dat ...
     elm2nix snapshot
-    mv -f ./registry.dat ./nix/elm/registry.dat
+    mv -f "$RR"/registry.dat "$RR"/nix/elm/registry.dat
 
-    echo "Generating Nix expressions from elm.json..."
-    elm2nix convert > ./nix/elm/elm-srcs.nix
-    nixfmt ./nix/elm/elm-srcs.nix
-    echo $(realpath ./nix/elm/elm-srcs.nix) has been updated.
+    # TODO: make elm2nix also record the shar256ForDocs?
+
+    echo "Generating Nix expressions from elm.json, for the main app..."
+    elm2nix convert > "$RR"/nix/elm/elm-srcs-main.nix
+    nixfmt "$RR"/nix/elm/elm-srcs-main.nix
+    echo "$RR"/nix/elm/elm-srcs-main.nix has been updated.
+
+    echo "Generating Nix expressions from elm.json, for elm-review..."
+    elm2nix convert > "$RR"/nix/elm/elm-srcs-review.nix
+    nixfmt "$RR"/nix/elm/elm-srcs-review.nix
+    echo "$RR"/nix/elm/elm-srcs-review.nix has been updated.
+
+    echo "todo: update npmDepsHash for elm-review-tool"
   '';
   liveDev = pkgs.writeScriptBin "livedev" ''
     cd "$(git rev-parse --show-toplevel)"
@@ -22,12 +32,12 @@ in pkgs.mkShell {
   name = "tulars";
 
   buildInputs = with pkgs; [
+    elm-review-tool
     elm2nix
     elmPackages.elm
     elmPackages.elm-format
     elmPackages.elm-json
     elmPackages.elm-live
-    elmPackages.elm-review
     elmPackages.elm-test
     cypress
     just # for discoverable project-specific commands. Simpler than Make, plus Nix already handles the build system.

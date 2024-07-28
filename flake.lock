@@ -1,5 +1,21 @@
 {
   "nodes": {
+    "elm-review-tool-src": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1721226175,
+        "narHash": "sha256-9meDkRyBSuNw6ywCj+SIlY+/TvJ2l7YK/vskcxE21xs=",
+        "owner": "jfmengels",
+        "repo": "node-elm-review",
+        "rev": "f0894b30a252e7db739546efa17f2ded174d167a",
+        "type": "github"
+      },
+      "original": {
+        "owner": "jfmengels",
+        "repo": "node-elm-review",
+        "type": "github"
+      }
+    },
     "flake-utils": {
       "inputs": {
         "systems": "systems"
@@ -35,6 +51,7 @@
     },
     "root": {
       "inputs": {
+        "elm-review-tool-src": "elm-review-tool-src",
         "flake-utils": "flake-utils",
         "nixpkgs": "nixpkgs"
       }
