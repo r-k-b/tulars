@@ -50,6 +50,8 @@
           sourceInfo = self.sourceInfo;
         };
 
+        elmtests = callPackage ./nix/elmtests.nix { inherit testsSrc; };
+
         peekSrc = name: src:
           stdenv.mkDerivation {
             src = src;
@@ -66,7 +68,7 @@
           testsSrc = peekSrc "tests" testsSrc;
           reviewSrc = peekSrc "elm-review" reviewSrc;
         };
-        checks = { inherit built failIfDepsOutOfSync; };
+        checks = { inherit built elmtests failIfDepsOutOfSync; };
         devShells.default = import ./nix/shell.nix { inherit pkgs; };
         apps.default = {
           type = "app";

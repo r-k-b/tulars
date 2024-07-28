@@ -32,7 +32,6 @@ Run `just check` to check everything, or `just test` for the unit tests.
 
 TODO: include these in `nix flake check`:
 
-- elm-test
 - elm-review
 - an elm-format check
 - style checks for all the other files?

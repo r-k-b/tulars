@@ -4,9 +4,7 @@
 # manually replaced the next two lines:
 # { nixpkgs ? <nixpkgs>, config ? { } }:
 # with (import nixpkgs config);
-{ pkgs, minimalElmSrc }:
-with pkgs;
-
+{ elmPackages, lib, pkgs, minimalElmSrc, nodePackages, stdenv }:
 let
   mkDerivation = { srcs ? ./elm/elm-srcs.nix, src, name, srcdir ? "../src"
     , targets ? [ ], registryDat ? ./elm/registry.dat, outputJavaScript ? false
