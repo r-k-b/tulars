@@ -11,6 +11,7 @@ let
     mv -f "$RR"/registry.dat "$RR"/nix/elm/registry.dat
 
     # TODO: make elm2nix also record the shar256ForDocs?
+    # or do we switch over to jeslie0/mkElmDerivation, do it there?
 
     echo "Generating Nix expressions from elm.json, for the main app..."
     elm2nix convert > "$RR"/nix/elm/elm-srcs-main.nix
