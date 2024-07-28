@@ -14,17 +14,31 @@
         inherit (pkgs) lib stdenv callPackage;
         inherit (lib) fileset hasInfix hasSuffix;
 
+        toSource = fsets:
+          fileset.toSource {
+            root = ./.;
+            fileset = fileset.unions fsets;
+          };
+
         # The build cache will be invalidated if any of the files within change.
         # So, exclude files from here unless they're necessary for `elm make` et al.
-        minimalElmSrc = fileset.toSource {
-          root = ./.;
-          fileset = fileset.unions [
-            (fileset.fileFilter (file: file.hasExt "elm") ./.)
-            ./dist
-            ./elm.json
-            ./nix/elm/registry.dat
-          ];
-        };
+        minimalElmSrc = toSource [
+          (fileset.fileFilter (file: file.hasExt "elm") ./app)
+          ./dist
+          ./elm.json
+          ./nix/elm/registry.dat
+        ];
+
+        testsSrc = toSource [
+          (fileset.difference (fileset.fromSource minimalElmSrc) ./dist)
+          (fileset.fileFilter (file: file.hasExt "elm") ./tests)
+        ];
+
+        reviewSrc = toSource [
+          (fileset.fromSource testsSrc)
+          (fileset.fileFilter (file: file.hasExt "elm") ./review)
+          ./review/elm.json
+        ];
 
         failIfDepsOutOfSync =
           callPackage ./nix/failIfDepsOutOfSync.nix { inherit minimalElmSrc; };
@@ -36,19 +50,21 @@
           sourceInfo = self.sourceInfo;
         };
 
-        # See the listing @ <https://github.com/NixOS/nixpkgs/blob/1e1396aafccff9378b8f3d0c686e277c226398cf/lib/sources.nix#L23-L26>
-        isFile = type: type == "regular";
+        peekSrc = name: src:
+          stdenv.mkDerivation {
+            src = src;
+            name = "peekSource-${name}";
+            buildPhase = "mkdir -p $out";
+            installPhase = "cp -r ./* $out";
+          };
       in {
         packages = {
           inherit built;
           default = built;
           rawElm2Nix = elm2nix;
-          minimalElmSrc = stdenv.mkDerivation {
-            src = minimalElmSrc;
-            name = "minimal-elm-source";
-            buildPhase = "mkdir -p $out";
-            installPhase = "cp -r ./* $out";
-          };
+          minimalElmSrc = peekSrc "minimal-elm" minimalElmSrc;
+          testsSrc = peekSrc "tests" testsSrc;
+          reviewSrc = peekSrc "elm-review" reviewSrc;
         };
         checks = { inherit built failIfDepsOutOfSync; };
         devShells.default = import ./nix/shell.nix { inherit pkgs; };
