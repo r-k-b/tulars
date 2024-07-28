@@ -14,89 +14,61 @@
         inherit (pkgs) lib stdenv callPackage;
         inherit (lib) fileset hasInfix hasSuffix;
 
+        toSource = fsets:
+          fileset.toSource {
+            root = ./.;
+            fileset = fileset.unions fsets;
+          };
+
         # The build cache will be invalidated if any of the files within change.
         # So, exclude files from here unless they're necessary for `elm make` et al.
-        minimalElmSrc = fileset.toSource {
-          root = ./.;
-          fileset = fileset.unions [
-            (fileset.fileFilter (file: file.hasExt "elm") ./.)
-            ./dist
-            ./elm.json
-            ./nix/elm/registry.dat
-          ];
+        minimalElmSrc = toSource [
+          (fileset.fileFilter (file: file.hasExt "elm") ./app)
+          ./dist
+          ./elm.json
+          ./nix/elm/registry.dat
+        ];
+
+        testsSrc = toSource [
+          (fileset.difference (fileset.fromSource minimalElmSrc) ./dist)
+          (fileset.fileFilter (file: file.hasExt "elm") ./tests)
+        ];
+
+        reviewSrc = toSource [
+          (fileset.fromSource testsSrc)
+          (fileset.fileFilter (file: file.hasExt "elm") ./review)
+          ./review/elm.json
+        ];
+
+        failIfDepsOutOfSync =
+          callPackage ./nix/failIfDepsOutOfSync.nix { inherit minimalElmSrc; };
+
+        elm2nix = callPackage ./nix/default.nix { inherit minimalElmSrc; };
+
+        built = callPackage ./nix/built.nix {
+          inherit elm2nix minimalElmSrc;
+          sourceInfo = self.sourceInfo;
         };
 
-        failIfDepsOutOfSync = stdenv.mkDerivation {
-          name = "failIfDepsOutOfSync";
-          src = minimalElmSrc;
-          nativeBuildInputs = with pkgs; [ jq ];
-          buildPhase = ''
-            jq '.dependencies.direct * .dependencies.indirect * ."test-dependencies".direct * ."test-dependencies".indirect' \
-              --sort-keys < ./elm.json > flat-elm-deps.json
+        elmtests = callPackage ./nix/elmtests.nix { inherit testsSrc; };
 
-            jq . --sort-keys < ${
-              pkgs.writeText "elmSrcsNixFlattened.json" (builtins.toJSON
-                (builtins.mapAttrs (k: value: value.version)
-                  (import ./nix/elm/elm-srcs.nix)))
-            } > flat-nix-deps.json
-
-            if diff flat-elm-deps.json flat-nix-deps.json; then
-              echo "Deps appear to be in sync 👍"
-            else
-              echo "ERROR: Looks like the nix deps are out of sync." >&2
-              echo "Run update-elm-nix-deps and raise a PR.";
-              exit 1
-            fi;
-          '';
-          installPhase = ''
-            mkdir -p $out
-            cp -r * $out
-          '';
-        };
-
-        elm2nix = import ./nix/default.nix { inherit pkgs minimalElmSrc; };
-
-        built = stdenv.mkDerivation {
-          name = "tulars";
-          src = minimalElmSrc;
-          # build-time-only dependencies
-          nativeBuildDeps = with pkgs; [ git ];
-          # runtime dependencies
-          buildDeps = [ ];
-          buildPhase = ''
-            patchShebangs *.sh
-            cat >./dist/context.js <<EOF
-            // This file generated within flake.nix
-
-            window.appContext = {
-                nix: {
-                  outPath: ${builtins.toJSON self.sourceInfo.outPath},
-                },
-            }
-            EOF
-          '';
-          installPhase = ''
-            mkdir -p $out
-            cp -r dist/* $out/
-            cp ${elm2nix}/*.js $out/
-          '';
-        };
-
-        # See the listing @ <https://github.com/NixOS/nixpkgs/blob/1e1396aafccff9378b8f3d0c686e277c226398cf/lib/sources.nix#L23-L26>
-        isFile = type: type == "regular";
+        peekSrc = name: src:
+          stdenv.mkDerivation {
+            src = src;
+            name = "peekSource-${name}";
+            buildPhase = "mkdir -p $out";
+            installPhase = "cp -r ./* $out";
+          };
       in {
         packages = {
           inherit built;
           default = built;
           rawElm2Nix = elm2nix;
-          minimalElmSrc = stdenv.mkDerivation {
-            src = minimalElmSrc;
-            name = "minimal-elm-source";
-            buildPhase = "mkdir -p $out";
-            installPhase = "cp -r ./* $out";
-          };
+          minimalElmSrc = peekSrc "minimal-elm" minimalElmSrc;
+          testsSrc = peekSrc "tests" testsSrc;
+          reviewSrc = peekSrc "elm-review" reviewSrc;
         };
-        checks = { inherit built failIfDepsOutOfSync; };
+        checks = { inherit built elmtests failIfDepsOutOfSync; };
         devShells.default = import ./nix/shell.nix { inherit pkgs; };
         apps.default = {
           type = "app";
