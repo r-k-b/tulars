@@ -15,7 +15,7 @@
             "jfmengels/elm-review-the-elm-architecture": "1.0.3",
             "jfmengels/elm-review-unused": "1.2.3",
             "r-k-b/no-long-import-lines": "1.0.4",
-            "stil4m/elm-syntax": "7.3.4",
+            "stil4m/elm-syntax": "7.3.5",
             "truqu/elm-review-nobooleancase": "1.0.1"
         },
         "indirect": {
