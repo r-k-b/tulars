@@ -46,8 +46,8 @@
   };
 
   "stil4m/elm-syntax" = {
-    sha256 = "1p7866mwndsxvx89n08ldis4rcirh64w5bhdxx824yi7rplfk6jl";
-    version = "7.3.4";
+    sha256 = "1n605skymz6bhf182g772cc18m5w20k81v5p1hlvl2fy011n4g6v";
+    version = "7.3.6";
   };
 
   "truqu/elm-review-nobooleancase" = {
