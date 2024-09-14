@@ -19,6 +19,7 @@ let
     echo "$RR"/nix/elm/elm-srcs-main.nix has been updated.
 
     echo "Generating Nix expressions from elm.json, for elm-review..."
+    cd "$RR"/review
     elm2nix convert > "$RR"/nix/elm/elm-srcs-review.nix
     nixfmt "$RR"/nix/elm/elm-srcs-review.nix
     echo "$RR"/nix/elm/elm-srcs-review.nix has been updated.
