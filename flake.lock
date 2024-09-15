@@ -1,5 +1,65 @@
 {
   "nodes": {
+    "elm-review-tool-src": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1725054818,
+        "narHash": "sha256-V1BJqqBbQK7qZPKfuIJijifynVLD7+JtDEEGg+51bVk=",
+        "owner": "jfmengels",
+        "repo": "node-elm-review",
+        "rev": "154855bf0aec51f97efce4e508a079c787df2f2f",
+        "type": "github"
+      },
+      "original": {
+        "owner": "jfmengels",
+        "repo": "node-elm-review",
+        "type": "github"
+      }
+    },
+    "elm-spa": {
+      "inputs": {
+        "nixpkgs": [
+          "mkElmDerivation",
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1706301604,
+        "narHash": "sha256-n6LDjnPCTLbKTrRgeZhlLTfY6V45xNYcb4NYEMuO4jg=",
+        "owner": "jeslie0",
+        "repo": "elm-spa",
+        "rev": "4c82e18d5fcf9d4c027f0ef0e89204dd87584f7f",
+        "type": "github"
+      },
+      "original": {
+        "owner": "jeslie0",
+        "repo": "elm-spa",
+        "type": "github"
+      }
+    },
+    "elm-watch": {
+      "inputs": {
+        "nixpkgs": [
+          "mkElmDerivation",
+          "nixpkgs"
+        ],
+        "npm-fix": "npm-fix",
+        "npmlock2nix": "npmlock2nix"
+      },
+      "locked": {
+        "lastModified": 1706304401,
+        "narHash": "sha256-992cypnhoRbsGkDc5/X241rafBML4EP0EuT6cBcaY/8=",
+        "owner": "jeslie0",
+        "repo": "elm-watch",
+        "rev": "2f1c6c0e69b163c15e2ce66f543c38021b2a0ea3",
+        "type": "github"
+      },
+      "original": {
+        "owner": "jeslie0",
+        "repo": "elm-watch",
+        "type": "github"
+      }
+    },
     "flake-utils": {
       "inputs": {
         "systems": "systems"
@@ -18,13 +78,36 @@
         "type": "github"
       }
     },
+    "mkElmDerivation": {
+      "inputs": {
+        "elm-spa": "elm-spa",
+        "elm-watch": "elm-watch",
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1726378324,
+        "narHash": "sha256-kvWmiFSfhfbC63ftip/3hM7SiimU56D5q+E2klwI+eM=",
+        "owner": "r-k-b",
+        "repo": "mkElmDerivation",
+        "rev": "ff580f55d0aad443d6f8fde2ab308275ce2fc3a7",
+        "type": "github"
+      },
+      "original": {
+        "owner": "r-k-b",
+        "repo": "mkElmDerivation",
+        "rev": "ff580f55d0aad443d6f8fde2ab308275ce2fc3a7",
+        "type": "github"
+      }
+    },
     "nixpkgs": {
       "locked": {
-        "lastModified": 1721924956,
-        "narHash": "sha256-Sb1jlyRO+N8jBXEX9Pg9Z1Qb8Bw9QyOgLDNMEpmjZ2M=",
+        "lastModified": 1726062873,
+        "narHash": "sha256-IiA3jfbR7K/B5+9byVi9BZGWTD4VSbWe8VLpp9B/iYk=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "5ad6a14c6bf098e98800b091668718c336effc95",
+        "rev": "4f807e8940284ad7925ebd0a0993d2a1791acb2f",
         "type": "github"
       },
       "original": {
@@ -33,9 +116,49 @@
         "type": "indirect"
       }
     },
+    "npm-fix": {
+      "inputs": {
+        "nixpkgs": [
+          "mkElmDerivation",
+          "elm-watch",
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1706304213,
+        "narHash": "sha256-XN9ESRSOANR0iFbEMMY1C1jvgZlYJsXQYVAHxxRmn+c=",
+        "owner": "jeslie0",
+        "repo": "npm-lockfile-fix",
+        "rev": "e9851274afa12b04d98e694ed089aa9cde8d7349",
+        "type": "github"
+      },
+      "original": {
+        "owner": "jeslie0",
+        "repo": "npm-lockfile-fix",
+        "type": "github"
+      }
+    },
+    "npmlock2nix": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1673447413,
+        "narHash": "sha256-sJM82Sj8yfQYs9axEmGZ9Evzdv/kDcI9sddqJ45frrU=",
+        "owner": "nix-community",
+        "repo": "npmlock2nix",
+        "rev": "9197bbf397d76059a76310523d45df10d2e4ca81",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nix-community",
+        "repo": "npmlock2nix",
+        "type": "github"
+      }
+    },
     "root": {
       "inputs": {
+        "elm-review-tool-src": "elm-review-tool-src",
         "flake-utils": "flake-utils",
+        "mkElmDerivation": "mkElmDerivation",
         "nixpkgs": "nixpkgs"
       }
     },

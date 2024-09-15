@@ -1,4 +1,4 @@
-{ elm2nix, minimalElmSrc, pkgs, sourceInfo, stdenv }:
+{ compiledElmApp, minimalElmSrc, pkgs, sourceInfo, stdenv }:
 stdenv.mkDerivation {
   name = "tulars";
   src = minimalElmSrc;
@@ -21,6 +21,6 @@ stdenv.mkDerivation {
   installPhase = ''
     mkdir -p $out
     cp -r dist/* $out/
-    cp ${elm2nix}/*.js $out/
+    cp ${compiledElmApp}/*.js $out/
   '';
 }

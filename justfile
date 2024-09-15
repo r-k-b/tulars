@@ -28,14 +28,10 @@ live:
 check:
     nix flake check
 
-# Regenerates the pinned dependency hashes for the sandboxed Nix builds.
-update-elm:
-    update-elm-nix-deps
-
 update-nix:
     nix flake update
 
-update: update-elm update-nix
+update: update-nix
 
 # Open the UI testing tool, Cypress.
 e2e:

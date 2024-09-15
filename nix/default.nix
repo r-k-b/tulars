@@ -6,26 +6,21 @@
 # with (import nixpkgs config);
 { elmPackages, lib, pkgs, minimalElmSrc, nodePackages, stdenv }:
 let
-  mkDerivation = { srcs ? ./elm/elm-srcs.nix, src, name, srcdir ? "../src"
+  mkDerivation = { srcs ? ./elm/elm-srcs-main.nix, src, name, srcdir ? "../src"
     , targets ? [ ], registryDat ? ./elm/registry.dat, outputJavaScript ? false
     }:
     stdenv.mkDerivation {
       inherit name src;
 
-      buildInputs = [ elmPackages.elm ]
+      nativeBuildInputs = [ elmPackages.elm ]
         ++ lib.optional outputJavaScript nodePackages.uglify-js;
-
-      buildPhase = pkgs.elmPackages.fetchElmDeps {
-        elmPackages = import srcs;
-        elmVersion = "0.19.1";
-        inherit registryDat;
-      };
 
       installPhase = let
         elmfile = module:
           "${srcdir}/${builtins.replaceStrings [ "." ] [ "/" ] module}.elm";
         extension = if outputJavaScript then "js" else "html";
       in ''
+        ${pkgs.makeDotElmDirectoryCmd { elmJson = ../elm.json; }}
         mkdir -p $out/share/doc
         ${lib.concatStrings (map (module: ''
           echo "compiling ${elmfile module}"
@@ -41,8 +36,8 @@ let
       '';
     };
 in mkDerivation {
-  name = "tulars-elm2nix-0.1.0";
-  srcs = ./elm/elm-srcs.nix;
+  name = "tulars-mkElmDerivation-0.1.0";
+  srcs = ./elm/elm-srcs-main.nix;
   src = minimalElmSrc;
   targets = [ "Main" ];
   srcdir = "./app";

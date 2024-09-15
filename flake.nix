@@ -4,13 +4,26 @@
   inputs = {
     flake-utils.url = "github:numtide/flake-utils";
     nixpkgs.url = "nixpkgs/nixos-unstable";
+    elm-review-tool-src = {
+      url = "github:jfmengels/node-elm-review";
+      flake = false;
+    };
+    mkElmDerivation = {
+      url =
+        "github:r-k-b/mkElmDerivation?rev=ff580f55d0aad443d6f8fde2ab308275ce2fc3a7";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
-  outputs = { self, nixpkgs, flake-utils }:
+  outputs =
+    { elm-review-tool-src, self, mkElmDerivation, nixpkgs, flake-utils }:
     let supportedSystems = with flake-utils.lib.system; [ x86_64-linux ];
     in flake-utils.lib.eachSystem supportedSystems (system:
       let
-        pkgs = nixpkgs.legacyPackages.${system};
+        pkgs = import nixpkgs {
+          inherit system;
+          overlays = [ mkElmDerivation.overlays.makeDotElmDirectoryCmd ];
+        };
         inherit (pkgs) lib stdenv callPackage;
         inherit (lib) fileset hasInfix hasSuffix;
 
@@ -26,7 +39,6 @@
           (fileset.fileFilter (file: file.hasExt "elm") ./app)
           ./dist
           ./elm.json
-          ./nix/elm/registry.dat
         ];
 
         testsSrc = toSource [
@@ -40,17 +52,22 @@
           ./review/elm.json
         ];
 
-        failIfDepsOutOfSync =
-          callPackage ./nix/failIfDepsOutOfSync.nix { inherit minimalElmSrc; };
+        elm-review-tool = callPackage ./nix/elm-review-tool.nix {
+          inherit elm-review-tool-src;
+        };
 
-        elm2nix = callPackage ./nix/default.nix { inherit minimalElmSrc; };
+        compiledElmApp =
+          callPackage ./nix/default.nix { inherit minimalElmSrc; };
 
         built = callPackage ./nix/built.nix {
-          inherit elm2nix minimalElmSrc;
+          inherit compiledElmApp minimalElmSrc;
           sourceInfo = self.sourceInfo;
         };
 
         elmtests = callPackage ./nix/elmtests.nix { inherit testsSrc; };
+        elmReviewed = callPackage ./nix/elmReviewed.nix {
+          inherit elm-review-tool reviewSrc;
+        };
 
         peekSrc = name: src:
           stdenv.mkDerivation {
@@ -61,15 +78,15 @@
           };
       in {
         packages = {
-          inherit built;
+          inherit built compiledElmApp elm-review-tool;
           default = built;
-          rawElm2Nix = elm2nix;
           minimalElmSrc = peekSrc "minimal-elm" minimalElmSrc;
           testsSrc = peekSrc "tests" testsSrc;
           reviewSrc = peekSrc "elm-review" reviewSrc;
         };
-        checks = { inherit built elmtests failIfDepsOutOfSync; };
-        devShells.default = import ./nix/shell.nix { inherit pkgs; };
+        checks = { inherit built elmReviewed elmtests; };
+        devShells.default =
+          import ./nix/shell.nix { inherit elm-review-tool pkgs; };
         apps.default = {
           type = "app";
           program = "${pkgs.writeScript "tularsApp" ''
