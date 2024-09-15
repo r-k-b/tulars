@@ -40,8 +40,7 @@ TODO: include these in `nix flake check`:
 # keeping dependencies up to date
 
 dependabot should keep the elm.json dependencies up to date;
-to keep the elm2nix / elm-srcs.nix dependencies up to date,
-run `just update`.
+to keep the nix dependencies up to date, run `just update`.
 
 NB, these commands assume you've entered the provided dev shell.
 `direnv allow` or `nix develop` should get you there.

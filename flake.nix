@@ -8,13 +8,22 @@
       url = "github:jfmengels/node-elm-review";
       flake = false;
     };
+    mkElmDerivation = {
+      url =
+        "github:r-k-b/mkElmDerivation?rev=05d9281548df8fbd62db07e2ed9bcc0759af23a0";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
-  outputs = { elm-review-tool-src, self, nixpkgs, flake-utils }:
+  outputs =
+    { elm-review-tool-src, self, mkElmDerivation, nixpkgs, flake-utils }:
     let supportedSystems = with flake-utils.lib.system; [ x86_64-linux ];
     in flake-utils.lib.eachSystem supportedSystems (system:
       let
-        pkgs = nixpkgs.legacyPackages.${system};
+        pkgs = import nixpkgs {
+          inherit system;
+          overlays = [ mkElmDerivation.overlays.makeDotElmDirectoryCmd ];
+        };
         inherit (pkgs) lib stdenv callPackage;
         inherit (lib) fileset hasInfix hasSuffix;
 
@@ -44,25 +53,21 @@
           ./review/elm.json
         ];
 
-        failIfDepsOutOfSync =
-          callPackage ./nix/failIfDepsOutOfSync.nix { inherit minimalElmSrc; };
-
         elm-review-tool = callPackage ./nix/elm-review-tool.nix {
           inherit elm-review-tool-src;
         };
 
-        fetchElmDepsWithDocs = callPackage ./nix/fetchElmDepsWithDocs.nix { };
-
-        elm2nix = callPackage ./nix/default.nix { inherit minimalElmSrc; };
+        compiledElmApp =
+          callPackage ./nix/default.nix { inherit minimalElmSrc; };
 
         built = callPackage ./nix/built.nix {
-          inherit elm2nix minimalElmSrc;
+          inherit compiledElmApp minimalElmSrc;
           sourceInfo = self.sourceInfo;
         };
 
         elmtests = callPackage ./nix/elmtests.nix { inherit testsSrc; };
         elmReviewed = callPackage ./nix/elmReviewed.nix {
-          inherit elm-review-tool fetchElmDepsWithDocs reviewSrc;
+          inherit elm-review-tool reviewSrc;
         };
 
         peekSrc = name: src:
@@ -74,14 +79,13 @@
           };
       in {
         packages = {
-          inherit built elm-review-tool;
+          inherit built compiledElmApp elm-review-tool;
           default = built;
-          rawElm2Nix = elm2nix;
           minimalElmSrc = peekSrc "minimal-elm" minimalElmSrc;
           testsSrc = peekSrc "tests" testsSrc;
           reviewSrc = peekSrc "elm-review" reviewSrc;
         };
-        checks = { inherit built elmReviewed elmtests failIfDepsOutOfSync; };
+        checks = { inherit built elmReviewed elmtests; };
         devShells.default =
           import ./nix/shell.nix { inherit elm-review-tool pkgs; };
         apps.default = {
