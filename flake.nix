@@ -10,7 +10,7 @@
     };
     mkElmDerivation = {
       url =
-        "github:r-k-b/mkElmDerivation?rev=05d9281548df8fbd62db07e2ed9bcc0759af23a0";
+        "github:r-k-b/mkElmDerivation?rev=ff580f55d0aad443d6f8fde2ab308275ce2fc3a7";
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };
