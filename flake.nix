@@ -39,7 +39,6 @@
           (fileset.fileFilter (file: file.hasExt "elm") ./app)
           ./dist
           ./elm.json
-          #./nix/elm/registry.dat
         ];
 
         testsSrc = toSource [

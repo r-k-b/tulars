@@ -8,12 +8,7 @@ in stdenv.mkDerivation {
   name = "elm-reviewed";
   src = reviewSrc;
 
-  buildInputs = with elmPackages; [
-    elm
-    elm-json
-    elm-review-tool
-    pkgs.breakpointHook
-  ];
+  buildInputs = with elmPackages; [ elm elm-json elm-review-tool ];
 
   installPhase = ''
     ${pkgs.makeDotElmDirectoryCmd {
