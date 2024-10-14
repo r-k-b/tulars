@@ -9,8 +9,7 @@
       flake = false;
     };
     mkElmDerivation = {
-      url =
-        "github:r-k-b/mkElmDerivation?rev=ff580f55d0aad443d6f8fde2ab308275ce2fc3a7";
+      url = "github:r-k-b/mkElmDerivation?ref=support-elm-review";
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };
