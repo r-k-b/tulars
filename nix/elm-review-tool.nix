@@ -1,6 +1,6 @@
 { elm-review-tool-src, elmPackages, pkgs, stdenv }:
 pkgs.buildNpmPackage {
-  name = "elm-review";
+  name = "elm-review-tool";
   src = elm-review-tool-src;
   npmDepsHash =
     # pkgs.lib.fakeHash;
