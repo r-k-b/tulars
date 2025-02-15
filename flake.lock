@@ -88,7 +88,7 @@
       },
       "locked": {
         "lastModified": 1739482715,
-        "narHash": "sha256-BkLNgaRM3c2cnXm/Lme0mwZRZidk7NolLHQT4siHpuQ=",
+        "narHash": "sha256-jHD4Y+oRmxxFpGew9qORaErDdHFhq4HyZYgsd1lZZG8=",
         "owner": "r-k-b",
         "repo": "mkElmDerivation",
         "rev": "fcf3fb2ac35ce8dcdf017392b964a19a349a8690",
