@@ -78,6 +78,8 @@
       in {
         packages = {
           inherit built compiledElmApp elm-review-tool;
+          elm-review-tool-src = pkgs.runCommand "elm-review-tool-src" { }
+            "ln -s ${elm-review-tool-src} $out";
           default = built;
           minimalElmSrc = peekSrc "minimal-elm" minimalElmSrc;
           testsSrc = peekSrc "tests" testsSrc;

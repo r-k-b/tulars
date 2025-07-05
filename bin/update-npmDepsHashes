@@ -1,0 +1,33 @@
+#!/usr/bin/env nix-shell
+#!nix-shell -i nu -p jq nushell prefetch-npm-deps
+
+# One day, when Dynamic Derivations are ready, this script will no longer be necessary...
+
+const repoRoot = path self ..
+print $repoRoot
+cd $repoRoot
+
+print $"Calculating hash for elm-review's package-lock.json, from '($repoRoot)' ..."
+
+let elmReviewSrcPath = try {
+    let jsonOutput = nix build --extra-experimental-features "nix-command flakes" $'($repoRoot)#elm-review-tool-src' --no-link --json
+    $jsonOutput | jq -r .[0].outputs.out
+} catch { |err|
+    print "⚠️ Couldn't find the path to the elm-review source!"
+    print $err.rendered
+}
+
+print $"elmReviewSrcPath is ($elmReviewSrcPath)"
+let elmReviewHash = (prefetch-npm-deps $"($elmReviewSrcPath)/package-lock.json")
+
+print $"elmReviewHash hash is '($elmReviewHash)'"
+
+print "Updating the npmDepsHash in elm-review-tool.nix..."
+
+let sedCommandElmReview = [`s/(^\s+npmDepsHash = ")sha256-.*";/\1`, ($elmReviewHash | str replace -a '/' `\/`), `";/`] | str join ""
+
+print $"hippo sed command is: ($sedCommandElmReview)"
+
+sed -i -E $sedCommandElmReview ./nix/elm-review-tool.nix
+
+print "npmDepsHashes updated. Don't forget to commit the changes."
