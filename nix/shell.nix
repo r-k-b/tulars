@@ -2,8 +2,11 @@
 let
   liveDev = pkgs.writeScriptBin "livedev" ''
     cd "$(git rev-parse --show-toplevel)"
+    if [ -z "''${ELM_HOME:-}" ]; then
+      # ELM_HOME wasn't set; prep the fallback folder
+      mkdir -p ./elm-home/elm-stuff
+    fi
     export ELM_HOME="''${ELM_HOME:-$(realpath ./elm-home/elm-stuff)}"
-    mkdir -p "$ELM_HOME"
     echo "⚠️ elm-safe-virtual-dom will now patch YOUR local ELM_HOME files, under ''${ELM_HOME:-./elm-home/elm-stuff}."
     echo "🛈️ Don't forget to clear ./elm-stuff each time you remove/apply these patches, or you'll get weird results!"
     rm -rf ./elm-kernel-replacements
