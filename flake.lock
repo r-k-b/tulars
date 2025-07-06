@@ -60,6 +60,22 @@
         "type": "github"
       }
     },
+    "elmSafeVirtualDom": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1750779589,
+        "narHash": "sha256-Wzz1mj42nv6Zcpo1ThXT8hkSQQSceREEcqBenNXVi6o=",
+        "owner": "lydell",
+        "repo": "elm-safe-virtual-dom",
+        "rev": "cee3aab245653461e89857a7ff96f8a5cfea7543",
+        "type": "github"
+      },
+      "original": {
+        "owner": "lydell",
+        "repo": "elm-safe-virtual-dom",
+        "type": "github"
+      }
+    },
     "flake-utils": {
       "inputs": {
         "systems": "systems"
@@ -75,6 +91,54 @@
       "original": {
         "owner": "numtide",
         "repo": "flake-utils",
+        "type": "github"
+      }
+    },
+    "lydellElmBrowser": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1742723029,
+        "narHash": "sha256-zC37DIRNaqW1I1ZEVXOeUbTlyEgubihLqMrp7JZZeLU=",
+        "owner": "lydell",
+        "repo": "browser",
+        "rev": "dc4614d8eb1d1a12aa12b4c2602801e9e07698c9",
+        "type": "github"
+      },
+      "original": {
+        "owner": "lydell",
+        "repo": "browser",
+        "type": "github"
+      }
+    },
+    "lydellElmHtml": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1748808494,
+        "narHash": "sha256-ugWjEuszB50l+EyOgLwDGrKxJxCDrxpzTzHrCDry3p4=",
+        "owner": "lydell",
+        "repo": "html",
+        "rev": "09257799949d6ef28756b1f03794acb0bab3af7f",
+        "type": "github"
+      },
+      "original": {
+        "owner": "lydell",
+        "repo": "html",
+        "type": "github"
+      }
+    },
+    "lydellElmVirtualDom": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1750779348,
+        "narHash": "sha256-1c+DzZhCL2HAwDa8W6gPsahO+VRI8wYArm1hfrGySwQ=",
+        "owner": "lydell",
+        "repo": "virtual-dom",
+        "rev": "8c20e5b9f309e82e67284669f3740132a2a4d9d6",
+        "type": "github"
+      },
+      "original": {
+        "owner": "lydell",
+        "repo": "virtual-dom",
         "type": "github"
       }
     },
@@ -157,7 +221,11 @@
     "root": {
       "inputs": {
         "elm-review-tool-src": "elm-review-tool-src",
+        "elmSafeVirtualDom": "elmSafeVirtualDom",
         "flake-utils": "flake-utils",
+        "lydellElmBrowser": "lydellElmBrowser",
+        "lydellElmHtml": "lydellElmHtml",
+        "lydellElmVirtualDom": "lydellElmVirtualDom",
         "mkElmDerivation": "mkElmDerivation",
         "nixpkgs": "nixpkgs"
       }

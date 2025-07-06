@@ -8,14 +8,32 @@
       url = "github:jfmengels/node-elm-review";
       flake = false;
     };
+    elmSafeVirtualDom = {
+      url = "github:lydell/elm-safe-virtual-dom";
+      flake = false;
+    };
+    # These "Lydell" packages are replacements for core/kernel Elm packages, needed for elm-safe-virtual-dom.
+    lydellElmBrowser = {
+      url = "github:lydell/browser";
+      flake = false;
+    };
+    lydellElmHtml = {
+      url = "github:lydell/html";
+      flake = false;
+    };
+    lydellElmVirtualDom = {
+      url = "github:lydell/virtual-dom";
+      flake = false;
+    };
     mkElmDerivation = {
       url = "github:r-k-b/mkElmDerivation?ref=support-elm-review";
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };
 
-  outputs =
-    { elm-review-tool-src, self, mkElmDerivation, nixpkgs, flake-utils }:
+  outputs = { elm-review-tool-src, elmSafeVirtualDom, lydellElmBrowser
+    , lydellElmHtml, lydellElmVirtualDom, self, mkElmDerivation, nixpkgs
+    , flake-utils }:
     let supportedSystems = with flake-utils.lib.system; [ x86_64-linux ];
     in flake-utils.lib.eachSystem supportedSystems (system:
       let
@@ -30,6 +48,14 @@
           fileset.toSource {
             root = ./.;
             fileset = fileset.unions fsets;
+          };
+
+        elmVersion = "0.19.1";
+
+        elmKernelReplacements =
+          pkgs.callPackage ./nix/elm-kernel-replacements.nix {
+            inherit elmSafeVirtualDom elmVersion lydellElmBrowser lydellElmHtml
+              lydellElmVirtualDom;
           };
 
         # The build cache will be invalidated if any of the files within change.
@@ -55,8 +81,9 @@
           inherit elm-review-tool-src;
         };
 
-        compiledElmApp =
-          callPackage ./nix/default.nix { inherit minimalElmSrc; };
+        compiledElmApp = callPackage ./nix/default.nix {
+          inherit elmKernelReplacements minimalElmSrc;
+        };
 
         built = callPackage ./nix/built.nix {
           inherit compiledElmApp minimalElmSrc;
@@ -65,7 +92,7 @@
 
         elmtests = callPackage ./nix/elmtests.nix { inherit testsSrc; };
         elmReviewed = callPackage ./nix/elmReviewed.nix {
-          inherit elm-review-tool reviewSrc;
+          inherit elm-review-tool elmVersion reviewSrc;
         };
 
         peekSrc = name: src:
