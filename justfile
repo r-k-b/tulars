@@ -15,7 +15,7 @@ open: build
 build:
     nix build .
 
-# Use elm-live to get hot reloading.
+# Use elm-live to get hot reloading. NB: Applies patches to files in ELM_HOME.
 live:
     livedev
 

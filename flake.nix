@@ -104,7 +104,7 @@
           };
       in {
         packages = {
-          inherit built compiledElmApp elm-review-tool;
+          inherit built compiledElmApp elm-review-tool elmKernelReplacements;
           elm-review-tool-src = pkgs.runCommand "elm-review-tool-src" { }
             "ln -s ${elm-review-tool-src} $out";
           default = built;
@@ -113,8 +113,9 @@
           reviewSrc = peekSrc "elm-review" reviewSrc;
         };
         checks = { inherit built elmReviewed elmtests; };
-        devShells.default =
-          import ./nix/shell.nix { inherit elm-review-tool pkgs; };
+        devShells.default = import ./nix/shell.nix {
+          inherit elm-review-tool elmKernelReplacements pkgs;
+        };
         apps.default = {
           type = "app";
           program = "${pkgs.writeScript "tularsApp" ''

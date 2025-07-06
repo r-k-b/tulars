@@ -6,6 +6,8 @@ elm-stuff
 # elm-repl generated files
 repl-temp-*
 
+# files derived from elm-safe-virtual-dom
+elm-kernel-replacements
 
 node_modules
 
