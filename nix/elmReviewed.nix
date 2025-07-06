@@ -1,8 +1,5 @@
-{ elm-review-tool, elmPackages, lib, pkgs, stdenv, reviewSrc }:
-let
-  elmVersion = "0.19.1";
-
-  mainApp = builtins.fromJSON (builtins.readFile ../elm.json);
+{ elm-review-tool, elmPackages, elmVersion, lib, pkgs, stdenv, reviewSrc }:
+let mainApp = builtins.fromJSON (builtins.readFile ../elm.json);
 
 in stdenv.mkDerivation {
   name = "elm-reviewed";

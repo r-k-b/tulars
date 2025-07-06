@@ -1,7 +1,14 @@
-{ elm-review-tool, pkgs }:
+{ elm-review-tool, elmKernelReplacements, pkgs }:
 let
   liveDev = pkgs.writeScriptBin "livedev" ''
     cd "$(git rev-parse --show-toplevel)"
+    export ELM_HOME="''${ELM_HOME:-$(realpath ./elm-home/elm-stuff)}"
+    mkdir -p "$ELM_HOME"
+    echo "⚠️ elm-safe-virtual-dom will now patch YOUR local ELM_HOME files, under ''${ELM_HOME:-./elm-home/elm-stuff}."
+    echo "🛈️ Don't forget to clear ./elm-stuff each time you remove/apply these patches, or you'll get weird results!"
+    rm -rf ./elm-kernel-replacements
+    cp --no-preserve=mode -r "${elmKernelReplacements}"/elm-kernel-replacements ./
+    ${pkgs.nodejs}/bin/node -e "import('./elm-kernel-replacements/replace-kernel-packages.mjs').then(m => m.replaceKernelPackages())"
     elm-live app/Main.elm -d dist -Hu -- --output="dist/Main.js"
   '';
 in pkgs.mkShell {

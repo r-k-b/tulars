@@ -4,7 +4,8 @@
 # manually replaced the next two lines:
 # { nixpkgs ? <nixpkgs>, config ? { } }:
 # with (import nixpkgs config);
-{ elmPackages, lib, pkgs, minimalElmSrc, nodePackages, stdenv }:
+{ elmKernelReplacements, elmPackages, lib, pkgs, minimalElmSrc, nodePackages
+, stdenv }:
 let
   mkDerivation = { srcs ? ./elm/elm-srcs-main.nix, src, name, srcdir ? "../src"
     , targets ? [ ], registryDat ? ./elm/registry.dat, outputJavaScript ? false
@@ -21,6 +22,14 @@ let
         extension = if outputJavaScript then "js" else "html";
       in ''
         ${pkgs.makeDotElmDirectoryCmd { elmJson = ../elm.json; }}
+
+        echo ELM_HOME is $ELM_HOME
+        echo "Creating elm-safe-virtual-dom's expected folder structure..."
+        cp -r ${elmKernelReplacements}/elm-kernel-replacements ./elm-kernel-replacements
+        echo "Done creating elm-safe-virtual-dom's expected folder structure."
+        ${pkgs.nodejs}/bin/node -e "import('./elm-kernel-replacements/replace-kernel-packages.mjs').then(m => m.replaceKernelPackages())"
+        echo "Done injecting elm-safe-virtual-dom's replacement kernel packages. 👍"
+
         mkdir -p $out/share/doc
         ${lib.concatStrings (map (module: ''
           echo "compiling ${elmfile module}"
