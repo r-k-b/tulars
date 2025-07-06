@@ -24,9 +24,14 @@ in pkgs.mkShell {
     export CYPRESS_INSTALL_BINARY=0
     export CYPRESS_RUN_BINARY=${pkgs.cypress}/bin/Cypress
 
+    if [ "''${TULARS_DEV_SHELL:-x}" == "entered" ]; then
+      exit 0
+    fi
     echo ""
     echo "This is the dev shell for the Tulars project."
     just --list --list-heading $'Run \'just\' to see the available commands:\n'
     echo ""
+
+    export TULARS_DEV_SHELL="entered"
   '';
 }

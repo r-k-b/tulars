@@ -28,10 +28,14 @@ live:
 check:
     nix flake check
 
+# Recalculate the npmDepsHashes needed for npm-based inputs.
+update-hashes:
+    update-npmDepsHashes
+
 update-nix:
     nix flake update
 
-update: update-nix
+update: update-nix update-hashes
 
 # Open the UI testing tool, Cypress.
 e2e:
