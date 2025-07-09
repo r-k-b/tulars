@@ -1,4 +1,5 @@
-{ compiledElmApp, minimalElmSrc, pkgs, sourceInfo, stdenv }:
+{ compiledElmApp, compiledElmAppNoESVD, minimalElmSrc, pkgs, sourceInfo, stdenv
+}:
 stdenv.mkDerivation {
   name = "tulars";
   src = minimalElmSrc;
@@ -19,8 +20,10 @@ stdenv.mkDerivation {
     EOF
   '';
   installPhase = ''
-    mkdir -p $out
+    mkdir -p $out/no-esvd
     cp -r dist/* $out/
+    cp -r dist/* $out/no-esvd
     cp ${compiledElmApp}/*.js $out/
+    cp ${compiledElmAppNoESVD}/*.js $out/no-esvd
   '';
 }

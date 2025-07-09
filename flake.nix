@@ -83,10 +83,16 @@
 
         compiledElmApp = callPackage ./nix/default.nix {
           inherit elmKernelReplacements minimalElmSrc;
+          applyElmSafeVirtualDom = true;
+        };
+
+        compiledElmAppNoESVD = callPackage ./nix/default.nix {
+          inherit elmKernelReplacements minimalElmSrc;
+          applyElmSafeVirtualDom = false;
         };
 
         built = callPackage ./nix/built.nix {
-          inherit compiledElmApp minimalElmSrc;
+          inherit compiledElmApp compiledElmAppNoESVD minimalElmSrc;
           sourceInfo = self.sourceInfo;
         };
 

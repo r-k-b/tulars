@@ -4,8 +4,8 @@
 # manually replaced the next two lines:
 # { nixpkgs ? <nixpkgs>, config ? { } }:
 # with (import nixpkgs config);
-{ elmKernelReplacements, elmPackages, lib, pkgs, minimalElmSrc, nodePackages
-, stdenv }:
+{ applyElmSafeVirtualDom, elmKernelReplacements, elmPackages, lib, pkgs
+, minimalElmSrc, nodePackages, stdenv }:
 let
   mkDerivation = { srcs ? ./elm/elm-srcs-main.nix, src, name, srcdir ? "../src"
     , targets ? [ ], registryDat ? ./elm/registry.dat, outputJavaScript ? false
@@ -24,11 +24,14 @@ let
         ${pkgs.makeDotElmDirectoryCmd { elmJson = ../elm.json; }}
 
         echo ELM_HOME is $ELM_HOME
-        echo "Creating elm-safe-virtual-dom's expected folder structure..."
-        cp -r ${elmKernelReplacements}/elm-kernel-replacements ./elm-kernel-replacements
-        echo "Done creating elm-safe-virtual-dom's expected folder structure."
-        ${pkgs.nodejs}/bin/node -e "import('./elm-kernel-replacements/replace-kernel-packages.mjs').then(m => m.replaceKernelPackages())"
-        echo "Done injecting elm-safe-virtual-dom's replacement kernel packages. 👍"
+        ${if applyElmSafeVirtualDom then ''
+          echo "Creating elm-safe-virtual-dom's expected folder structure..."
+          cp -r ${elmKernelReplacements}/elm-kernel-replacements ./elm-kernel-replacements
+          echo "Done creating elm-safe-virtual-dom's expected folder structure."
+          ${pkgs.nodejs}/bin/node -e "import('./elm-kernel-replacements/replace-kernel-packages.mjs').then(m => m.replaceKernelPackages())"
+          echo "Done injecting elm-safe-virtual-dom's replacement kernel packages. 👍"
+        '' else
+          ""}
 
         mkdir -p $out/share/doc
         ${lib.concatStrings (map (module: ''
