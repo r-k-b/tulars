@@ -63,11 +63,11 @@
     "elmSafeVirtualDom": {
       "flake": false,
       "locked": {
-        "lastModified": 1750779589,
-        "narHash": "sha256-Wzz1mj42nv6Zcpo1ThXT8hkSQQSceREEcqBenNXVi6o=",
+        "lastModified": 1752009179,
+        "narHash": "sha256-FQKov/kF1I8uBlitVgEhRIkarI0rT317zhEGRPF+PsY=",
         "owner": "lydell",
         "repo": "elm-safe-virtual-dom",
-        "rev": "cee3aab245653461e89857a7ff96f8a5cfea7543",
+        "rev": "b5dd161f1a882e1c092e7c057833afb895f9e9cc",
         "type": "github"
       },
       "original": {
@@ -129,11 +129,11 @@
     "lydellElmVirtualDom": {
       "flake": false,
       "locked": {
-        "lastModified": 1750779348,
-        "narHash": "sha256-1c+DzZhCL2HAwDa8W6gPsahO+VRI8wYArm1hfrGySwQ=",
+        "lastModified": 1752091915,
+        "narHash": "sha256-WLycZakBgftlKoNQ9WDHlHdCxpOpc7KSHOUQYXlZd04=",
         "owner": "lydell",
         "repo": "virtual-dom",
-        "rev": "8c20e5b9f309e82e67284669f3740132a2a4d9d6",
+        "rev": "4163ad89613a6da9f29d7a9240f08fcc471d6cf5",
         "type": "github"
       },
       "original": {
