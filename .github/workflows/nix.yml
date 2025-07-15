@@ -27,7 +27,7 @@ jobs:
                   nix_path: nixpkgs=channel:nixos-unstable
             - uses: DeterminateSystems/magic-nix-cache-action@v13
             - name: Keep the Flake up-to-date and healthy
-              uses: DeterminateSystems/flake-checker-action@v11
+              uses: DeterminateSystems/flake-checker-action@v12
               with:
                   fail-mode: true
             - run: nix flake check
