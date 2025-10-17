@@ -13,6 +13,8 @@ pkgs.buildNpmPackage {
 
     # Leaving this at 1.1.3 causes build failures, with:
     # `Error: Because there is no version of elm/json in 1.1.3 and root/ 0.0.0 depends on elm/json 1.1.3, root/ 0.0.0 is forbidden.`
+    # To avoid this issue, `makeDotElmDirectoryCmd` needs changes, to support
+    # including multiple versions of packages.
     substituteInPlace ./parseElm/elm.json \
       --replace-fail '"elm/json": "1.1.3"' '"elm/json": "1.1.4"'
 
