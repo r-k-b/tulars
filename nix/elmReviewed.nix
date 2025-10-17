@@ -1,5 +1,9 @@
 { elm-review-tool, elmPackages, elmVersion, lib, pkgs, stdenv, reviewSrc }:
-let mainApp = builtins.fromJSON (builtins.readFile ../elm.json);
+let
+  mainApp = builtins.fromJSON (builtins.readFile ../elm.json);
+
+  reviewApp = builtins.fromJSON (builtins.readFile ../review/elm.json);
+  elmReviewVersion = reviewApp.dependencies.direct."jfmengels/elm-review";
 
 in stdenv.mkDerivation {
   name = "elm-reviewed";
@@ -13,8 +17,10 @@ in stdenv.mkDerivation {
       extraDeps = mainApp.dependencies.direct // mainApp.dependencies.indirect;
     }}
     set -e
-    mkdir -p .elm/elm-review/2.12.0
-    ln -s ../../${elmVersion} .elm/elm-review/2.12.0/${elmVersion}
+    mkdir -p .elm/elm-review/${elmReviewVersion}
+    ln -s ../../${elmVersion} .elm/elm-review/${elmReviewVersion}/${elmVersion}
+    echo "elm-review --version (cli tool) = $(elm-review --version)"
+    echo "elm-review (elm pkg) version from review/elm.json = ${elmReviewVersion}"
     elm-review --offline
     echo "passed" > $out
   '';
