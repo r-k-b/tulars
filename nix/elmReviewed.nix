@@ -19,6 +19,8 @@ in stdenv.mkDerivation {
     set -e
     mkdir -p .elm/elm-review/${elmReviewVersion}
     ln -s ../../${elmVersion} .elm/elm-review/${elmReviewVersion}/${elmVersion}
+    echo "elm-review --version (cli tool) = $(elm-review --version)"
+    echo "elm-review (elm pkg) version from review/elm.json = ${elmReviewVersion}"
     elm-review --offline
     echo "passed" > $out
   '';
