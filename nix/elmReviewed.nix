@@ -4,6 +4,8 @@ let
 
   reviewApp = builtins.fromJSON (builtins.readFile ../review/elm.json);
   elmReviewVersion = reviewApp.dependencies.direct."jfmengels/elm-review";
+  reviewToolApp =
+    builtins.fromJSON (builtins.readFile "${elm-review-tool}/review/elm.json");
 
 in stdenv.mkDerivation {
   name = "elm-reviewed";
@@ -14,7 +16,12 @@ in stdenv.mkDerivation {
   installPhase = ''
     ${pkgs.makeDotElmDirectoryCmd {
       elmJson = ../review/elm.json;
-      extraDeps = mainApp.dependencies.direct // mainApp.dependencies.indirect;
+      extraDeps = [
+        mainApp.dependencies.direct
+        mainApp.dependencies.indirect
+        reviewToolApp.dependencies.direct
+        reviewToolApp.dependencies.indirect
+      ];
     }}
     set -e
     mkdir -p .elm/elm-review/${elmReviewVersion}
