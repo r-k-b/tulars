@@ -63,11 +63,11 @@
     "elmSafeVirtualDom": {
       "flake": false,
       "locked": {
-        "lastModified": 1755935627,
-        "narHash": "sha256-9kL3qvGw4r8tr+I05B28A/kOGhPnetuS5uKPxtgGiQM=",
+        "lastModified": 1763382256,
+        "narHash": "sha256-Xvq3uUXjQhOvz4R9zR87xqwoa9k0cbMCckHrAXReLZ4=",
         "owner": "lydell",
         "repo": "elm-safe-virtual-dom",
-        "rev": "e87fc040defa3879ab814077c69666b14977cb4b",
+        "rev": "dd6cb5609bf3d49b7c27e168c30d8d097ae09b3c",
         "type": "github"
       },
       "original": {
@@ -113,11 +113,11 @@
     "lydellElmHtml": {
       "flake": false,
       "locked": {
-        "lastModified": 1748808494,
-        "narHash": "sha256-ugWjEuszB50l+EyOgLwDGrKxJxCDrxpzTzHrCDry3p4=",
+        "lastModified": 1763029093,
+        "narHash": "sha256-xyL/AvKdsxTl4RgfBCdTuWndM55eNM6whPD3YqptcKM=",
         "owner": "lydell",
         "repo": "html",
-        "rev": "09257799949d6ef28756b1f03794acb0bab3af7f",
+        "rev": "b35c476a69f0ba9bf8282d8c15df65e63aefea8f",
         "type": "github"
       },
       "original": {
@@ -129,11 +129,11 @@
     "lydellElmVirtualDom": {
       "flake": false,
       "locked": {
-        "lastModified": 1753473329,
-        "narHash": "sha256-c+2fSg7HptenqI1KJZU8ytfFeQ9xvJbSa/eL4lQ3kAE=",
+        "lastModified": 1763038620,
+        "narHash": "sha256-XpbRMCpIx151eHHoph7wkGYhtDp5bTBwUOefiWKItOc=",
         "owner": "lydell",
         "repo": "virtual-dom",
-        "rev": "236651460c96bc1c37a7e94553081402deb350cc",
+        "rev": "e1fae6aabd65539db2c94a98220a45cfc624b633",
         "type": "github"
       },
       "original": {
@@ -151,11 +151,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1760745627,
-        "narHash": "sha256-KfEmJGi193fTAPABqUZiJhGBE51pJhSKAYFLG+xF5YQ=",
+        "lastModified": 1763767431,
+        "narHash": "sha256-MYCeY11TSrcjjGzR/3SvnCxhKhsiqMnCtfR6e9rfAdo=",
         "owner": "r-k-b",
         "repo": "mkElmDerivation",
-        "rev": "3cb2948ec5908b5328b171c7cbdc2ab5fbbaa2cf",
+        "rev": "634288dd55f612e38c519580008c0cfa8be1d9f1",
         "type": "github"
       },
       "original": {
@@ -167,11 +167,11 @@
     },
     "nixpkgs": {
       "locked": {
-        "lastModified": 1760524057,
-        "narHash": "sha256-EVAqOteLBFmd7pKkb0+FIUyzTF61VKi7YmvP1tw4nEw=",
+        "lastModified": 1763421233,
+        "narHash": "sha256-Stk9ZYRkGrnnpyJ4eqt9eQtdFWRRIvMxpNRf4sIegnw=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "544961dfcce86422ba200ed9a0b00dd4b1486ec5",
+        "rev": "89c2b2330e733d6cdb5eae7b899326930c2c0648",
         "type": "github"
       },
       "original": {

@@ -118,6 +118,8 @@
         };
         apps.default = {
           type = "app";
+          meta.description =
+            "Experimentation with simple Utility Function-based agents.";
           program = "${pkgs.writeScript "tularsApp" ''
             #!${pkgs.bash}/bin/bash
 
