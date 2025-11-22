@@ -2,7 +2,6 @@
 , lydellElmVirtualDom, pkgs, stdenv }:
 let
   inherit (lib) fileset;
-  inherit (lib.asserts) assertMsg;
 
   readPackageVersion = package: (lib.importJSON "${package}/elm.json").version;
 
@@ -13,14 +12,19 @@ let
     virtual-dom = readPackageVersion lydellElmVirtualDom;
   };
   depVersions = (lib.importJSON ../elm.json).dependencies;
-in assert assertMsg (depVersions.direct."elm/browser" == lydellVersions.browser)
-  "elm/browser version must match the Lydell patch";
-assert assertMsg (depVersions.direct."elm/html" == lydellVersions.html)
-  "elm/html version must match the Lydell patch";
-assert assertMsg
-  (depVersions.indirect."elm/virtual-dom" == lydellVersions.virtual-dom)
-  "elm/virtual-dom version must match the Lydell patch";
-stdenv.mkDerivation {
+
+  versionsMatch = whichDepVersions: elmPkgName: lydellVersion: {
+    assertion = (whichDepVersions."${elmPkgName}" == lydellVersion);
+    message = "${elmPkgName} version (${
+        whichDepVersions."${elmPkgName}"
+      }) must match the Lydell patch (${lydellVersion})";
+  };
+in lib.asserts.checkAssertWarn [
+  (versionsMatch depVersions.direct "elm/browser" lydellVersions.browser)
+  (versionsMatch depVersions.direct "elm/html" lydellVersions.html)
+  (versionsMatch depVersions.indirect "elm/virtual-dom"
+    lydellVersions.virtual-dom)
+] [ ] stdenv.mkDerivation {
   name =
     "elm_kernel_replacements"; # deliberately unique spelling, so it's easy to find from error messages
   dontUnpack = true;
