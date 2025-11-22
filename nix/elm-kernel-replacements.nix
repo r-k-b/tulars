@@ -4,11 +4,13 @@ let
   inherit (lib) fileset;
   inherit (lib.asserts) assertMsg;
 
+  readPackageVersion = package: (lib.importJSON "${package}/elm.json").version;
+
   # These must match the original elm* versions in elm.json, for all projects this is applied to!
   lydellVersions = {
-    browser = "1.0.2";
-    html = "1.0.0";
-    virtual-dom = "1.0.4";
+    browser = readPackageVersion lydellElmBrowser;
+    html = readPackageVersion lydellElmHtml;
+    virtual-dom = readPackageVersion lydellElmVirtualDom;
   };
   depVersions = (lib.importJSON ../elm.json).dependencies;
 in assert assertMsg (depVersions.direct."elm/browser" == lydellVersions.browser)
