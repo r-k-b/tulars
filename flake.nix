@@ -26,7 +26,7 @@
       flake = false;
     };
     mkElmDerivation = {
-      url = "github:r-k-b/mkElmDerivation?ref=support-elm-review";
+      url = "github:r-k-b/mkElmDerivation?ref=support_elm_review";
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };

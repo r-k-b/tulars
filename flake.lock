@@ -151,16 +151,16 @@
         ]
       },
       "locked": {
-        "lastModified": 1767217290,
-        "narHash": "sha256-z7NaSBZ63FCNr+Oew7l3ieRtRP/Vi5ZbrZLg7pcO2ZQ=",
+        "lastModified": 1767235301,
+        "narHash": "sha256-+tU86EINiQfHoN4GZwEQ56DA2gOLOAyi9+9J1+G+Msg=",
         "owner": "r-k-b",
         "repo": "mkElmDerivation",
-        "rev": "f3ba180ed8e84412a9759270b4b2c7567ae70e19",
+        "rev": "59dfe2ea462a55e42dd781201e693efbb41189a8",
         "type": "github"
       },
       "original": {
         "owner": "r-k-b",
-        "ref": "support-elm-review",
+        "ref": "support_elm_review",
         "repo": "mkElmDerivation",
         "type": "github"
       }
