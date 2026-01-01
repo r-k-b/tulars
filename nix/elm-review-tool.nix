@@ -3,7 +3,7 @@ pkgs.buildNpmPackage {
   name = "elm-review-tool";
   src = elm-review-tool-src;
   # to update this hash, see `../bin/update-npmDepsHashes`
-  npmDepsHash = "sha256-mI94fYNKZ9Jx1Iyo/VjZqaXQ64tZA2S8mtn5l6TtCSc=";
+  npmDepsHash = "sha256-MviwszWO0Jv9ctdXXvPC1/Z0lhULddp31lWEs5xPxjs=";
   patches = [ ./elm-review-offline-details.patch ];
   nativeBuildInputs = with pkgs; [ coreutils ];
   buildInputs = with elmPackages; [ elm elm-format ];
