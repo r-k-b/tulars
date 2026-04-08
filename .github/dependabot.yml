@@ -11,8 +11,6 @@ updates:
     time: "08:00"
     timezone: Australia/Sydney
   open-pull-requests-limit: 10
-  reviewers:
-  - r-k-b
 - package-ecosystem: github-actions
   cooldown:
     default-days: 10
@@ -24,5 +22,3 @@ updates:
     time: "08:00"
     timezone: Australia/Sydney
   open-pull-requests-limit: 10
-  reviewers:
-  - r-k-b
