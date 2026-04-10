@@ -29,7 +29,7 @@ in lib.asserts.checkAssertWarn [
     "elm_kernel_replacements"; # deliberately unique spelling, so it's easy to find from error messages
   dontUnpack = true;
   buildPhase = ''
-    # the `assert` guards above will enforce that the versions in hippo/elm.json must exactly match the Lydell versions
+    # the `assert` guards above will enforce that the versions in elm.json must exactly match the Lydell versions
 
     echo "Creating elm-safe-virtual-dom's expected folder structure..."
     mkdir -p ./elm-kernel-replacements/elm-stuff/elm
