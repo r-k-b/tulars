@@ -26,7 +26,7 @@ print "Updating the npmDepsHash in elm-review-tool.nix..."
 
 let sedCommandElmReview = [`s/(^\s+npmDepsHash = ")sha256-.*";/\1`, ($elmReviewHash | str replace -a '/' `\/`), `";/`] | str join ""
 
-print $"hippo sed command is: ($sedCommandElmReview)"
+print $"the sed command is: ($sedCommandElmReview)"
 
 sed -i -E $sedCommandElmReview ./nix/elm-review-tool.nix
 
