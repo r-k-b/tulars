@@ -3,11 +3,11 @@
     "elm-review-tool-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1774476758,
-        "narHash": "sha256-mIUZ9RZUa4oH8DSL111WQeh5wNxO9lPVHCiJfDbTl0k=",
+        "lastModified": 1776958458,
+        "narHash": "sha256-TD8lrvyAO6a2jY9utIhO1Yylzus3B91A0c4sxo01iNs=",
         "owner": "jfmengels",
         "repo": "node-elm-review",
-        "rev": "a9e2a5d488de07c4e1463c43f08d2e1bd5ba882d",
+        "rev": "000a9b10f7b1a72770734a51bcae65021803ee1d",
         "type": "github"
       },
       "original": {
