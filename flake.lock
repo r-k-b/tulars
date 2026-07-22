@@ -151,11 +151,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1783222454,
-        "narHash": "sha256-YlgLmSIr+WCUjcko4l3vM9102eD1gahEH0j0QceUD9I=",
+        "lastModified": 1784429433,
+        "narHash": "sha256-6HCbjYcqnNOiNNgbzaq3JEwQimikj7ViOJlaiE4ad2Q=",
         "owner": "jeslie0",
         "repo": "mkElmDerivation",
-        "rev": "45862bab6e19bd7301e17368c26f69dfb4ebbe79",
+        "rev": "6fff838f35ccd6aace654774f3c4de1fe8f69c53",
         "type": "github"
       },
       "original": {
