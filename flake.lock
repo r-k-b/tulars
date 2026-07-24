@@ -63,11 +63,11 @@
     "elmSafeVirtualDom": {
       "flake": false,
       "locked": {
-        "lastModified": 1782754758,
-        "narHash": "sha256-PdkNZ3H5bu8SGkI1rOc9qQun8VMm/FDXn4DdfxQ2zqs=",
+        "lastModified": 1783962584,
+        "narHash": "sha256-9OafGtgfu9FNJfWZYX4XiqgI3LIe0DEEgNg4Y/8Q7Dw=",
         "owner": "lydell",
         "repo": "elm-safe-virtual-dom",
-        "rev": "36bfe394a98657e30940a7516f9ee0fbd998f0b4",
+        "rev": "edaaba673d692526a250280aac84a6d5fdeca307",
         "type": "github"
       },
       "original": {
