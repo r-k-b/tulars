@@ -1,4 +1,9 @@
-{ elm-review-tool-src, elmPackages, pkgs, stdenv }:
+{
+  elm-review-tool-src,
+  elmPackages,
+  pkgs,
+  stdenv,
+}:
 pkgs.buildNpmPackage {
   name = "elm-review-tool";
   src = elm-review-tool-src;
@@ -6,7 +11,10 @@ pkgs.buildNpmPackage {
   npmDepsHash = "sha256-tXeQtjDR3mq+yzhP3E6v7XTqL4HQPhq4ExoFr3szZak=";
   patches = [ ./elm-review-offline-details.patch ];
   nativeBuildInputs = with pkgs; [ coreutils ];
-  buildInputs = with elmPackages; [ elm elm-format ];
+  buildInputs = with elmPackages; [
+    elm
+    elm-format
+  ];
   buildPhase = ''
     substituteInPlace ./package.json \
       --replace-fail '"elm-tooling install"' '"echo skipping elm-tooling"'

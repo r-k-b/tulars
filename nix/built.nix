@@ -1,4 +1,10 @@
-{ compiledElmApp, minimalElmSrc, pkgs, sourceInfo, stdenv }:
+{
+  compiledElmApp,
+  minimalElmSrc,
+  pkgs,
+  sourceInfo,
+  stdenv,
+}:
 stdenv.mkDerivation {
   name = "tulars";
   src = minimalElmSrc;

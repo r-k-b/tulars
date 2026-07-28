@@ -4,47 +4,62 @@
 # manually replaced the next two lines:
 # { nixpkgs ? <nixpkgs>, config ? { } }:
 # with (import nixpkgs config);
-{ elmKernelReplacements, elmPackages, lib, pkgs, minimalElmSrc, stdenv
-, uglify-js }:
+{
+  elmKernelReplacements,
+  elmPackages,
+  lib,
+  pkgs,
+  minimalElmSrc,
+  stdenv,
+  uglify-js,
+}:
 let
-  mkDerivation = { srcs ? ./elm/elm-srcs-main.nix, src, name, srcdir ? "../src"
-    , targets ? [ ], registryDat ? ./elm/registry.dat, outputJavaScript ? false
+  mkDerivation =
+    {
+      srcs ? ./elm/elm-srcs-main.nix,
+      src,
+      name,
+      srcdir ? "../src",
+      targets ? [ ],
+      registryDat ? ./elm/registry.dat,
+      outputJavaScript ? false,
     }:
     stdenv.mkDerivation {
       inherit name src;
 
-      nativeBuildInputs = [ elmPackages.elm ]
-        ++ lib.optional outputJavaScript uglify-js;
+      nativeBuildInputs = [ elmPackages.elm ] ++ lib.optional outputJavaScript uglify-js;
 
-      installPhase = let
-        elmfile = module:
-          "${srcdir}/${builtins.replaceStrings [ "." ] [ "/" ] module}.elm";
-        extension = if outputJavaScript then "js" else "html";
-      in ''
-        ${pkgs.makeDotElmDirectoryCmd { elmJson = ../elm.json; }}
+      installPhase =
+        let
+          elmfile = module: "${srcdir}/${builtins.replaceStrings [ "." ] [ "/" ] module}.elm";
+          extension = if outputJavaScript then "js" else "html";
+        in
+        ''
+          ${pkgs.makeDotElmDirectoryCmd { elmJson = ../elm.json; }}
 
-        echo ELM_HOME is $ELM_HOME
-        echo "Creating elm-safe-virtual-dom's expected folder structure..."
-        cp -r ${elmKernelReplacements}/elm-kernel-replacements ./elm-kernel-replacements
-        echo "Done creating elm-safe-virtual-dom's expected folder structure."
-        ${pkgs.nodejs}/bin/node -e "import('./elm-kernel-replacements/replace-kernel-packages.mjs').then(m => m.replaceKernelPackages())"
-        echo "Done injecting elm-safe-virtual-dom's replacement kernel packages. 👍"
+          echo ELM_HOME is $ELM_HOME
+          echo "Creating elm-safe-virtual-dom's expected folder structure..."
+          cp -r ${elmKernelReplacements}/elm-kernel-replacements ./elm-kernel-replacements
+          echo "Done creating elm-safe-virtual-dom's expected folder structure."
+          ${pkgs.nodejs}/bin/node -e "import('./elm-kernel-replacements/replace-kernel-packages.mjs').then(m => m.replaceKernelPackages())"
+          echo "Done injecting elm-safe-virtual-dom's replacement kernel packages. 👍"
 
-        mkdir -p $out/share/doc
-        ${lib.concatStrings (map (module: ''
-          echo "compiling ${elmfile module}"
-          elm make ${
-            elmfile module
-          } --output $out/${module}.${extension} --docs $out/share/doc/${module}.json
-          ${lib.optionalString outputJavaScript ''
-            echo "minifying ${elmfile module}"
-            uglifyjs $out/${module}.${extension} --compress 'pure_funcs="F2,F3,F4,F5,F6,F7,F8,F9,A2,A3,A4,A5,A6,A7,A8,A9",pure_getters,keep_fargs=false,unsafe_comps,unsafe' \
-                | uglifyjs --mangle --output $out/${module}.min.${extension}
-          ''}
-        '') targets)}
-      '';
+          mkdir -p $out/share/doc
+          ${lib.concatStrings (
+            map (module: ''
+              echo "compiling ${elmfile module}"
+              elm make ${elmfile module} --output $out/${module}.${extension} --docs $out/share/doc/${module}.json
+              ${lib.optionalString outputJavaScript ''
+                echo "minifying ${elmfile module}"
+                uglifyjs $out/${module}.${extension} --compress 'pure_funcs="F2,F3,F4,F5,F6,F7,F8,F9,A2,A3,A4,A5,A6,A7,A8,A9",pure_getters,keep_fargs=false,unsafe_comps,unsafe' \
+                    | uglifyjs --mangle --output $out/${module}.min.${extension}
+              ''}
+            '') targets
+          )}
+        '';
     };
-in mkDerivation {
+in
+mkDerivation {
   name = "tulars-mkElmDerivation-0.1.0";
   srcs = ./elm/elm-srcs-main.nix;
   src = minimalElmSrc;
