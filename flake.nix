@@ -31,11 +31,23 @@
     };
   };
 
-  outputs = { elm-review-tool-src, elmSafeVirtualDom, lydellElmBrowser
-    , lydellElmHtml, lydellElmVirtualDom, self, mkElmDerivation, nixpkgs
-    , flake-utils }:
-    let supportedSystems = with flake-utils.lib.system; [ x86_64-linux ];
-    in flake-utils.lib.eachSystem supportedSystems (system:
+  outputs =
+    {
+      elm-review-tool-src,
+      elmSafeVirtualDom,
+      lydellElmBrowser,
+      lydellElmHtml,
+      lydellElmVirtualDom,
+      self,
+      mkElmDerivation,
+      nixpkgs,
+      flake-utils,
+    }:
+    let
+      supportedSystems = with flake-utils.lib.system; [ x86_64-linux ];
+    in
+    flake-utils.lib.eachSystem supportedSystems (
+      system:
       let
         pkgs = import nixpkgs {
           inherit system;
@@ -44,7 +56,8 @@
         inherit (pkgs) lib stdenv callPackage;
         inherit (lib) fileset hasInfix hasSuffix;
 
-        toSource = fsets:
+        toSource =
+          fsets:
           fileset.toSource {
             root = ./.;
             fileset = fileset.unions fsets;
@@ -52,11 +65,15 @@
 
         elmVersion = "0.19.1";
 
-        elmKernelReplacements =
-          pkgs.callPackage ./nix/elm-kernel-replacements.nix {
-            inherit elmSafeVirtualDom elmVersion lydellElmBrowser lydellElmHtml
-              lydellElmVirtualDom;
-          };
+        elmKernelReplacements = pkgs.callPackage ./nix/elm-kernel-replacements.nix {
+          inherit
+            elmSafeVirtualDom
+            elmVersion
+            lydellElmBrowser
+            lydellElmHtml
+            lydellElmVirtualDom
+            ;
+        };
 
         # The build cache will be invalidated if any of the files within change.
         # So, exclude files from here unless they're necessary for `elm make` et al.
@@ -95,18 +112,24 @@
           inherit elm-review-tool elmVersion reviewSrc;
         };
 
-        peekSrc = name: src:
+        peekSrc =
+          name: src:
           stdenv.mkDerivation {
             src = src;
             name = "peekSource-${name}";
             buildPhase = "mkdir -p $out";
             installPhase = "cp -r ./* $out";
           };
-      in {
+      in
+      {
         packages = {
-          inherit built compiledElmApp elm-review-tool elmKernelReplacements;
-          elm-review-tool-src = pkgs.runCommand "elm-review-tool-src" { }
-            "ln -s ${elm-review-tool-src} $out";
+          inherit
+            built
+            compiledElmApp
+            elm-review-tool
+            elmKernelReplacements
+            ;
+          elm-review-tool-src = pkgs.runCommand "elm-review-tool-src" { } "ln -s ${elm-review-tool-src} $out";
           default = built;
           minimalElmSrc = peekSrc "minimal-elm" minimalElmSrc;
           testsSrc = peekSrc "tests" testsSrc;
@@ -118,13 +141,13 @@
         };
         apps.default = {
           type = "app";
-          meta.description =
-            "Experimentation with simple Utility Function-based agents.";
+          meta.description = "Experimentation with simple Utility Function-based agents.";
           program = "${pkgs.writeScript "tularsApp" ''
             #!${pkgs.bash}/bin/bash
 
             xdg-open ${built}/index.html
           ''}";
         };
-      });
+      }
+    );
 }

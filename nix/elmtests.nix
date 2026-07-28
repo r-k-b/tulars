@@ -1,9 +1,17 @@
-{ elmPackages, pkgs, stdenv, testsSrc }:
+{
+  elmPackages,
+  pkgs,
+  stdenv,
+  testsSrc,
+}:
 stdenv.mkDerivation {
   name = "elm-test-results";
   src = testsSrc;
 
-  nativeBuildInputs = with elmPackages; [ elm elm-test ];
+  nativeBuildInputs = with elmPackages; [
+    elm
+    elm-test
+  ];
 
   installPhase = ''
     ${pkgs.makeDotElmDirectoryCmd { elmJson = ../elm.json; }}

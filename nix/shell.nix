@@ -1,4 +1,8 @@
-{ elm-review-tool, elmKernelReplacements, pkgs }:
+{
+  elm-review-tool,
+  elmKernelReplacements,
+  pkgs,
+}:
 let
   liveDev = pkgs.writeScriptBin "livedev" ''
     cd "$(git rev-parse --show-toplevel)"
@@ -14,7 +18,8 @@ let
     ${pkgs.nodejs}/bin/node -e "import('./elm-kernel-replacements/replace-kernel-packages.mjs').then(m => m.replaceKernelPackages())"
     elm-live app/Main.elm -d dist -Hu -- --output="dist/Main.js"
   '';
-in pkgs.mkShell {
+in
+pkgs.mkShell {
   name = "tulars";
 
   buildInputs = with pkgs; [
@@ -27,7 +32,7 @@ in pkgs.mkShell {
     cypress
     just # for discoverable project-specific commands. Simpler than Make, plus Nix already handles the build system.
     liveDev
-    nixfmt-classic
+    nixfmt
   ];
 
   shellHook = ''

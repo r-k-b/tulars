@@ -1,17 +1,29 @@
-{ elm-review-tool, elmPackages, elmVersion, lib, pkgs, stdenv, reviewSrc }:
+{
+  elm-review-tool,
+  elmPackages,
+  elmVersion,
+  lib,
+  pkgs,
+  stdenv,
+  reviewSrc,
+}:
 let
   mainApp = builtins.fromJSON (builtins.readFile ../elm.json);
 
   reviewApp = builtins.fromJSON (builtins.readFile ../review/elm.json);
   elmReviewVersion = reviewApp.dependencies.direct."jfmengels/elm-review";
-  reviewToolApp =
-    builtins.fromJSON (builtins.readFile "${elm-review-tool}/review/elm.json");
+  reviewToolApp = builtins.fromJSON (builtins.readFile "${elm-review-tool}/review/elm.json");
 
-in stdenv.mkDerivation {
+in
+stdenv.mkDerivation {
   name = "elm-reviewed";
   src = reviewSrc;
 
-  buildInputs = with elmPackages; [ elm elm-json elm-review-tool ];
+  buildInputs = with elmPackages; [
+    elm
+    elm-json
+    elm-review-tool
+  ];
 
   installPhase = ''
     ${pkgs.makeDotElmDirectoryCmd {

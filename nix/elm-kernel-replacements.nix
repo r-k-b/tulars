@@ -1,5 +1,13 @@
-{ elmSafeVirtualDom, elmVersion, lib, lydellElmBrowser, lydellElmHtml
-, lydellElmVirtualDom, pkgs, stdenv }:
+{
+  elmSafeVirtualDom,
+  elmVersion,
+  lib,
+  lydellElmBrowser,
+  lydellElmHtml,
+  lydellElmVirtualDom,
+  pkgs,
+  stdenv,
+}:
 let
   inherit (lib) fileset;
 
@@ -16,53 +24,56 @@ let
   versionsMatch = whichDepVersions: elmPkgName: lydellVersion: {
     assertion = (whichDepVersions."${elmPkgName}" == lydellVersion);
     message = "${elmPkgName} version (${
-        whichDepVersions."${elmPkgName}"
-      }) must match the Lydell patch (${lydellVersion})";
+      whichDepVersions."${elmPkgName}"
+    }) must match the Lydell patch (${lydellVersion})";
   };
-in lib.asserts.checkAssertWarn [
-  (versionsMatch depVersions.direct "elm/browser" lydellVersions.browser)
-  (versionsMatch depVersions.direct "elm/html" lydellVersions.html)
-  (versionsMatch depVersions.indirect "elm/virtual-dom"
-    lydellVersions.virtual-dom)
-] [ ] stdenv.mkDerivation {
-  name =
-    "elm_kernel_replacements"; # deliberately unique spelling, so it's easy to find from error messages
-  dontUnpack = true;
-  buildPhase = ''
-    # the `assert` guards above will enforce that the versions in elm.json must exactly match the Lydell versions
+in
+lib.asserts.checkAssertWarn
+  [
+    (versionsMatch depVersions.direct "elm/browser" lydellVersions.browser)
+    (versionsMatch depVersions.direct "elm/html" lydellVersions.html)
+    (versionsMatch depVersions.indirect "elm/virtual-dom" lydellVersions.virtual-dom)
+  ]
+  [ ]
+  stdenv.mkDerivation
+  {
+    name = "elm_kernel_replacements"; # deliberately unique spelling, so it's easy to find from error messages
+    dontUnpack = true;
+    buildPhase = ''
+      # the `assert` guards above will enforce that the versions in elm.json must exactly match the Lydell versions
 
-    echo "Creating elm-safe-virtual-dom's expected folder structure..."
-    mkdir -p ./elm-kernel-replacements/elm-stuff/elm
-    pushd ./elm-kernel-replacements/elm-stuff/elm
-    mkdir -p browser/${lydellVersions.browser}
-    mkdir -p html/${lydellVersions.html}
-    mkdir -p virtual-dom/${lydellVersions.virtual-dom}
+      echo "Creating elm-safe-virtual-dom's expected folder structure..."
+      mkdir -p ./elm-kernel-replacements/elm-stuff/elm
+      pushd ./elm-kernel-replacements/elm-stuff/elm
+      mkdir -p browser/${lydellVersions.browser}
+      mkdir -p html/${lydellVersions.html}
+      mkdir -p virtual-dom/${lydellVersions.virtual-dom}
 
-    cp -r ${lydellElmBrowser}/* ./browser/${lydellVersions.browser}
-    cp -r ${lydellElmHtml}/* ./html/${lydellVersions.html}
-    cp -r ${lydellElmVirtualDom}/* ./virtual-dom/${lydellVersions.virtual-dom}
-    popd
-    cp ${elmSafeVirtualDom}/replace-kernel-packages.mjs ./elm-kernel-replacements/
-    echo "Done creating elm-safe-virtual-dom's expected folder structure:"
+      cp -r ${lydellElmBrowser}/* ./browser/${lydellVersions.browser}
+      cp -r ${lydellElmHtml}/* ./html/${lydellVersions.html}
+      cp -r ${lydellElmVirtualDom}/* ./virtual-dom/${lydellVersions.virtual-dom}
+      popd
+      cp ${elmSafeVirtualDom}/replace-kernel-packages.mjs ./elm-kernel-replacements/
+      echo "Done creating elm-safe-virtual-dom's expected folder structure:"
 
-    ${pkgs.tree}/bin/tree -d .
+      ${pkgs.tree}/bin/tree -d .
 
-    cat << EOF
-    The expected file structure is ready!
-    To use it, link or copy this derivation's files into your project folder, then run something like:
+      cat << EOF
+      The expected file structure is ready!
+      To use it, link or copy this derivation's files into your project folder, then run something like:
 
-        node -e "import('./elm-kernel-replacements/replace-kernel-packages.mjs').then(m => m.replaceKernelPackages())"
+          node -e "import('./elm-kernel-replacements/replace-kernel-packages.mjs').then(m => m.replaceKernelPackages())"
 
-    That will apply the patched versions to your \$ELM_HOME folder, or ./elm-home/elm-stuff if
-    the ELM_HOME env var is not set.
-    From there, Elm will use the patched versions as if they were the originals.
+      That will apply the patched versions to your \$ELM_HOME folder, or ./elm-home/elm-stuff if
+      the ELM_HOME env var is not set.
+      From there, Elm will use the patched versions as if they were the originals.
 
-    More info: https://github.com/lydell/elm-safe-virtual-dom?tab=readme-ov-file#elm-safe-virtual-dom
-    EOF
-  '';
+      More info: https://github.com/lydell/elm-safe-virtual-dom?tab=readme-ov-file#elm-safe-virtual-dom
+      EOF
+    '';
 
-  installPhase = ''
-    mkdir -p $out
-    cp -r ./elm-kernel-replacements $out
-  '';
-}
+    installPhase = ''
+      mkdir -p $out
+      cp -r ./elm-kernel-replacements $out
+    '';
+  }
