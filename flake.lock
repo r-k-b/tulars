@@ -113,11 +113,11 @@
     "lydellElmHtml": {
       "flake": false,
       "locked": {
-        "lastModified": 1763029093,
-        "narHash": "sha256-xyL/AvKdsxTl4RgfBCdTuWndM55eNM6whPD3YqptcKM=",
+        "lastModified": 1792065103,
+        "narHash": "sha256-E6NWZl1weql3MXGcjiLJdFqEoVeiP1kxhThqtKgFyYk=",
         "owner": "lydell",
         "repo": "html",
-        "rev": "b35c476a69f0ba9bf8282d8c15df65e63aefea8f",
+        "rev": "24065d8ab7e53e51bb525263889a76a75bdd694b",
         "type": "github"
       },
       "original": {
