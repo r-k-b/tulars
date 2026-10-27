@@ -97,11 +97,11 @@
     "lydellElmBrowser": {
       "flake": false,
       "locked": {
-        "lastModified": 1752826233,
-        "narHash": "sha256-29axLnzXcLDeKG+CBX49pjt2ZcYVdVg04XVnfAfImvI=",
+        "lastModified": 1792074235,
+        "narHash": "sha256-agT9pLRryIyu6NxNPKKWM6L8B7kDijDuALFHO5VqjXA=",
         "owner": "lydell",
         "repo": "browser",
-        "rev": "f5de544c8033d934285501f78f09e2eaf0171d55",
+        "rev": "63de763b416b5938b79141d1410ef4a737a03bef",
         "type": "github"
       },
       "original": {
