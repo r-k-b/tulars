@@ -129,11 +129,11 @@
     "lydellElmVirtualDom": {
       "flake": false,
       "locked": {
-        "lastModified": 1793994967,
-        "narHash": "sha256-FGbqkCZA60mPTcUe9AD/9TM7UNZxD2iTKIWa7mAAUlo=",
+        "lastModified": 1794388762,
+        "narHash": "sha256-pP8IpIp3g1XD25XOec8/vFlB+8nHWyVceccIzvQSlx4=",
         "owner": "lydell",
         "repo": "virtual-dom",
-        "rev": "b924c621fced0afb3e3c6d1f9306662cb1004842",
+        "rev": "c0bfa405f37e23b3083272d2cb8dadc019620e56",
         "type": "github"
       },
       "original": {
